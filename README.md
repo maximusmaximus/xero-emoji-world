@@ -1,13 +1,13 @@
 # 🏙️ Xero Emoji World
 
-A living, self-building **emoji megacity**, generated procedurally down to the individual apartment, with the people in it, their pets and their things. Every glyph is a Unicode emoji from a typed catalog.
+A living, self-building **emoji megacity**, generated procedurally down to the individual apartment, with the people in it, their pets and their things. Every glyph is a Unicode emoji from a typed catalog. The city is an isometric diorama that fills the screen.
 
-- **One screen, one button.** The city fills the viewport on desktop and mobile. The only UI is the **ℹ** button at the top left.
-- **Always alive.** The sim server keeps ticking whether anyone is watching or not. Crews top out floors, people move in, buy a 🛋️, adopt a 🐈, get jobs, commute by 🚇, and new districts get founded.
-- **ℹ on** shows the **life story**: a live feed of every action, in lockstep with the canvas. Click any emoji to get a close-up with its Unicode info (codepoints, name, version, category, UTF-8), reference links and the entity's own story. Click outside the close-up to go back to the city.
-- **Vector memory.** Every action and entity is embedded and stored in **Qdrant**, so you can search it semantically ("who bought pizza?").
+- **One screen, one button.** The ground plane covers the viewport on desktop and mobile. The only UI is the **ℹ** button at the top left.
+- **Always alive.** The sim server keeps ticking whether anyone is watching or not. Crews top out floors, people move in, buy a 🛋️, adopt a 🐈, get jobs, commute by 🚇, and new districts get founded. Ticks are local. They do not spend the inference dollar.
+- **ℹ on** shows the **life story**: a live feed of every action, in lockstep with the canvas. Click any emoji for its story. Click outside the close-up to go back to the city.
+- **Vector memory.** Every action and entity can be embedded and stored in **Qdrant**, so you can search it semantically ("who bought pizza?").
 - **Backups.** You can download a full DB export (`.ndjson.gz`) from the ℹ panel at any time. Hourly snapshots are kept on the server too.
-- **Mobile.** You can scroll across the landscape, but pinch zoom is off. After 30 s of use the app asks for fullscreen.
+- **Look around.** Drag to pan the isometric city, scroll to zoom. The camera starts framed so every roof is on screen and the streets run to the edges.
 
 ## Quick start
 ```bash
@@ -24,18 +24,22 @@ To run everything in Docker: `docker compose up --build` → http://localhost:80
 ```
 packages/shared   emoji catalog, PRNG, generator, reducer, simulation rules, protocol (pure, tested)
 apps/sim-server   tick loop, Qdrant store, embedder, HTTP/WS/SSE API, backups, restore script
-apps/web          Vite + Canvas2D renderer, ℹ story panel, close-up popup, mobile guards
+apps/web          Vite + Canvas2D isometric renderer, ℹ story panel, close-up popup
 ```
-See [ARCHITECTURE.md](ARCHITECTURE.md) and [HANDOFF.md](HANDOFF.md). License: MIT.
+See [ARCHITECTURE.md](ARCHITECTURE.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), and [HANDOFF.md](HANDOFF.md). License: MIT.
 
 ## Embeddings & Venice.ai
-By default the sim uses a local hash embedder (offline, deterministic). For richer semantic search, switch to an OpenAI-compatible provider. **Venice.ai** is recommended (private inference, good models like `text-embedding-bge-m3`).
+By default the sim uses a local hash embedder (offline, deterministic). Production inference is private Venice:
 
-See [docs/SECRETS.md](docs/SECRETS.md) for setup and secure key handling. Changing the embedder or dimensions requires new Qdrant collections.
+- Voice: `grok-4-20`, with `reasoning_effort` set to `none`
+- Memory: `text-embedding-qwen3-8b` (4096-d)
+- Budget: `$1` per Pacific day
+
+See [docs/MODELS.md](docs/MODELS.md) and [docs/SECRETS.md](docs/SECRETS.md). Changing the embedder or dimensions requires new Qdrant collections.
 
 ## Contributing / Grok workflow
 Prototype and product are built with Grok agents. Preferred flow:
-1. Agents create feature branches and open PRs with improvements.
-2. Review on GitHub (enable Watch + notifications to see acceptance/merges).
-3. Merge to `main`.
+1. Read [docs/WORKFLOW.md](docs/WORKFLOW.md) before adding a pass. Make and project stay free. Remember and speak are the only paid passes, and they are cached.
+2. Agents open PRs (or push to `main` when asked) with that pipeline intact.
+3. Review on GitHub (enable Watch + notifications to see acceptance/merges).
 See [HANDOFF.md](HANDOFF.md) for bring-up and [docs/SECRETS.md](docs/SECRETS.md) for keys.
