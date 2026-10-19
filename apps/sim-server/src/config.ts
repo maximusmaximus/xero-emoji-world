@@ -30,10 +30,18 @@ export const config = {
     veniceDim: 4096,
     veniceUrl: VENICE_EMBED_URL,
   },
-  /** Life-story voice. Key is EMBED_API_KEY or VENICE_API_KEY — never committed. */
+  /**
+   * Life-story voice. Key is EMBED_API_KEY or VENICE_API_KEY — never committed.
+   * dailyBudgetUsd is a hard Pacific-day cap. Callers must send reasoning_effort=none
+   * and stop voice calls once spent reaches dailyBudgetUsd - memoryReserveUsd.
+   * See docs/MODELS.md.
+   */
   world: {
     model: env('WORLD_MODEL', VENICE_WORLD_MODEL),
     url: env('WORLD_API_URL', VENICE_CHAT_URL),
+    dailyBudgetUsd: num('DAILY_BUDGET_USD', 1),
+    memoryReserveUsd: 0.02,
+    reasoningEffort: 'none' as const,
   },
   backup: { intervalMin: num('BACKUP_INTERVAL_MIN', 60), dir: env('BACKUP_DIR', './backups'), keep: num('BACKUP_KEEP', 48) },
   /** Snapshot the full city state to the DB every N ticks (actions are written every tick). */
