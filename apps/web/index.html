@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- user-scalable=no + maximum-scale=1 disables pinch zoom; touch-action in CSS + gesture handlers in mobile.ts cover iOS Safari. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Xero Emoji World</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+</head>
+<body>
+  <div id="scroller" aria-label="Xero Emoji World city">
+    <div id="world-size"></div>
+    <canvas id="city"></canvas>
+  </div>
+  <button id="info-btn" aria-pressed="false" aria-label="Toggle life story">i</button>
+  <aside id="story" hidden></aside>
+  <div id="popup" hidden></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

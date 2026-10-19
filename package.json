@@ -1,0 +1,17 @@
+{
+  "name": "xero-emoji-world",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A living, self-building procedurally generated emoji megacity.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build": "npm run build -w @xew/shared && npm run build -w @xew/sim-server && npm run build -w @xew/web",
+    "dev:server": "npm run dev -w @xew/sim-server",
+    "dev:web": "npm run dev -w @xew/web",
+    "test": "npm test -w @xew/shared",
+    "typecheck": "tsc -b packages/shared apps/sim-server apps/web"
+  },
+  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0", "tsx": "^4.19.0" }
+}
