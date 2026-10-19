@@ -20,7 +20,7 @@ Nothing in this pass calls a model.
 
 1. **Seed.** `mulberry32(hash(seed))`. The same seed is the same city.
 2. **Plot.** A district grid. Streets are every third column and every third row. Buildings take lots from a fixed plan, in order, so a newly founded block lands on the next empty lot instead of starting a new flat row.
-3. **Raise.** Each lot becomes a building: floors, then people, pets, and things. Light is part of the apartment, not of the renderer.
+3. **Raise.** Each lot becomes a building: floors, then people, pets, and things. Every one of those is an emoji first. The block is only the lot they stand on. Light is part of the apartment, not of the renderer.
 4. **Tick.** `step` derives its RNG from `(seed, tick)` and appends one beat (bought something, adopted someone, commuted, founded a block, watched the night). Patches are the only way the city changes. The tick loop does not wait for a browser.
 
 ## 2. Project
@@ -28,9 +28,9 @@ Nothing in this pass calls a model.
 Every frame, still free.
 
 1. **Frame.** The camera fits every roof inside the viewport, then expands the world box to the screen's aspect so the ground plane covers **100%** of the window. Drag pans. The wheel zooms around the cursor.
-2. **Paint, back to front.** Sort key is `col + row`. Ground tiles first (streets sunk, parks raised), then lamps, trees, the tram, then buildings.
-3. **Each building is a prism.** Dark left face, lit right face, roof. A window sits in each floor and glows when the apartment is lit. Residents stand on the front ledge of their floor, so a tap targets a life and not a rectangle of wall.
-4. **Pick.** The hit box is the glyph's screen rectangle, front-most first.
+2. **Paint, back to front.** Sort key is `col + row`. Ground tiles first (streets sunk, parks raised), then the emoji layer, then buildings.
+3. **Emoji first, then the block.** Anything the city can create is a Unicode glyph: people, pets, things, trees, flowers, lamps, doors, windows, cars, taxis, buses, trucks. The only blocks are the ground and the building prism. A bigger district gets bigger glyphs — a bus and a truck once the city is grown, a helicopter and a plane once it is full, and landmarks (castle, wheel, ship, bridge) out past the lots. Glyphs sort with the blocks by `col + row`.
+4. **Pick.** The hit box is the life glyph's screen rectangle, front-most first. Scenery is not a target.
 
 ## 3. Remember
 
@@ -56,4 +56,4 @@ Only when someone taps a life.
 
 - A tick does not call Venice. The city stays alive with the dollar untouched.
 - Keys are never committed. The host secret or a gitignored file is the only copy.
-- The renderer does not invent residents. If it is on screen, the sim put it there.
+- The renderer does not invent residents. If a life is on a floor, the sim put that emoji there. Scenery glyphs are derived from the same seed and the size of the city.
