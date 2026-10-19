@@ -4,7 +4,7 @@
  *    and emoji graphemes into a fixed-dim L2-normalised vector. Good enough for
  *    "find actions about pizza / this building" and keeps the project runnable offline.
  *  - OpenAICompatibleEmbedder: any /v1/embeddings endpoint. Falls back to hash on error.
- * IMPORTANT: changing embedder or dim requires a new collection (see HANDOFF.md).
+ * IMPORTANT: changing embedder or dim requires a new collection (see docs/MODELS.md).
  */
 import { hashString } from '@xew/shared';
 import { config } from './config.js';
@@ -54,7 +54,9 @@ export class OpenAICompatibleEmbedder implements Embedder {
 
 export function createEmbedder(): Embedder {
   const c = config.embed;
-  return c.kind === 'openai-compatible' && c.url && c.key
-    ? new OpenAICompatibleEmbedder(c.dim, c.url, c.key, c.model)
-    : new HashEmbedder(c.dim);
+  if (c.kind !== 'openai-compatible' || !c.key) return new HashEmbedder(c.dim);
+  const model = c.model || c.veniceModel;
+  const url = c.url || c.veniceUrl;
+  const dim = c.model ? c.dim : c.veniceDim;
+  return new OpenAICompatibleEmbedder(dim, url, c.key, model);
 }
