@@ -2,6 +2,8 @@
 
 Four passes. The first two are free and run all day. The last two are the only ones allowed to touch Venice, and only when someone asks. The key has **$1 per Pacific day** (see [MODELS.md](MODELS.md)).
 
+The glyphs are not the system emoji font. Every picture is **Xero Emoji** from [maximusmaximus/xeroemoji](https://github.com/maximusmaximus/xeroemoji), pinned at `v1.0.0`. Files are `svg/<codepoints>.svg` on jsDelivr. Credit on screen: "Xero Emoji by Max Infeld". The artwork is CC BY-NC 4.0.
+
 ```
 seed ─► plot ─► raise ─► tick        make     local, deterministic
                 │
@@ -29,7 +31,7 @@ Every frame, still free.
 
 1. **Frame.** The camera fits every roof inside the viewport, then expands the world box to the screen's aspect so the ground plane covers **100%** of the window. Drag pans. The wheel zooms around the cursor.
 2. **Paint, back to front.** Sort key is `col + row`. Ground tiles first (streets sunk, parks raised), then the emoji layer, then buildings.
-3. **Emoji first, then the block.** Anything the city can create is a Unicode glyph: people, pets, things, trees, flowers, lamps, doors, windows, cars, taxis, buses, trucks. The only blocks are the ground and the building prism. A bigger district gets bigger glyphs — a bus and a truck once the city is grown, a helicopter and a plane once it is full, and landmarks (castle, wheel, ship, bridge) out past the lots. Glyphs sort with the blocks by `col + row`.
+3. **Emoji first, then the block.** Anything the city can create is a Unicode glyph: people, pets, things, trees, flowers, lamps, doors, windows, cars, taxis, buses, trucks. The only blocks are the ground and the building prism. A bigger district gets bigger glyphs — a bus and a truck once the city is grown, a helicopter and a plane once it is full, and landmarks (castle, wheel, ship, bridge) out past the lots. Each glyph is drawn from Xero Emoji (`v1.0.0`), looked up by codepoint with U+FE0F dropped. Glyphs sort with the blocks by `col + row`.
 4. **Pick.** The hit box is the life glyph's screen rectangle, front-most first. Scenery is not a target.
 
 ## 3. Remember
@@ -57,3 +59,4 @@ Only when someone taps a life.
 - A tick does not call Venice. The city stays alive with the dollar untouched.
 - Keys are never committed. The host secret or a gitignored file is the only copy.
 - The renderer does not invent residents. If a life is on a floor, the sim put that emoji there. Scenery glyphs are derived from the same seed and the size of the city.
+- The system emoji font is not the art. If a Xero file is missing, the spot stays empty until it loads. It does not fall back to another set.
