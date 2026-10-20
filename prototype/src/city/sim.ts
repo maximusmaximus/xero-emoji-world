@@ -3,7 +3,28 @@ export const CITY_VERSION = 2;
 export type Role = "person" | "pet" | "item";
 export type Kind = "hut" | "farmhouse" | "house" | "block" | "tower" | "skyscraper";
 export type Era = "camp" | "farm" | "roads" | "town" | "city" | "skyline";
-export type Task = "raise" | "pave" | "tend" | "visit" | "study";
+export type Task = "raise" | "pave" | "tend" | "visit" | "study" | "haul";
+export type Goods = "timber" | "grain" | "brick" | "steel" | "glass" | "tools";
+export type Stock = Record<Goods, number>;
+
+export type Works = {
+  id: string;
+  kind: "yard" | "mill" | "kiln" | "factory" | "shop";
+  emoji: string;
+  name: string;
+  col: number;
+  row: number;
+  goods: Goods;
+};
+
+export type Infra = {
+  id: string;
+  emoji: string;
+  name: string;
+  col: number;
+  row: number;
+  kind: "well" | "lamp" | "pipe" | "power";
+};
 
 export type Resident = {
   id: string;
@@ -44,6 +65,7 @@ export type Crew = {
   destRow: number;
   progress: number;
   targetId: string;
+  cargo?: string;
 };
 
 export type Plan = {
@@ -81,6 +103,9 @@ export type City = {
   beats: Beat[];
   plans?: Plan[];
   watchers?: number;
+  stock?: Stock;
+  works?: Works[];
+  infra?: Infra[];
 };
 
 const ERA_ORDER: Era[] = ["camp", "farm", "roads", "town", "city", "skyline"];
@@ -114,6 +139,114 @@ const SUFFIX: Record<Kind, string> = {
   tower: "Tower",
   skyscraper: "Spire",
 };
+
+const CARGO: Record<Goods, string> = {
+  timber: "🪵",
+  grain: "🌾",
+  brick: "🧱",
+  steel: "⚙️",
+  glass: "🪟",
+  tools: "🔧",
+};
+
+const COST: Record<Kind, Partial<Stock>> = {
+  hut: { timber: 1 },
+  farmhouse: { timber: 1, grain: 1 },
+  house: { timber: 1, brick: 1 },
+  block: { brick: 2, glass: 1 },
+  tower: { brick: 1, steel: 1, glass: 1 },
+  skyscraper: { steel: 2, glass: 1, tools: 1 },
+};
+
+const WORK_PLAN: { kind: Works["kind"]; emoji: string; name: string; goods: Goods; era: Era }[] = [
+  { kind: "yard", emoji: "🪓", name: "Timber Yard", goods: "timber", era: "camp" },
+  { kind: "mill", emoji: "🌾", name: "Grain Mill", goods: "grain", era: "farm" },
+  { kind: "kiln", emoji: "🔥", name: "Brick Kiln", goods: "brick", era: "roads" },
+  { kind: "factory", emoji: "🏭", name: "Steel Works", goods: "steel", era: "city" },
+  { kind: "shop", emoji: "🛠️", name: "Tool Shop", goods: "tools", era: "town" },
+];
+
+function emptyStock(era: Era): Stock {
+  const at = eraIndex(era);
+  return {
+    timber: 6,
+    grain: at >= 1 ? 4 : 1,
+    brick: at >= 2 ? 4 : 0,
+    steel: at >= 4 ? 3 : 0,
+    glass: at >= 3 ? 2 : 0,
+    tools: at >= 4 ? 2 : 0,
+  };
+}
+
+function takenCells(city: City) {
+  return new Set([
+    ...city.buildings.map((b) => keyOf(b.col, b.row)),
+    ...city.farms.map((f) => keyOf(f.col, f.row)),
+    ...(city.works ?? []).map((w) => keyOf(w.col, w.row)),
+    ...(city.infra ?? []).map((item) => keyOf(item.col, item.row)),
+    ...city.trees,
+    ...city.roads,
+  ]);
+}
+
+function openNear(city: City, originCol: number, originRow: number): [number, number] | null {
+  const blocked = takenCells(city);
+  for (let rad = 1; rad < 10; rad++) {
+    for (let dc = -rad; dc <= rad; dc++) {
+      for (let dr = -rad; dr <= rad; dr++) {
+        if (Math.max(Math.abs(dc), Math.abs(dr)) !== rad) continue;
+        const col = originCol + dc;
+        const row = originRow + dr;
+        if (col < 0 || row < 0 || col >= city.cols || row >= city.rows) continue;
+        if (blocked.has(keyOf(col, row))) continue;
+        return [col, row];
+      }
+    }
+  }
+  return null;
+}
+
+function withEconomy(city: City): City {
+  const stock = city.stock ?? emptyStock(city.era);
+  const works = [...(city.works ?? [])];
+  const home = city.buildings[0];
+  for (const plan of WORK_PLAN) {
+    if (eraIndex(city.era) < eraIndex(plan.era)) continue;
+    if (works.some((works) => works.kind === plan.kind)) continue;
+    const spot = openNear({ ...city, works }, home?.col ?? 5, home?.row ?? 4);
+    if (!spot) break;
+    works.push({
+      id: `works-${plan.kind}`,
+      kind: plan.kind,
+      emoji: plan.emoji,
+      name: plan.name,
+      col: spot[0],
+      row: spot[1],
+      goods: plan.goods,
+    });
+  }
+  const infra = [...(city.infra ?? [])];
+  if (!infra.some((item) => item.kind === "well")) {
+    const spot = openNear({ ...city, works, infra }, home?.col ?? 5, (home?.row ?? 4) + 1);
+    if (spot) infra.push({ id: "infra-well", emoji: "🪣", name: "Well", col: spot[0], row: spot[1], kind: "well" });
+  }
+  return { ...city, stock, works, infra };
+}
+
+function canPay(stock: Stock, cost: Partial<Stock>) {
+  return (Object.keys(cost) as Goods[]).every((good) => stock[good] >= (cost[good] || 0));
+}
+
+function pay(stock: Stock, cost: Partial<Stock>): Stock {
+  const next = { ...stock };
+  for (const good of Object.keys(cost) as Goods[]) next[good] -= cost[good] || 0;
+  return next;
+}
+
+function shortGood(stock: Stock, kind: Kind): Goods | null {
+  const cost = COST[kind];
+  return ((Object.keys(cost) as Goods[]).find((good) => stock[good] < (cost[good] || 0)) ?? null);
+}
 
 const DIRS = [
   [1, 0],
@@ -388,6 +521,85 @@ function spawn(city: City, crew: Omit<Crew, "progress"> & { progress?: number })
   return { ...city, crews: [...city.crews, { ...crew, progress: crew.progress ?? 0 }] };
 }
 
+function spawnHaul(city: City, good: Goods, destCol: number, destRow: number, destId: string): City {
+  const hauling = city.crews.filter((crew) => crew.task === "haul");
+  if (hauling.length >= 3) return city;
+  const cargo = CARGO[good];
+  if (hauling.some((crew) => crew.cargo === cargo && crew.targetId === `${good}:${destId}`)) return city;
+  const from = (city.works ?? []).find((works) => works.goods === good) ?? (city.works ?? [])[0];
+  if (!from) return city;
+  const truck = eraIndex(city.era) >= 2;
+  return spawn(city, {
+    id: `crew-${city.tick}-haul-${good}`,
+    emoji: truck ? "🚚" : "🧑",
+    task: "haul",
+    name: truck ? "wagon" : "porter",
+    cargo,
+    col: from.col,
+    row: from.row,
+    destCol,
+    destRow,
+    targetId: `${good}:${destId}`,
+  });
+}
+
+function growInfra(city: City): City {
+  const infra = [...(city.infra ?? [])];
+  const at = eraIndex(city.era);
+  const place = (kind: Infra["kind"], emoji: string, name: string, col: number, row: number) => {
+    if (infra.some((item) => item.kind === kind && item.col === col && item.row === row)) return;
+    if (infra.filter((item) => item.kind === kind).length >= (kind === "lamp" ? 10 : 3)) return;
+    infra.push({ id: `infra-${kind}-${col}-${row}`, emoji, name, col, row, kind });
+  };
+  if (at >= 3 && city.tick % 36 === 0) {
+    const road = city.roads[city.tick % city.roads.length];
+    if (road) {
+      const [col, row] = road.split(",").map(Number) as [number, number];
+      place("lamp", "🏮", "Street lamp", col, row);
+    }
+  }
+  if (at >= 4 && !infra.some((item) => item.kind === "pipe")) {
+    const spot = openNear(city, city.buildings[0]?.col ?? 5, city.buildings[0]?.row ?? 4);
+    if (spot) place("pipe", "🚰", "Water main", spot[0], spot[1]);
+  }
+  if (at >= 4 && !infra.some((item) => item.kind === "power")) {
+    const factory = (city.works ?? []).find((works) => works.kind === "factory");
+    const spot = openNear(city, factory?.col ?? 6, factory?.row ?? 5);
+    if (spot) place("power", "⚡", "Power shed", spot[0], spot[1]);
+  }
+  return infra.length === (city.infra ?? []).length ? city : { ...city, infra };
+}
+
+function runWorks(city: City): City {
+  let next = city;
+  const stock = { ...(next.stock ?? emptyStock(next.era)) };
+  const site = next.buildings.find((building) => building.rising);
+  for (const works of next.works ?? []) {
+    const period = works.kind === "yard" || works.kind === "mill" ? 20 : 28;
+    if (next.tick % period !== works.col % Math.max(1, period)) continue;
+    let good = works.goods;
+    if (works.kind === "kiln") {
+      if (stock.timber < 1) continue;
+      stock.timber -= 1;
+      good = next.tick % 2 === 0 ? "glass" : "brick";
+    } else if (works.kind === "factory") {
+      if (stock.brick < 1) continue;
+      stock.brick -= 1;
+    } else if (works.kind === "shop") {
+      if (stock.steel < 1) continue;
+      stock.steel -= 1;
+    }
+    next = { ...next, stock };
+    const before = next.crews.length;
+    if (site) next = spawnHaul(next, good, site.col, site.row, site.id);
+    if (next.crews.length === before) {
+      stock[good] += 1;
+      next = { ...next, stock: { ...stock } };
+    }
+  }
+  return next.stock === city.stock && next.crews === city.crews ? city : next;
+}
+
 function wants(city: City) {
   const builders = city.crews.filter((c) => c.task === "raise").length;
   const pavers = city.crews.filter((c) => c.task === "pave").length;
@@ -514,10 +726,19 @@ function resolve(city: City, crew: Crew, rng: () => number): { city: City; keep:
   if (crew.task === "raise") {
     const building = city.buildings.find((b) => b.id === crew.targetId);
     if (!building || !building.rising) return { city, keep: false };
+    const ready = withEconomy(city);
+    const cost = COST[building.kind];
+    const stock = ready.stock ?? emptyStock(ready.era);
+    if (!canPay(stock, cost)) {
+      const good = shortGood(stock, building.kind);
+      const waiting = good ? spawnHaul(ready, good, building.col, building.row, building.id) : ready;
+      return { city: waiting, keep: true };
+    }
     const raised = addFloor(building, rng, city.tick);
     let next: City = {
-      ...city,
-      buildings: city.buildings.map((b) => (b.id === raised.id ? raised : b)),
+      ...ready,
+      stock: pay(stock, cost),
+      buildings: ready.buildings.map((b) => (b.id === raised.id ? raised : b)),
     };
     if (!raised.rising) {
       const people = raised.apartments.reduce(
@@ -536,6 +757,27 @@ function resolve(city: City, crew: Crew, rng: () => number): { city: City; keep:
       return { city: next, keep: false };
     }
     return { city: next, keep: true };
+  }
+  if (crew.task === "haul") {
+    const good = crew.targetId.split(":")[0] as Goods;
+    const stock = { ...(city.stock ?? emptyStock(city.era)) };
+    if (good in CARGO) stock[good] += 1;
+    const host = city.buildings.find((b) => b.id === crew.targetId.split(":")[1]) ?? city.buildings.find((b) => b.rising);
+    return {
+      city: pushBeat(
+        { ...city, stock },
+        {
+          id: `beat-${city.tick}-haul-${good}`,
+          tick: city.tick,
+          emoji: crew.cargo || CARGO[good] || "📦",
+          text: `${crew.emoji} carries ${crew.cargo || "a load"} to ${host?.name ?? "the yard"}.`,
+          subjectId: host?.id ?? crew.id,
+          subjectName: crew.name,
+          place: host?.name ?? "the works",
+        },
+      ),
+      keep: false,
+    };
   }
   if (crew.task === "pave") {
     const cell = keyOf(crew.destCol, crew.destRow);
@@ -741,7 +983,7 @@ export function createCity(seed: string): City {
 export function stepCity(city: City): City {
   if (city.version !== CITY_VERSION) return city;
   const rng = mulberry32(hash(`${city.seed}:${city.tick + 1}`));
-  let next: City = { ...city, tick: city.tick + 1 };
+  let next: City = withEconomy({ ...city, tick: city.tick + 1 });
   const audience = Math.max(1, next.watchers || 1);
   if (next.tick % 4 === 0) next = { ...next, research: next.research + audience };
   if (next.tick % 240 === 0) {
@@ -808,7 +1050,14 @@ export function stepCity(city: City): City {
     if (done.keep) staying.push({ ...crew, progress: 0.05 });
   }
   next = { ...next, crews: staying };
-  if (next.crews.length < 8) next = assignWork(next, rng);
+  next = runWorks(next);
+  next = growInfra(next);
+  for (const building of next.buildings) {
+    if (!building.rising || !next.stock) continue;
+    const good = shortGood(next.stock, building.kind);
+    if (good) next = spawnHaul(next, good, building.col, building.row, building.id);
+  }
+  if (next.crews.length < 12) next = assignWork(next, rng);
   return next;
 }
 

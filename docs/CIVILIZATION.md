@@ -40,6 +40,21 @@ Crews are emoji with a job, walking from where they are to where the work is.
 - **Farmer.** Walks to a plot. The crop grows while they are gone and jumps when they arrive. A harvest carries grain into a farmhouse.
 - **Visitor.** A resident walks to another building and leaves bread, a book, a basket, or flowers. The gift stays in the rooms.
 - **Scholar.** Studies at the first camp and writes the discovery that pushes research.
+- **Hauler.** A porter, and later a truck, carries one emoji at a time: timber, grain, brick, steel, glass, or tools. The load rides with them. A floor does not go up until the stock can pay for it.
+
+## Works and infrastructure
+
+The city keeps a stockpile. Yards, mills, kilns, factories, and tool shops sit off the road and feed it.
+
+| works | opens | makes |
+|---|---|---|
+| Timber yard | Camp | Timber, from the land |
+| Grain mill | Farm | Grain |
+| Brick kiln | Roads | Brick, and glass on the other firing. Burns timber |
+| Tool shop | Town | Tools. Uses steel |
+| Steel works | City | Steel. Uses brick |
+
+A well is there from the start. Street lamps line the roads in town. A water main and a power shed arrive with the city. Haulers walk the new material to the site that is short, so you see the load move before the next floor.
 
 Lots are staked on open ground beside a road, with a timber pile and a flag before the first floor exists. People, pets, and things move in as each floor is finished.
 

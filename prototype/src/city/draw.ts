@@ -536,24 +536,63 @@ export function drawCity(
       },
     });
   }
+  for (const works of city.works ?? []) {
+    props.push({
+      depth: depthOf(works.col + 0.5, works.row + 0.5),
+      draw: () =>
+        glyph(works.emoji, works.col + 0.5, works.row + 0.45, 0, 36, {
+          cover: true,
+          hit: {
+            id: works.id,
+            name: works.name,
+            role: "plant",
+            place: works.name,
+            detail: `${works.name} is tooling for the city. It feeds ${works.goods} to the crews. A floor does not rise until that load is carried over.`,
+          },
+        }),
+    });
+  }
+  for (const item of city.infra ?? []) {
+    props.push({
+      depth: depthOf(item.col + 0.5, item.row + 0.5) - 0.02,
+      draw: () =>
+        glyph(item.emoji, item.col + 0.5, item.row + 0.55, 0, 22, {
+          cover: true,
+          hit: {
+            id: item.id,
+            name: item.name,
+            role: "road",
+            place: item.name,
+            detail: `${item.name} is part of the city works. Lamps, water, and power show up only after the era can build them.`,
+          },
+        }),
+    });
+  }
   for (const crew of city.crews ?? []) {
     const col = crew.col + (crew.destCol - crew.col) * crew.progress;
     const row = crew.row + (crew.destRow - crew.row) * crew.progress;
     props.push({
       depth: depthOf(col + 0.5, row + 0.5),
-      draw: () =>
-        glyph(crew.emoji, col + 0.5, row + 0.5, 0, crew.task === "raise" ? 26 : 22, {
+      draw: () => {
+        glyph(crew.emoji, col + 0.5, row + 0.5, 0, crew.task === "raise" ? 26 : crew.task === "haul" ? 30 : 22, {
           cover: true,
           dc: crew.destCol - crew.col,
           dr: crew.destRow - crew.row,
+          ride: crew.emoji === "🚚",
           hit: {
             id: crew.id,
             name: crew.name,
             role: "crew",
             place: crew.task,
-            detail: `${crew.name} is a ${crew.emoji} doing ${crew.task} work. They only walk while someone is watching.`,
+            detail: crew.cargo
+              ? `${crew.name} is carrying ${crew.cargo} from the works to a site that cannot rise without it.`
+              : `${crew.name} is a ${crew.emoji} doing ${crew.task} work. They only walk while someone is watching.`,
           },
-        }),
+        });
+        if (crew.cargo) {
+          glyph(crew.cargo, col + 0.78, row + 0.28, 18, 18, { feet: false, cover: true });
+        }
+      },
     });
   }
   if (roads.length > 3 && grown >= 2) {
