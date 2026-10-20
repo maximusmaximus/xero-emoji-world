@@ -147,31 +147,39 @@ function noteInference(ok: boolean, detail: string) {
   lastInference = { ok, detail: detail.slice(0, 80) };
 }
 
+async function veniceFetch(url: string, key: string, body?: unknown) {
+  return fetch(url, {
+    method: body ? "POST" : "GET",
+    headers: {
+      authorization: `Bearer ${key}`,
+      ...(body ? { "content-type": "application/json" } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(10000),
+  });
+}
+
 export async function veniceProbe(force = false): Promise<{ ok: boolean; detail: string }> {
   const key = veniceKey();
   if (!key) return { ok: false, detail: "no key on this host" };
-  if (!force && probeCache.at && Date.now() - probeCache.at < 45_000) {
-    return { ok: probeCache.ok, detail: probeCache.detail };
+  if (!force && probeCache.ok && Date.now() - probeCache.at < 5 * 60_000) {
+    return { ok: true, detail: probeCache.detail };
   }
   try {
-    const res = await fetch(MODELS_URL, { headers: { authorization: `Bearer ${key}` } });
+    const res = await veniceFetch(MODELS_URL, key);
     if (!res.ok) {
-      const text = await res.text();
-      probeCache = { at: Date.now(), ok: false, detail: `key rejected ${res.status}` };
-      if (text) probeCache.detail = `${probeCache.detail}`;
-      return { ok: false, detail: probeCache.detail };
-    }
-    const json = (await res.json()) as { data?: { id?: string }[] };
-    const ids = new Set((json.data ?? []).map((model) => model.id));
-    if (!ids.has(WORLD_MODEL)) {
-      probeCache = { at: Date.now(), ok: false, detail: `${WORLD_MODEL} missing` };
-      return { ok: false, detail: probeCache.detail };
+      const detail = `key rejected ${res.status}`;
+      probeCache = { at: Date.now(), ok: false, detail };
+      noteInference(false, detail);
+      return { ok: false, detail };
     }
     probeCache = { at: Date.now(), ok: true, detail: WORLD_MODEL };
+    noteInference(true, WORLD_MODEL);
     return { ok: true, detail: WORLD_MODEL };
   } catch (err) {
-    const detail = err instanceof Error ? err.message.slice(0, 60) : "network";
+    const detail = err instanceof Error ? err.message.replace(/^.*Error: /, "").slice(0, 60) : "network";
     probeCache = { at: Date.now(), ok: false, detail };
+    noteInference(false, detail);
     return { ok: false, detail };
   }
 }
@@ -271,10 +279,7 @@ export async function narrate(input: NarrateInput): Promise<{
         budget: budgetOf(ledger),
       };
     }
-    const res = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { authorization: `Bearer ${liveKey}`, "content-type": "application/json" },
-      body: JSON.stringify({
+    const res = await veniceFetch(CHAT_URL, liveKey, {
         model: WORLD_MODEL,
         temperature: 0.7,
         max_tokens: MAX_STORY_TOKENS,
@@ -284,7 +289,6 @@ export async function narrate(input: NarrateInput): Promise<{
           { role: "system", content: STORY_SYSTEM },
           { role: "user", content: user },
         ],
-      }),
     });
     if (!res.ok) {
       noteInference(false, `voice ${res.status}`);
@@ -383,11 +387,7 @@ export async function searchLife(query: string, beats: BeatIn[]): Promise<{
     if (!liveKey || spentFor(ledger, liveKey) + estimate > DAILY_BUDGET_USD) {
       return { ...empty, budget: budgetOf(ledger) };
     }
-    const res = await fetch(EMBED_URL, {
-      method: "POST",
-      headers: { authorization: `Bearer ${liveKey}`, "content-type": "application/json" },
-      body: JSON.stringify({ model: EMBED_MODEL, encoding_format: "float", input: missing }),
-    });
+    const res = await veniceFetch(EMBED_URL, liveKey, { model: EMBED_MODEL, encoding_format: "float", input: missing });
     if (!res.ok) {
       const detail = await res.text();
       throw new Error(`Venice memory ${res.status}: ${detail.slice(0, 180)}`);
@@ -484,10 +484,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
       noteInference(false, "voice budget held");
       return fallback();
     }
-    const res = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { authorization: `Bearer ${liveKey}`, "content-type": "application/json" },
-      body: JSON.stringify({
+    const res = await veniceFetch(CHAT_URL, liveKey, {
         model: WORLD_MODEL,
         temperature: 0.4,
         max_tokens: 140,
@@ -497,7 +494,6 @@ export async function developCity(input: { era: string; watchers: number; have: 
           { role: "system", content: DEVELOP_SYSTEM },
           { role: "user", content: user },
         ],
-      }),
     });
     if (!res.ok) {
       noteInference(false, `voice ${res.status}`);
@@ -526,18 +522,36 @@ function parseDevelopments(text: string): Development[] {
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) return [];
   try {
-    const json = JSON.parse(text.slice(start, end + 1)) as { developments?: unknown };
-    if (!Array.isArray(json.developments)) return [];
-    return json.developments.slice(0, 2).flatMap((item) => {
+    const json = JSON.parse(text.slice(start, end + 1)) as unknown;
+    const rows = Array.isArray(json)
+      ? json
+      : json && typeof json === "object" && Array.isArray((json as { developments?: unknown }).developments)
+        ? (json as { developments: unknown[] }).developments
+        : json && typeof json === "object" && "name" in json
+          ? [json]
+          : [];
+    return rows.slice(0, 2).flatMap((item) => {
       if (!item || typeof item !== "object") return [];
       const row = item as { name?: unknown; kind?: unknown; emoji?: unknown; note?: unknown };
-      const kind = String(row.kind || "");
-      if (!KINDS.includes(kind as DevKind)) return [];
+      const rawKind = String(row.kind || "").toLowerCase();
+      const kind = KINDS.includes(rawKind as DevKind)
+        ? (rawKind as DevKind)
+        : rawKind.includes("sky") || rawKind.includes("spire")
+          ? "skyscraper"
+          : rawKind.includes("tower")
+            ? "tower"
+            : rawKind.includes("farm") || rawKind.includes("barn")
+              ? "farmhouse"
+              : rawKind.includes("block")
+                ? "block"
+                : rawKind.includes("house")
+                  ? "house"
+                  : "hut";
       const name = String(row.name || "").replace(/\s+/g, " ").trim().slice(0, 32);
       const note = String(row.note || "").replace(/\s+/g, " ").trim().slice(0, 160);
       const emoji = Array.from(String(row.emoji || "🏗️")).slice(0, 2).join("") || "🏗️";
-      if (!name || !note) return [];
-      return [{ name, kind: kind as DevKind, emoji, note }];
+      if (!name) return [];
+      return [{ name, kind, emoji, note: note || `${name} goes up while people are watching.` }];
     });
   } catch {
     return [];

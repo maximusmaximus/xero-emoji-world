@@ -66,7 +66,8 @@ function Home() {
   const pointers = useRef(new Map<number, { x: number; y: number; type: string }>());
   const gesture = useRef({
     mode: "none" as "none" | "rotate" | "pinch",
-    lastAngle: 0,
+    lastX: 0,
+    lastY: 0,
     lastDist: 0,
     lastMidX: 0,
     lastMidY: 0,
@@ -100,7 +101,13 @@ function Home() {
           setStatus(next);
           setBudget((prev) => (next.budget.spentUsd >= prev.spentUsd ? next.budget : prev));
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          setStatus((prev) => ({
+            ...prev,
+            live: false,
+            detail: err instanceof Error ? err.message.slice(0, 72) : "status failed",
+          }));
+        });
     };
     pull();
     const timer = window.setInterval(pull, 20000);
@@ -194,13 +201,14 @@ function Home() {
           cityRef.current = queuePlans(cityRef.current, plan.developments);
           setCity(cityRef.current);
           setBudget((prev) => (plan.budget.spentUsd >= prev.spentUsd ? plan.budget : prev));
+          if (plan.live) setStatus((prev) => ({ ...prev, live: true, detail: plan.model }));
+        })
+        .catch((err) => {
           setStatus((prev) => ({
             ...prev,
-            live: plan.live,
-            detail: plan.live ? plan.model : prev.detail,
+            detail: err instanceof Error ? err.message.slice(0, 72) : "voice failed",
           }));
-        })
-        .catch(() => undefined);
+        });
     };
     beat();
     const timer = window.setInterval(beat, 8000);
@@ -222,10 +230,10 @@ function Home() {
     };
   }
 
-  function armRotate(x: number, y: number, canvas: HTMLCanvasElement) {
-    const rect = canvas.getBoundingClientRect();
+  function armRotate(x: number, y: number) {
     gesture.current.mode = "rotate";
-    gesture.current.lastAngle = Math.atan2(y - (rect.top + rect.height / 2), x - (rect.left + rect.width / 2));
+    gesture.current.lastX = x;
+    gesture.current.lastY = y;
   }
     function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = event.currentTarget;
@@ -241,7 +249,7 @@ function Home() {
       g.lastMidY = pair.midY;
       return;
     }
-    armRotate(event.clientX, event.clientY, canvas);
+    armRotate(event.clientX, event.clientY);
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -271,13 +279,13 @@ function Home() {
       return;
     }
     if (g.mode === "rotate") {
-      const rect = canvas.getBoundingClientRect();
-      const ang = Math.atan2(event.clientY - (rect.top + rect.height / 2), event.clientX - (rect.left + rect.width / 2));
-      let delta = ang - g.lastAngle;
-      if (delta > Math.PI) delta -= Math.PI * 2;
-      if (delta < -Math.PI) delta += Math.PI * 2;
-      g.lastAngle = ang;
-      camRef.current = { ...camRef.current, yaw: (camRef.current.yaw || 0) + delta };
+      const dx = event.clientX - g.lastX;
+      const dy = event.clientY - g.lastY;
+      g.lastX = event.clientX;
+      g.lastY = event.clientY;
+      const yaw = (camRef.current.yaw || 0) + dx * 0.008;
+      const pitch = Math.min(1.2, Math.max(0.14, (camRef.current.pitch ?? 0.76) - dy * 0.005));
+      camRef.current = { ...camRef.current, yaw, pitch };
     }
   }
 
@@ -296,7 +304,7 @@ function Home() {
     }
     if (pointers.current.size === 1) {
       const left = [...pointers.current.values()][0];
-      if (left) armRotate(left.x, left.y, event.currentTarget);
+      if (left) armRotate(left.x, left.y);
     }
     if (pointers.current.size === 0) g.mode = "none";
   }

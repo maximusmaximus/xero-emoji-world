@@ -16,7 +16,7 @@ export type Hit = {
   h: number;
 };
 
-export type Camera = { zoom: number; panX: number; panY: number; yaw: number };
+export type Camera = { zoom: number; panX: number; panY: number; yaw: number; pitch: number };
 
 type Point = { x: number; y: number };
 type View = { scale: number; ox: number; oy: number };
@@ -33,16 +33,17 @@ const MATERIALS = [
 ] as const;
 
 export function defaultCamera(): Camera {
-  return { zoom: 1, panX: 0, panY: 0, yaw: 0 };
+  return { zoom: 1, panX: 0, panY: 0, yaw: 0, pitch: 0.76 };
 }
 
 let viewYaw = 0;
+let viewPitch = 0.76;
 let focusC = 5;
 let focusR = 4;
 
 function aim() {
   const az = viewYaw + Math.PI * 1.25;
-  const elev = 0.76;
+  const elev = Math.min(1.2, Math.max(0.14, viewPitch));
   const dist = 36;
   const tx = focusC;
   const ty = focusR;
@@ -124,6 +125,7 @@ function cellHash(col: number, row: number) {
 
 export function viewOf(city: City, width: number, height: number, camera: Camera): View {
   viewYaw = camera.yaw || 0;
+  viewPitch = camera.pitch ?? 0.76;
   focusC = (city.cols || 11) / 2;
   focusR = (city.rows || 9) / 2;
   const box = bounds(city);
@@ -183,6 +185,7 @@ export function zoomAt(
   return {
     zoom,
     yaw: camera.yaw || 0,
+    pitch: camera.pitch ?? 0.76,
     panX: camera.panX + (px - (wx * mid.scale + mid.ox)),
     panY: camera.panY + (py - (wy * mid.scale + mid.oy)),
   };
@@ -784,6 +787,6 @@ export function drawCity(
   ctx.font = "12px Outfit, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText("one finger turns · two fingers move and zoom · tap any emoji", 16, height - 16);
+  ctx.fillText("drag sideways to turn · drag down to level the view · two fingers move and zoom", 16, height - 16);
   return hits;
 }
