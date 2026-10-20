@@ -55,6 +55,7 @@ function Home() {
   const [keyDraft, setKeyDraft] = useState("");
   const [keyNote, setKeyNote] = useState("");
   const [watchers, setWatchers] = useState(1);
+  const [credit, setCredit] = useState(true);
   const [budget, setBudget] = useState(initialStatus.budget);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitsRef = useRef<Hit[]>([]);
@@ -346,6 +347,11 @@ function Home() {
     }
   }
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCredit(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const latest = city.beats[0];
 
   return (
@@ -425,6 +431,27 @@ function Home() {
           )}
         </div>
       </header>
+      {credit && (
+        <a
+          href={XERO_REPO}
+          target="_blank"
+          rel="noreferrer"
+          className="credit-pop pointer-events-auto absolute bottom-14 left-1/2 z-30 flex max-w-[min(92vw,36rem)] -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-panel/95 px-3 py-2 text-[13px] text-cream shadow-lg"
+        >
+          <span className="flex shrink-0" aria-hidden>
+            {["🏙️", "🚗", "🌻", "🌙", "👩", "🌳", "🚌", "🪐"].map((emoji, index) => (
+              <img
+                key={emoji + index}
+                src={xeroUrl(emoji)}
+                alt=""
+                className="credit-glyph size-5"
+                style={{ animationDelay: `${index * 70}ms` }}
+              />
+            ))}
+          </span>
+          <span className="leading-tight">With Licensing Support from XeroEmoji</span>
+        </a>
+      )}
       <a
         href={XERO_REPO}
         target="_blank"
