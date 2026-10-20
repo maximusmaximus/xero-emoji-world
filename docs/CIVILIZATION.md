@@ -2,6 +2,8 @@
 
 The city is not a fixed district that occasionally gains a block. It starts as one fire and becomes a skyline. The clock runs once per frame, about a hundred times the old beat (one social event every 1.6s, then a hard stop at eight buildings). What you see is staged, so a floor, a field, and a road cell still read as work instead of a pop.
 
+The world is saved in the browser (`localStorage`, key `xero-emoji-world`) about every second and a half, and again when the tab closes. A refresh continues the same city. It does not go back to the fire. A save from an older layout is ignored and a new city starts.
+
 ## Research
 
 Research climbs on its own, and faster when a scholar finishes a walk. Crossing a goal changes the era. The header shows the era and the count.
@@ -27,8 +29,16 @@ Crews are emoji with a job, walking from where they are to where the work is.
 - **Visitor.** A resident walks to another building and leaves bread, a book, a basket, or flowers. The gift stays in the rooms.
 - **Scholar.** Studies at the first camp and writes the discovery that pushes research.
 
-Lots are staked on open ground beside a road, with a timber pile and a flag before the first floor exists. People, pets, and things move in as each floor is finished. The same seed is the same civilization.
+Lots are staked on open ground beside a road, with a timber pile and a flag before the first floor exists. People, pets, and things move in as each floor is finished.
 
-## What the picture is
+## Where a glyph stands
 
-Ground is a tile. A road is sunk. A field is tilled earth plus the crop emoji at a size that matches how ripe it is. Residents, crews, vehicles, trees, doors, and windows are Xero Emoji. The prism is the only block. Name plates stay on farms, towers, spires, and anything still under construction, so the camp does not turn into a pile of labels.
+The blocks are orthographic isometric. The emoji are not smeared onto those faces, and people are not tilted to match a wall. Each one stands upright, feet on the surface it actually uses.
+
+- A person stands in a window, feet on the sill, sized to that opening. A pet stands in the same room, off to one side. A kept thing sits on the sill.
+- The glass is the lit opening. It follows the wall. The face in it does not.
+- A door stands at the ground-floor entrance. A crane stands on the roof while the building is still rising.
+- Trees and crops stand in the ground, feet in the dirt. Farmers and builders stand on the road or the lot, and only turn to face the way they are walking.
+- Carts, bikes, and aircraft follow the diagonal they are traveling, wheels (or wings) down. They are the glyphs that are allowed to rotate.
+
+Name plates stay on farms, towers, spires, and anything still under construction.
