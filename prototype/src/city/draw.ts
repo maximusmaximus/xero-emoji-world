@@ -1,4 +1,4 @@
-import { drawXero } from "./xero-emoji";
+import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -37,19 +37,57 @@ export function defaultCamera(): Camera {
 }
 
 let viewYaw = 0;
+let focusC = 5;
+let focusR = 4;
 
-function cellHash(col: number, row: number) {
-  let h = Math.imul(col | 0, 374761393) ^ Math.imul(row | 0, 668265263);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return (h ^ (h >>> 16)) >>> 0;
+function aim() {
+  const az = viewYaw + Math.PI * 1.25;
+  const elev = 0.76;
+  const dist = 36;
+  const tx = focusC;
+  const ty = focusR;
+  const tz = 1.5;
+  const ex = tx + Math.cos(az) * Math.cos(elev) * dist;
+  const ey = ty + Math.sin(az) * Math.cos(elev) * dist;
+  const ez = tz + Math.sin(elev) * dist;
+  let fx = tx - ex;
+  let fy = ty - ey;
+  let fz = tz - ez;
+  const fl = Math.hypot(fx, fy, fz) || 1;
+  fx /= fl;
+  fy /= fl;
+  fz /= fl;
+  let rx = fy;
+  let ry = -fx;
+  const rl = Math.hypot(rx, ry) || 1;
+  rx /= rl;
+  ry /= rl;
+  const ux = ry * fz - 0 * fy;
+  const uy = 0 * fx - rx * fz;
+  const uz = rx * fy - ry * fx;
+  return { ex, ey, ez, fx, fy, fz, rx, ry, ux, uy, uz };
+}
+
+function placed(col: number, row: number, z: number) {
+  const cam = aim();
+  const dx = col - cam.ex;
+  const dy = row - cam.ey;
+  const dz = z / 54 - cam.ez;
+  return {
+    camX: dx * cam.rx + dy * cam.ry,
+    camY: dx * cam.ux + dy * cam.uy + dz * cam.uz,
+    camZ: dx * cam.fx + dy * cam.fy + dz * cam.fz,
+  };
 }
 
 function iso(col: number, row: number, z = 0): Point {
-  const ca = Math.cos(viewYaw);
-  const sa = Math.sin(viewYaw);
-  const u = col * ca - row * sa;
-  const v = col * sa + row * ca;
-  return { x: (u - v) * (TW / 2), y: (u + v) * (TH / 2) - z };
+  const p = placed(col, row, z);
+  const s = 640 / Math.max(0.4, p.camZ);
+  return { x: p.camX * s, y: -p.camY * s };
+}
+
+function depthOf(col: number, row: number) {
+  return -placed(col, row, 0).camZ;
 }
 
 function bounds(city: City) {
@@ -78,8 +116,16 @@ function bounds(city: City) {
   return { minX, minY, maxX, maxY };
 }
 
+function cellHash(col: number, row: number) {
+  let h = Math.imul(col | 0, 374761393) ^ Math.imul(row | 0, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
 export function viewOf(city: City, width: number, height: number, camera: Camera): View {
   viewYaw = camera.yaw || 0;
+  focusC = (city.cols || 11) / 2;
+  focusR = (city.rows || 9) / 2;
   const box = bounds(city);
   let minX = box.minX;
   let minY = box.minY;
@@ -168,11 +214,49 @@ function split(a: Point, b: Point, c: Point, d: Point, i: number, n: number): Po
   return [l(a, b, t0), l(a, b, t1), l(d, c, t1), l(d, c, t0)];
 }
 
-function face(col: number, row: number, z0: number, z1: number, side: "left" | "right"): Point[] {
-  if (side === "right") {
-    return [iso(col + 1, row, z0), iso(col + 1, row + 1, z0), iso(col + 1, row + 1, z1), iso(col + 1, row, z1)];
+function wall(col: number, row: number, z0: number, z1: number, side: number): Point[] {
+  if (side === 0) return [iso(col + 1, row, z0), iso(col + 1, row + 1, z0), iso(col + 1, row + 1, z1), iso(col + 1, row, z1)];
+  if (side === 1) return [iso(col, row + 1, z0), iso(col + 1, row + 1, z0), iso(col + 1, row + 1, z1), iso(col, row + 1, z1)];
+  if (side === 2) return [iso(col, row + 1, z0), iso(col, row, z0), iso(col, row, z1), iso(col, row + 1, z1)];
+  return [iso(col + 1, row, z0), iso(col, row, z0), iso(col, row, z1), iso(col + 1, row, z1)];
+}
+
+function facing(points: Point[]) {
+  const a = points[0];
+  const b = points[1];
+  const c = points[2];
+  if (!a || !b || !c) return 0;
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+function hullOf(points: Point[]): Point[] {
+  const pts = points.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+  const turn = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lower: Point[] = [];
+  for (const p of pts) {
+    while (lower.length >= 2 && turn(lower[lower.length - 2]!, lower[lower.length - 1]!, p) <= 0) lower.pop();
+    lower.push(p);
   }
-  return [iso(col, row + 1, z0), iso(col + 1, row + 1, z0), iso(col + 1, row + 1, z1), iso(col, row + 1, z1)];
+  const upper: Point[] = [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const p = pts[i]!;
+    while (upper.length >= 2 && turn(upper[upper.length - 2]!, upper[upper.length - 1]!, p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+function inside(p: Point, poly: Point[]) {
+  let hit = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i]!;
+    const b = poly[j]!;
+    const crosses = (a.y > p.y) !== (b.y > p.y);
+    if (crosses && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y || 1e-6) + a.x) hit = !hit;
+  }
+  return hit;
 }
 
 function top(col: number, row: number, z: number, w = 1, d = 1): Point[] {
@@ -199,24 +283,10 @@ export function drawCity(
   const occupied = new Set(city.buildings.map((b) => `${b.col},${b.row}`));
   const spanC = city.cols || 11;
   const spanR = city.rows || 9;
-  const corners = [
-    { x: -40, y: -40 },
-    { x: width + 40, y: -40 },
-    { x: -40, y: height + 40 },
-    { x: width + 40, y: height + 40 },
-  ].map((p) => {
-    const wx = (p.x - view.ox) / view.scale;
-    const wy = (p.y - view.oy) / view.scale;
-    return { col: wx / TW + wy / TH, row: wy / TH - wx / TW };
-  });
-  let minC = Math.floor(Math.min(...corners.map((c) => c.col))) - 1;
-  let minR = Math.floor(Math.min(...corners.map((c) => c.row))) - 1;
-  let maxC = Math.ceil(Math.max(...corners.map((c) => c.col))) + 1;
-  let maxR = Math.ceil(Math.max(...corners.map((c) => c.row))) + 1;
-  minC = Math.max(-12, minC);
-  minR = Math.max(-12, minR);
-  maxC = Math.min(spanC + 6, maxC);
-  maxR = Math.min(spanR + 6, maxR);
+  const minC = -3;
+  const minR = -3;
+  const maxC = spanC + 3;
+  const maxR = spanR + 3;
 
   const roadSet = new Set(city.roads ?? []);
   const farmAt = new Map((city.farms ?? []).map((farm) => [`${farm.col},${farm.row}`, farm]));
@@ -225,7 +295,7 @@ export function drawCity(
   for (let row = minR; row < maxR; row++) {
     for (let col = minC; col < maxC; col++) ground.push({ col, row });
   }
-  ground.sort((a, b) => a.col + a.row - (b.col + b.row));
+  ground.sort((a, b) => depthOf(a.col, a.row) - depthOf(b.col, b.row));
 
   for (const tile of ground) {
     const key = `${tile.col},${tile.row}`;
@@ -247,6 +317,26 @@ export function drawCity(
   }
 
   const props: { depth: number; draw: () => void }[] = [];
+  const masks = city.buildings
+    .filter((building) => building.apartments.length > 0)
+    .map((building) => {
+      const h = building.apartments.length * FH;
+      const corners = [0, 1].flatMap((z) =>
+        [iso(building.col, building.row, z * h), iso(building.col + 1, building.row, z * h), iso(building.col, building.row + 1, z * h), iso(building.col + 1, building.row + 1, z * h)].map(to),
+      );
+      const front = Math.max(
+        depthOf(building.col, building.row),
+        depthOf(building.col + 1, building.row),
+        depthOf(building.col, building.row + 1),
+        depthOf(building.col + 1, building.row + 1),
+      );
+      return { front, poly: hullOf(corners) };
+    });
+  const covered = (col: number, row: number) => {
+    const p = to(iso(col, row, 20));
+    const depth = depthOf(col, row);
+    return masks.some((mask) => depth < mask.front - 0.2 && inside(p, mask.poly));
+  };
   const headingOf = (dc: number, dr: number) => {
     if (!dc && !dr) return { rotation: 0, flip: false };
     const origin = iso(0, 0, 0);
@@ -274,8 +364,10 @@ export function drawCity(
       feet?: boolean;
       ride?: boolean;
       hit?: { id: string; name: string; role: Hit["role"]; place: string; floor?: number; detail: string };
+      cover?: boolean;
     },
   ) => {
+    if (place?.cover && covered(col, row)) return;
     const p = to(iso(col, row, z));
     const size = Math.max(12, world * view.scale);
     const feet = place?.feet !== false;
@@ -331,9 +423,10 @@ export function drawCity(
     const emoji = (col + row) % 2 === 0 ? "🌳" : "🌲";
     const scale = growOf(col, row);
     props.push({
-      depth: col + row + 0.15,
+      depth: depthOf(col + 0.5, row + 0.5),
       draw: () =>
         glyph(emoji, col + 0.5, row + 0.45, 0, 28 * scale, {
+          cover: true,
           hit: {
             id: `tree-${cell}`,
             name: emoji === "🌳" ? "Old tree" : "Pine",
@@ -348,9 +441,10 @@ export function drawCity(
     const emoji = stages[Math.min(3, Math.floor(farm.growth * 4))]!;
     const world = (16 + farm.growth * 30) * (0.85 + watch * 0.35);
     props.push({
-      depth: farm.col + farm.row + 0.2,
+      depth: depthOf(farm.col + 0.5, farm.row + 0.5),
       draw: () =>
         glyph(emoji, farm.col + 0.5, farm.row + 0.5, 0, world, {
+          cover: true,
           hit: {
             id: `farm-${farm.col}-${farm.row}`,
             name: "Field",
@@ -371,9 +465,10 @@ export function drawCity(
       const emoji = pool[h % pool.length]!;
       const scale = emoji === "🪨" || emoji === "🪵" ? 0.8 : growOf(col, row);
       props.push({
-        depth: col + row + 0.12,
+        depth: depthOf(col + 0.5, row + 0.5) - 0.05,
         draw: () =>
           glyph(emoji, col + 0.5, row + 0.5, 0, 16 * scale, {
+            cover: true,
             hit: {
               id: `wild-${col}-${row}`,
               name: "Wild " + emoji,
@@ -395,21 +490,41 @@ export function drawCity(
     let north = roadSet.has(`${col},${row - 1}`);
     const links = Number(east) + Number(west) + Number(south) + Number(north);
     const junction = links >= 3 && (east || west) && (north || south);
-    const emoji = junction ? "🚦" : (col * 3 + row) % 9 === 0 ? "🚏" : "🛣️";
+    const emoji = junction ? "🚦" : "🛣️";
     props.push({
-      depth: col + row + 0.08,
-      draw: () =>
-        glyph(emoji, col + 0.5, row + 0.5, 0, junction ? 26 : 46, {
-          hit: {
-            id: `road-${key}`,
-            name: junction ? "Crossing" : "Road",
-            role: "road",
-            place: "the road",
-            detail: junction
-              ? "A crossing where the emoji roads meet. Carts have to take a turn."
-              : `A stretch of road made of ${emoji}. It was paved one cell at a time and can keep going.`,
-          },
-        }),
+      depth: depthOf(col + 0.5, row + 0.5) - 0.08,
+      draw: () => {
+        if (junction) {
+          glyph(emoji, col + 0.5, row + 0.5, 0, 26, {
+            cover: true,
+            hit: {
+              id: `road-${key}`,
+              name: "Crossing",
+              role: "road",
+              place: "the road",
+              detail: "A crossing where the emoji roads meet. Carts have to take a turn.",
+            },
+          });
+          return;
+        }
+        const pad = 0.18;
+        const tile = top(col + pad, row + pad, 2, 1 - pad * 2, 1 - pad * 2).map(to);
+        drawXeroOnto(ctx, emoji, tile[0]!, tile[1]!, tile[3]!);
+        const hit = to(iso(col + 0.5, row + 0.5, 2));
+        hits.push({
+          id: `road-${key}`,
+          name: "Road",
+          emoji,
+          role: "road",
+          place: "the road",
+          floor: 0,
+          detail: `A stretch of road made of ${emoji}. It lies on the ground and turns with the city.`,
+          x: hit.x - 16,
+          y: hit.y - 10,
+          w: 32,
+          h: 20,
+        });
+      },
     });
   }
   for (const crew of city.crews ?? []) {
@@ -494,7 +609,7 @@ export function drawCity(
 
   for (const building of city.buildings) {
     props.push({
-      depth: building.col + building.row + 0.5,
+      depth: depthOf(building.col + 0.5, building.row + 0.5),
       draw: () => paintBuilding(building),
     });
   }
@@ -516,48 +631,56 @@ export function drawCity(
     ctx.fillStyle = "rgba(0,0,0,0.32)";
     ctx.fill();
 
-    quad(ctx, face(col, row, 0, floors * FH, "left").map(to));
-    ctx.fillStyle = mat.left;
-    ctx.fill();
-    quad(ctx, face(col, row, 0, floors * FH, "right").map(to));
-    ctx.fillStyle = mat.right;
-    ctx.fill();
+    const height = floors * FH;
+    const sides = [0, 1, 2, 3]
+      .map((side) => {
+        const midC = side === 0 ? col + 1 : side === 2 ? col : col + 0.5;
+        const midR = side === 1 ? row + 1 : side === 3 ? row : row + 0.5;
+        return { side, depth: depthOf(midC, midR) };
+      })
+      .sort((a, b) => a.depth - b.depth);
+    const shade = ["#5c4638", "#3d4a3c", "#2a2420", "#3e4a56"];
+    for (const side of sides) {
+      const pts = wall(col, row, 0, height, side.side).map(to);
+      quad(ctx, pts);
+      ctx.fillStyle = shade[side.side] ?? mat.left;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.45)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
 
     for (const apt of building.apartments) {
       const z0 = (apt.floor - 1) * FH;
       const z1 = apt.floor * FH;
       const openings: { foot: Point; head: Point; along: Point }[] = [];
-      for (const side of ["left", "right"] as const) {
-        const wall = face(col, row, z0 + FH * 0.16, z1 - FH * 0.06, side).map(to);
-        for (const pane of [0, 1]) {
-          const cell = split(wall[0]!, wall[1]!, wall[2]!, wall[3]!, pane, 2);
-          const shrunk = inset(cell, 0.22);
+      const near = sides.slice(-2);
+      for (const side of near) {
+        const panes = side.side === 2 ? 1 : side.side === 3 ? 2 : 3;
+        const paneWall = wall(col, row, z0 + FH * 0.18, z1 - FH * 0.1, side.side).map(to);
+        for (let pane = 0; pane < panes; pane++) {
+          const cell = split(paneWall[0]!, paneWall[1]!, paneWall[2]!, paneWall[3]!, pane, panes);
+          const shrunk = inset(cell, side.side === 2 ? 0.34 : 0.2);
           quad(ctx, shrunk);
-          if (apt.lit) {
-            ctx.fillStyle = "rgba(242, 197, 122, 0.5)";
-            ctx.shadowColor = "rgba(232,165,75,0.85)";
-            ctx.shadowBlur = 12;
+          if (apt.lit && side.side !== 2) {
+            ctx.fillStyle = side.side === 0 ? "rgba(242, 197, 122, 0.62)" : "rgba(186, 214, 204, 0.5)";
+            ctx.shadowColor = "rgba(232,165,75,0.7)";
+            ctx.shadowBlur = 8;
           } else {
-            ctx.fillStyle = "#14110e";
+            ctx.fillStyle = "#100e0c";
             ctx.shadowBlur = 0;
           }
           ctx.fill();
           ctx.shadowBlur = 0;
-          openings.push({
-            foot: { x: (shrunk[0]!.x + shrunk[1]!.x) / 2, y: (shrunk[0]!.y + shrunk[1]!.y) / 2 },
-            head: { x: (shrunk[2]!.x + shrunk[3]!.x) / 2, y: (shrunk[2]!.y + shrunk[3]!.y) / 2 },
-            along: { x: shrunk[1]!.x - shrunk[0]!.x, y: shrunk[1]!.y - shrunk[0]!.y },
-          });
+          if (side.side !== 2) {
+            openings.push({
+              foot: { x: (shrunk[0]!.x + shrunk[1]!.x) / 2, y: (shrunk[0]!.y + shrunk[1]!.y) / 2 },
+              head: { x: (shrunk[2]!.x + shrunk[3]!.x) / 2, y: (shrunk[2]!.y + shrunk[3]!.y) / 2 },
+              along: { x: shrunk[1]!.x - shrunk[0]!.x, y: shrunk[1]!.y - shrunk[0]!.y },
+            });
+          }
         }
       }
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.beginPath();
-      const seam = [iso(col, row + 1, z1), iso(col + 1, row + 1, z1), iso(col + 1, row, z1)].map(to);
-      ctx.moveTo(seam[0]!.x, seam[0]!.y);
-      ctx.lineTo(seam[1]!.x, seam[1]!.y);
-      ctx.lineTo(seam[2]!.x, seam[2]!.y);
-      ctx.stroke();
-
       apt.residents.forEach((resident, index) => {
         const opening = openings[index % Math.max(1, openings.length)];
         if (!opening) return;
@@ -594,18 +717,44 @@ export function drawCity(
     }
 
     const roofZ = floors * FH;
-    glyph("🚪", col + 0.78, row + 1.06, 0, 22);
-    if (building.rising) glyph("🏗️", col + 0.55, row + 0.35, roofZ, 30);
-    quad(ctx, top(col, row, roofZ).map(to));
+    const slab = 8;
+    for (const side of sides) {
+      const fascia = wall(col, row, roofZ, roofZ + slab, side.side).map(to);
+      quad(ctx, fascia);
+      ctx.fillStyle = side.side === 2 ? "#241e1a" : mat.edge;
+      ctx.fill();
+    }
+    quad(ctx, top(col - 0.04, row - 0.04, roofZ + slab, 1.08, 1.08).map(to));
     ctx.fillStyle = mat.top;
     ctx.fill();
     ctx.strokeStyle = mat.edge;
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    ctx.strokeStyle = "rgba(243,234,215,0.35)";
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    for (const [c, r] of [
+      [col, row],
+      [col + 1, row],
+      [col, row + 1],
+      [col + 1, row + 1],
+    ] as const) {
+      const a = to(iso(c, r, 0));
+      const b = to(iso(c, r, roofZ + slab));
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+    const nearSides = new Set(sides.slice(-2).map((side) => side.side));
+    if (nearSides.has(0)) glyph("🚪", col + 1.04, row + 0.5, 0, 22);
+    if (nearSides.has(2)) glyph("🪜", col - 0.04, row + 0.55, FH, 20);
+    if (nearSides.has(3)) glyph("🪴", col + 0.5, row - 0.04, 4, 16);
+    if (nearSides.has(1)) glyph("🪧", col + 0.5, row + 1.04, FH * 0.45, 16);
+    if (building.rising) glyph("🏗️", col + 0.55, row + 0.35, roofZ + slab, 30);
 
     if (building.material % 2 === 0) {
       const cap = ["📡", "🛰️", "📺", "🪺", "🎐"][building.material % 5]!;
-      glyph(cap, col + 0.72, row + 0.28, roofZ, 20);
+      glyph(cap, col + 0.72, row + 0.28, roofZ + slab, 20);
     }
 
     const crown = to(iso(col + 0.5, row + 0.5, roofZ + 1));
