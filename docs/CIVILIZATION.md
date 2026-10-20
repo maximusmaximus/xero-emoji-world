@@ -4,11 +4,21 @@ The city is not a fixed district that occasionally gains a block. It starts as o
 
 The world is saved in the browser (`localStorage`, key `xero-emoji-world`) about every second and a half, and again when the tab closes. A refresh continues the same city. It does not go back to the fire. A save from an older layout is ignored and a new city starts.
 
-While the tab is open, people are watching. Research keeps climbing, the grid can keep spreading, and every so often the city notes a new star, a planet, a wider moon, or another emoji road. Venice is told the era, the research, and how long the city has been watched, and it is asked to speak at that level. A camp stays physical. A skyline talks about towers, roads, fields, and the sky. Inference does not run on its own clock. It runs when someone opens a glyph.
+## Who is watching
+
+Each open tab sends a short pulse. The header shows how many are live. A tab that goes quiet for about twelve seconds drops off the count.
+
+The city runs one step per frame for a single watcher, and up to four steps when more people are here. Research and new lots speed up with that count. More watchers also raise the cap on each kind of building, and a planned tower is built a few floors taller.
+
+## What Venice builds
+
+About every eight seconds the city asks Venice for the next two buildings, once per era and watcher count. The reply is a name, a kind, an emoji, and one sentence. Those plans are queued. The next lot that matches the era uses the plan instead of a random name. A plan that is too advanced for the era waits until the city can build it.
+
+The call is cached, so a second tab in the same era does not pay again. If the day's dollar is gone, a local plan is used and nothing is charged. Stories still run only when someone taps a glyph, and they are told the era and that people are watching.
 
 ## Research
 
-Research climbs on its own, and faster when a scholar finishes a walk. Crossing a goal changes the era. The header shows the era and the count.
+Research climbs on its own, and faster when a scholar finishes a walk or when more people are watching. Crossing a goal changes the era. The header shows the era and the count.
 
 | era | what opens |
 |---|---|
@@ -46,7 +56,7 @@ The blocks are orthographic isometric. The emoji are not smeared onto those face
 
 ## Looking around
 
-On a desktop, drag pulls the city around its center: the view turns in the direction of the pull. The wheel zooms. On a phone, one finger drags to move and two fingers pinch to zoom. Tap any emoji for the detail.
+One finger turns the city. Pull around the center and the view follows that direction. Two fingers do the rest: pinch to zoom, and drag to move. On a desktop the wheel still zooms, and the mouse turns the view the same way one finger does. Tap any emoji for the detail.
 
 ## More Venice keys
 
