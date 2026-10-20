@@ -194,6 +194,11 @@ function Home() {
           cityRef.current = queuePlans(cityRef.current, plan.developments);
           setCity(cityRef.current);
           setBudget((prev) => (plan.budget.spentUsd >= prev.spentUsd ? plan.budget : prev));
+          setStatus((prev) => ({
+            ...prev,
+            live: plan.live,
+            detail: plan.live ? plan.model : prev.detail,
+          }));
         })
         .catch(() => undefined);
     };
@@ -384,14 +389,15 @@ function Home() {
             <p className="mt-1 max-w-xs text-sm text-mute">{latest ? <XeroLine text={latest.text} /> : null}</p>
           </div>
         </div>
-        <div className="pointer-events-auto relative hidden sm:block">
+        <div className="pointer-events-auto relative">
           <button
             type="button"
-            className="rounded-full border border-line bg-panel px-3 py-2 text-xs text-mute"
+            className="max-w-[16rem] rounded-full border border-line bg-panel px-3 py-2 text-left text-xs text-mute sm:max-w-none"
             aria-expanded={keysOpen}
             onClick={() => setKeysOpen((open) => !open)}
           >
-            {status.keyPresent ? "Venice live" : "Venice offline"}
+            {status.live ? "Venice live" : "Venice offline"}
+            {status.detail ? ` · ${status.detail}` : ""}
             {status.keyCount > 1 ? ` · ${status.keyCount} keys` : ""} · {budget.spentUsd.toFixed(3)} of $1
           </button>
           {keysOpen && (

@@ -139,6 +139,43 @@ function serialized<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+const MODELS_URL = "https://api.venice.ai/api/v1/models";
+let lastInference = { ok: false, detail: "not called yet" };
+let probeCache: { at: number; ok: boolean; detail: string } = { at: 0, ok: false, detail: "" };
+
+function noteInference(ok: boolean, detail: string) {
+  lastInference = { ok, detail: detail.slice(0, 80) };
+}
+
+export async function veniceProbe(force = false): Promise<{ ok: boolean; detail: string }> {
+  const key = veniceKey();
+  if (!key) return { ok: false, detail: "no key on this host" };
+  if (!force && probeCache.at && Date.now() - probeCache.at < 45_000) {
+    return { ok: probeCache.ok, detail: probeCache.detail };
+  }
+  try {
+    const res = await fetch(MODELS_URL, { headers: { authorization: `Bearer ${key}` } });
+    if (!res.ok) {
+      const text = await res.text();
+      probeCache = { at: Date.now(), ok: false, detail: `key rejected ${res.status}` };
+      if (text) probeCache.detail = `${probeCache.detail}`;
+      return { ok: false, detail: probeCache.detail };
+    }
+    const json = (await res.json()) as { data?: { id?: string }[] };
+    const ids = new Set((json.data ?? []).map((model) => model.id));
+    if (!ids.has(WORLD_MODEL)) {
+      probeCache = { at: Date.now(), ok: false, detail: `${WORLD_MODEL} missing` };
+      return { ok: false, detail: probeCache.detail };
+    }
+    probeCache = { at: Date.now(), ok: true, detail: WORLD_MODEL };
+    return { ok: true, detail: WORLD_MODEL };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message.slice(0, 60) : "network";
+    probeCache = { at: Date.now(), ok: false, detail };
+    return { ok: false, detail };
+  }
+}
+
 export function veniceKey(): string {
   return activeKey(readLedger());
 }
@@ -161,11 +198,12 @@ export function addVeniceKeys(raw: string): { added: number; keyCount: number } 
   return { added, keyCount: next.length };
 }
 
-export function veniceStatus() {
+export async function veniceStatus() {
   const keys = readVeniceKeys();
   const ledger = readLedger();
   const key = activeKey(ledger);
   const spent = key ? spentFor(ledger, key) : 0;
+  const probe = await veniceProbe();
   return {
     voice: WORLD_MODEL,
     embed: EMBED_MODEL,
@@ -173,6 +211,8 @@ export function veniceStatus() {
     privacy: "private" as const,
     keyPresent: keys.length > 0,
     keyCount: keys.length,
+    live: probe.ok,
+    detail: lastInference.ok ? lastInference.detail : probe.detail,
     budget: budgetOf({ ...ledger, spentUsd: spent }),
   };
 }
@@ -207,6 +247,7 @@ export async function narrate(input: NarrateInput): Promise<{
   }
   const key = veniceKey();
   if (!key) {
+    noteInference(false, "no key on this host");
     return {
       text: localStory(input, "Venice is not configured on this server."),
       model: WORLD_MODEL,
@@ -221,6 +262,7 @@ export async function narrate(input: NarrateInput): Promise<{
     const ledger = readLedger();
     const liveKey = activeKey(ledger);
     if (!liveKey || spentFor(ledger, liveKey) + estimate > DAILY_BUDGET_USD - MEMORY_RESERVE_USD) {
+      noteInference(false, "voice budget held");
       return {
         text: localStory(input, "The day's voice budget is saved for tomorrow."),
         model: WORLD_MODEL,
@@ -245,6 +287,7 @@ export async function narrate(input: NarrateInput): Promise<{
       }),
     });
     if (!res.ok) {
+      noteInference(false, `voice ${res.status}`);
       const detail = await res.text();
       throw new Error(`Venice voice ${res.status}: ${detail.slice(0, 180)}`);
     }
@@ -266,6 +309,7 @@ export async function narrate(input: NarrateInput): Promise<{
       cachedTokens * VOICE_CACHE_USD +
       completion * VOICE_OUTPUT_USD;
     storyCache.set(cacheKey, text);
+    noteInference(true, WORLD_MODEL);
     return { text, model: WORLD_MODEL, live: true, cached: false, budget: charge(spent) };
   });
 }
@@ -427,13 +471,19 @@ export async function developCity(input: { era: string; watchers: number; have: 
     cached: false,
     budget: budgetOf(readLedger()),
   });
-  if (!veniceKey()) return fallback();
+  if (!veniceKey()) {
+    noteInference(false, "no key on this host");
+    return fallback();
+  }
   const user = `Era ${era}. ${watchers} people are watching right now. Buildings already standing: ${have || "none"}. Propose two new ones. The more watchers, the more sophisticated the next building should be.`;
   const estimate = tokens(DEVELOP_SYSTEM + user) * VOICE_INPUT_USD + 140 * VOICE_OUTPUT_USD;
   return serialized(async () => {
     const ledger = readLedger();
     const liveKey = activeKey(ledger);
-    if (!liveKey || spentFor(ledger, liveKey) + estimate > DAILY_BUDGET_USD - MEMORY_RESERVE_USD) return fallback();
+    if (!liveKey || spentFor(ledger, liveKey) + estimate > DAILY_BUDGET_USD - MEMORY_RESERVE_USD) {
+      noteInference(false, "voice budget held");
+      return fallback();
+    }
     const res = await fetch(CHAT_URL, {
       method: "POST",
       headers: { authorization: `Bearer ${liveKey}`, "content-type": "application/json" },
@@ -449,7 +499,10 @@ export async function developCity(input: { era: string; watchers: number; have: 
         ],
       }),
     });
-    if (!res.ok) return fallback();
+    if (!res.ok) {
+      noteInference(false, `voice ${res.status}`);
+      return fallback();
+    }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
       usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
@@ -462,7 +515,8 @@ export async function developCity(input: { era: string; watchers: number; have: 
     const completion = json.usage?.completion_tokens ?? tokens(text);
     const spent =
       Math.max(0, prompt - cachedTokens) * VOICE_INPUT_USD + cachedTokens * VOICE_CACHE_USD + completion * VOICE_OUTPUT_USD;
-    developCache.set(cacheKey, developments);
+    if (parsed.length) developCache.set(cacheKey, developments);
+    noteInference(parsed.length > 0, parsed.length > 0 ? WORLD_MODEL : "plan unreadable");
     return { developments, model: WORLD_MODEL, live: parsed.length > 0, cached: false, budget: charge(spent) };
   });
 }

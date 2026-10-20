@@ -332,10 +332,10 @@ export function drawCity(
       );
       return { front, poly: hullOf(corners) };
     });
-  const covered = (col: number, row: number) => {
-    const p = to(iso(col, row, 20));
-    const depth = depthOf(col, row);
-    return masks.some((mask) => depth < mask.front - 0.2 && inside(p, mask.poly));
+  const covered = (col: number, row: number, z = 20) => {
+    const p = to(iso(col, row, z));
+    const depth = z > 80 ? -1000 : depthOf(col, row);
+    return masks.some((mask) => depth < mask.front - 0.15 && inside(p, mask.poly));
   };
   const headingOf = (dc: number, dr: number) => {
     if (!dc && !dr) return { rotation: 0, flip: false };
@@ -363,13 +363,19 @@ export function drawCity(
       dr?: number;
       feet?: boolean;
       ride?: boolean;
+      sky?: boolean;
       hit?: { id: string; name: string; role: Hit["role"]; place: string; floor?: number; detail: string };
       cover?: boolean;
     },
   ) => {
-    if (place?.cover && covered(col, row)) return;
+    if (place?.cover && covered(col, row, z)) return;
     const p = to(iso(col, row, z));
-    const size = Math.max(12, world * view.scale);
+    const east = to(iso(col + 1, row, 0));
+    const south = to(iso(col, row + 1, 0));
+    const origin = to(iso(col, row, 0));
+    const span = Math.max(18, Math.hypot(east.x - origin.x, east.y - origin.y), Math.hypot(south.x - origin.x, south.y - origin.y));
+    const fraction = Math.min(place?.sky ? 0.85 : 0.82, Math.max(0.46, world / 58));
+    const size = place?.sky ? Math.min(56, Math.max(22, span * fraction)) : span * fraction;
     const feet = place?.feet !== false;
     if (feet) {
       ctx.save();
@@ -415,7 +421,7 @@ export function drawCity(
   const pool = wildPool.slice(0, 8 + Math.floor(watch * (wildPool.length - 8)));
   const growOf = (col: number, row: number) => {
     const n = (cellHash(col, row) % 1000) / 1000;
-    return 0.42 + n * 0.25 + watch * (0.55 + n * 0.7);
+    return 0.55 + n * 0.3 + watch * 0.2;
   };
 
   for (const cell of city.trees ?? []) {
@@ -425,7 +431,7 @@ export function drawCity(
     props.push({
       depth: depthOf(col + 0.5, row + 0.5),
       draw: () =>
-        glyph(emoji, col + 0.5, row + 0.45, 0, 28 * scale, {
+        glyph(emoji, col + 0.5, row + 0.45, 0, 40 * Math.min(1.05, scale), {
           cover: true,
           hit: {
             id: `tree-${cell}`,
@@ -439,7 +445,7 @@ export function drawCity(
   }
   for (const farm of city.farms ?? []) {
     const emoji = stages[Math.min(3, Math.floor(farm.growth * 4))]!;
-    const world = (16 + farm.growth * 30) * (0.85 + watch * 0.35);
+    const world = 18 + farm.growth * 16;
     props.push({
       depth: depthOf(farm.col + 0.5, farm.row + 0.5),
       draw: () =>
@@ -461,13 +467,13 @@ export function drawCity(
       if (roadSet.has(key) || occupied.has(key) || farmAt.has(key)) continue;
       if ((city.trees ?? []).includes(key)) continue;
       const h = cellHash(col, row);
-      if (h % 6 !== 0) continue;
+      if (h % 8 !== 0) continue;
       const emoji = pool[h % pool.length]!;
-      const scale = emoji === "🪨" || emoji === "🪵" ? 0.8 : growOf(col, row);
+      const scale = emoji === "🪨" || emoji === "🪵" ? 0.7 : Math.min(1, growOf(col, row));
       props.push({
-        depth: depthOf(col + 0.5, row + 0.5) - 0.05,
+        depth: depthOf(col + 0.5, row + 0.5) - 0.04,
         draw: () =>
-          glyph(emoji, col + 0.5, row + 0.5, 0, 16 * scale, {
+          glyph(emoji, col + 0.5, row + 0.5, 0, 18 * scale, {
             cover: true,
             hit: {
               id: `wild-${col}-${row}`,
@@ -531,9 +537,10 @@ export function drawCity(
     const col = crew.col + (crew.destCol - crew.col) * crew.progress;
     const row = crew.row + (crew.destRow - crew.row) * crew.progress;
     props.push({
-      depth: col + row + 0.8,
+      depth: depthOf(col + 0.5, row + 0.5),
       draw: () =>
-        glyph(crew.emoji, col + 0.5, row + 0.5, 0, crew.task === "raise" ? 28 : 24, {
+        glyph(crew.emoji, col + 0.5, row + 0.5, 0, crew.task === "raise" ? 26 : 22, {
+          cover: true,
           dc: crew.destCol - crew.col,
           dr: crew.destRow - crew.row,
           hit: {
@@ -548,11 +555,11 @@ export function drawCity(
   }
   if (roads.length > 3 && grown >= 2) {
     const rides = [
-      { emoji: "🚲", world: 22, speed: 0.15, name: "Bicycle" },
-      { emoji: "🚗", world: 30, speed: 0.22, name: "Car" },
-      { emoji: "🚜", world: 34, speed: 0.08, name: "Tractor" },
-      { emoji: "🚌", world: 40, speed: 0.12, name: "Bus" },
-      { emoji: "🚚", world: 42, speed: 0.1, name: "Truck" },
+      { emoji: "🚲", world: 20, speed: 0.15, name: "Bicycle" },
+      { emoji: "🚗", world: 26, speed: 0.22, name: "Car" },
+      { emoji: "🚜", world: 28, speed: 0.08, name: "Tractor" },
+      { emoji: "🚌", world: 32, speed: 0.12, name: "Bus" },
+      { emoji: "🚚", world: 30, speed: 0.1, name: "Truck" },
     ];
     rides.forEach((ride, index) => {
       if (grown < 3 && index > 1) return;
@@ -566,9 +573,10 @@ export function drawCity(
       const dc = b[0] - a[0];
       const dr = b[1] - a[1];
       props.push({
-        depth: col + row + 0.55,
+        depth: depthOf(col, row),
         draw: () =>
           glyph(ride.emoji, col, row, 0, ride.world, {
+            cover: true,
             dc,
             dr,
             ride: true,
@@ -590,12 +598,14 @@ export function drawCity(
     const col = ((i * 2.6 + phase * 0.004) % (spanC + 6)) - 2;
     const row = (i % 4) * 0.8 - 2.2;
     const z = 210 + (i % 4) * 28;
-    const world = (emoji === "🌙" || emoji === "🪐" || emoji === "🌍" || emoji === "☀️" ? 40 : 22) * (0.75 + watch * 0.5);
+    const world = emoji === "🌙" || emoji === "🪐" || emoji === "🌍" || emoji === "☀️" ? 28 : 16;
     props.push({
-      depth: -30 - i,
+      depth: -1000 - i,
       draw: () =>
         glyph(emoji, col, row, z, world, {
           feet: false,
+          sky: true,
+          cover: true,
           hit: {
             id: `sky-${emoji}-${i}`,
             name: emoji === "🌙" ? "Moon" : emoji === "🪐" ? "Planet" : emoji === "🌍" ? "World" : emoji === "☀️" ? "Sun" : "Star",
