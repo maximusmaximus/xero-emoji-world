@@ -7,7 +7,7 @@ A living, self-building **emoji megacity**, generated procedurally down to the i
 - **ℹ on** shows the **life story**: a live feed of every action, in lockstep with the canvas. Click any emoji for its story. Click outside the close-up to go back to the city.
 - **Vector memory.** Every action and entity can be embedded and stored in **Qdrant**, so you can search it semantically ("who bought pizza?").
 - **Backups.** You can download a full DB export (`.ndjson.gz`) from the ℹ panel at any time. Hourly snapshots are kept on the server too.
-- **Look around.** Drag to pan the isometric city, scroll to zoom. The camera starts framed so every roof is on screen and the streets run to the edges.
+- **Look around.** One finger, or the mouse, turns the view. Two fingers pan and pinch to zoom. The wheel still zooms. The header shows how many people are watching, and the city builds faster as that count rises. Tap any emoji for its story.
 
 ## Quick start
 ```bash
@@ -19,6 +19,13 @@ npm run dev:web                      # http://localhost:5173
 ```
 To run without Docker, use `STORE=memory npm run dev:server` (not durable).
 To run everything in Docker: `docker compose up --build` → http://localhost:8080
+
+
+## Live prototype
+
+The city you can open now is the Grok build in [prototype/](prototype/). That is the source for the isometric world, emoji roads, persistence, live watchers, and Venice building plans. See [docs/CIVILIZATION.md](docs/CIVILIZATION.md). The Docker apps above are the earlier server layout.
+
+Venice keys are not in this repo. Put them in `.secrets/` on the host, or paste them from the Venice badge. `.secrets/` is gitignored.
 
 ## Layout
 ```
