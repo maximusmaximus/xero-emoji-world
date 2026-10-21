@@ -93,6 +93,16 @@ export type Beat = {
   place: string;
 };
 
+export type Alchemy = {
+  knowledge: number;
+  eraName: string;
+  materials: Record<string, number>;
+  recipes: { a: string; b: string; out: string; name: string; found?: number }[];
+  wonder?: { emoji: string; name: string; cost: Record<string, number>; paid: Record<string, number>; built?: boolean };
+  prophecy?: string;
+  last?: string;
+};
+
 export type City = {
   version: typeof CITY_VERSION;
   seed: string;
@@ -111,6 +121,7 @@ export type City = {
   watchers?: number;
   sophistication?: number;
   focus?: Focus;
+  alchemy?: Alchemy;
   stock?: Stock;
   works?: Works[];
   infra?: Infra[];
@@ -1081,6 +1092,143 @@ export function createCity(seed: string): City {
   return city;
 }
 
+const ALCHEMY_ERAS = ["Age of Clay", "Age of Bread", "Age of Gears", "Age of Light", "Age of Stars", "Age of Magic", "Age of Dragons"];
+const ALCHEMY_YIELD: Record<Kind, string[]> = {
+  hut: ["🔥", "🪵"],
+  farmhouse: ["🌾", "🌱"],
+  house: ["🍞", "💡"],
+  store: ["🪙", "🍞"],
+  gas: ["⛽", "⚙️"],
+  school: ["📚", "📜"],
+  hospital: ["💊", "💡"],
+  block: ["🧱", "🪙"],
+  tower: ["💡", "🪟"],
+  skyscraper: ["⚡", "🏙️"],
+};
+const BASE_RECIPES: NonNullable<City["alchemy"]>["recipes"] = [
+  { a: "🪨", b: "🔥", out: "🧱", name: "kiln-fired brick" },
+  { a: "🌱", b: "💧", out: "🌾", name: "first harvest" },
+  { a: "🌾", b: "🔥", out: "🍞", name: "bread ovens" },
+  { a: "🪵", b: "⚙️", out: "🛠️", name: "the workshop" },
+  { a: "💡", b: "📜", out: "📚", name: "libraries" },
+  { a: "📚", b: "💡", out: "🔭", name: "astronomy" },
+  { a: "💧", b: "⚡", out: "🧪", name: "chemistry" },
+  { a: "🔭", b: "💎", out: "🌌", name: "star maps" },
+  { a: "🌌", b: "🔮", out: "🪄", name: "true magic" },
+  { a: "🪄", b: "🔥", out: "🐉", name: "dragon hatcheries" },
+];
+
+export function growthOf(alchemy?: Alchemy) {
+  const knowledge = alchemy?.knowledge ?? 0;
+  const wonders = alchemy?.wonder?.built ? 1 : 0;
+  return 1.12 ** knowledge * (1 + 0.25 * wonders);
+}
+
+function stepAlchemy(city: City, rng: () => number): City {
+  const prior = city.alchemy?.recipes?.length
+    ? city.alchemy
+    : {
+        knowledge: 0,
+        eraName: ALCHEMY_ERAS[0]!,
+        materials: { "🧱": 24, "🪨": 12, "🔥": 12, "💧": 10, "🌱": 10, "🪵": 8 },
+        recipes: BASE_RECIPES.map((recipe) => ({ ...recipe })),
+        prophecy: "From brick and fire the towers will learn to sing.",
+      };
+  const materials = { ...prior.materials };
+  if (city.tick % 8 === 0) {
+    for (const key of Object.keys(materials)) materials[key] = Math.floor((materials[key] ?? 0) * 0.97);
+    const mult = growthOf(prior);
+    for (const building of city.buildings) {
+      if (!building.apartments.length || building.rising) continue;
+      (ALCHEMY_YIELD[building.kind] ?? ["🧱"]).forEach((emoji, index) => {
+        materials[emoji] = (materials[emoji] ?? 0) + Math.max(1, Math.floor(mult / (index + 1)));
+      });
+    }
+  }
+  let next = prior;
+  let beat: Beat | null = null;
+  if (city.tick % 6 === 0) {
+    const ready = next.recipes.filter((recipe) => (materials[recipe.a] ?? 0) >= 1 && (materials[recipe.b] ?? 0) >= 1);
+    const fresh = ready.filter((recipe) => !recipe.found);
+    const pool = fresh.length ? fresh : ready;
+    const recipe = pool[Math.floor(rng() * pool.length)];
+    if (recipe) {
+      materials[recipe.a] = (materials[recipe.a] ?? 0) - 1;
+      materials[recipe.b] = (materials[recipe.b] ?? 0) - 1;
+      materials[recipe.out] = (materials[recipe.out] ?? 0) + 1;
+      const wasFound = recipe.found;
+      const recipes = next.recipes.map((item) =>
+        item.a === recipe.a && item.b === recipe.b && item.out === recipe.out ? { ...item, found: item.found ?? city.tick } : item,
+      );
+      const knowledge = new Set(recipes.filter((item) => item.found).map((item) => item.out)).size + (next.wonder?.built ? 3 : 0);
+      const eraName = ALCHEMY_ERAS[Math.min(ALCHEMY_ERAS.length - 1, Math.floor(Math.log2(1 + knowledge)))]!;
+      next = { ...next, recipes, knowledge, eraName, last: recipe.out };
+      beat = {
+        id: `beat-${city.tick}-alchemy`,
+        tick: city.tick,
+        emoji: recipe.out,
+        text: wasFound
+          ? `Someone crafts ${recipe.out} from ${recipe.a} and ${recipe.b}.`
+          : `Discovered ${recipe.name}: ${recipe.a} + ${recipe.b} → ${recipe.out}. Knowledge ${knowledge}.`,
+        subjectId: "alchemy",
+        subjectName: recipe.name,
+        place: "the workshop",
+      };
+    }
+  }
+  if (!next.wonder && next.knowledge >= 1 && city.tick % 20 === 0) {
+    const emoji = next.knowledge > 6 ? "🐉" : next.knowledge > 3 ? "🔭" : "🗼";
+    next = {
+      ...next,
+      wonder: {
+        emoji,
+        name: emoji === "🐉" ? "the Sleeping Dragon" : emoji === "🔭" ? "the Star Glass" : "the Great Tower",
+        cost: { "🧱": 8 + next.knowledge, "🪵": 4, "💡": 2 },
+        paid: {},
+      },
+    };
+  }
+  if (next.wonder && !next.wonder.built && city.tick % 5 === 0) {
+    const paid = { ...next.wonder.paid };
+    let moved = false;
+    for (const [emoji, need] of Object.entries(next.wonder.cost)) {
+      const have = materials[emoji] ?? 0;
+      const q = Math.min(need - (paid[emoji] ?? 0), have, 3);
+      if (q > 0) {
+        materials[emoji] = have - q;
+        paid[emoji] = (paid[emoji] ?? 0) + q;
+        moved = true;
+      }
+    }
+    const built = Object.entries(next.wonder.cost).every(([emoji, need]) => (paid[emoji] ?? 0) >= need);
+    const wonder = { ...next.wonder, paid, built };
+    next = { ...next, wonder, knowledge: next.knowledge + (built ? 3 : 0) };
+    if (built) {
+      beat = {
+        id: `beat-${city.tick}-wonder`,
+        tick: city.tick,
+        emoji: wonder.emoji,
+        text: `${wonder.emoji} ${wonder.name} stands. Every harvest grows faster now.`,
+        subjectId: "wonder",
+        subjectName: wonder.name,
+        place: "the skyline",
+      };
+    } else if (moved && city.tick % 15 === 0) {
+      beat = {
+        id: `beat-${city.tick}-wonder-pay`,
+        tick: city.tick,
+        emoji: wonder.emoji,
+        text: `Citizens pour materials into ${wonder.emoji} ${wonder.name}.`,
+        subjectId: "wonder",
+        subjectName: wonder.name,
+        place: "the yard",
+      };
+    }
+  }
+  const alchemy = { ...next, materials };
+  return beat ? pushBeat({ ...city, alchemy }, beat) : { ...city, alchemy };
+}
+
 export function stepCity(city: City): City {
   if (city.version !== CITY_VERSION) return city;
   const rng = mulberry32(hash(`${city.seed}:${city.tick + 1}`));
@@ -1168,6 +1316,7 @@ export function stepCity(city: City): City {
     }
   }
   if (next.crews.length < 16) next = assignWork(next, rng);
+  next = stepAlchemy(next, rng);
   return next;
 }
 

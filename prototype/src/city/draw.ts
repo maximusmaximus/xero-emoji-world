@@ -839,6 +839,35 @@ export function drawCity(
       }
     });
 
+  if (city.alchemy?.wonder) {
+    const wonder = city.alchemy.wonder;
+    const paid = Object.values(wonder.paid).reduce((sum, n) => sum + n, 0);
+    const cost = Object.values(wonder.cost).reduce((sum, n) => sum + n, 0) || 1;
+    props.push({
+      depth: depthOf(centerC + 1.2, centerR - 0.4) + 0.4,
+      draw: () =>
+        glyph(wonder.emoji, centerC + 1.4, centerR - 0.2, wonder.built ? 80 : 30, wonder.built ? 120 : 70 + (paid / cost) * 40, {
+          huge: true,
+          feet: false,
+          hit: {
+            id: "wonder",
+            name: wonder.name,
+            role: "building",
+            place: "the wonder",
+            detail: wonder.built
+              ? `${wonder.emoji} ${wonder.name} is finished. Harvests compound faster because it stands.`
+              : `${wonder.emoji} ${wonder.name} is ${Math.round((paid / cost) * 100)}% paid for in emoji.`,
+          },
+        }),
+    });
+  }
+  if (city.alchemy?.last) {
+    props.push({
+      depth: depthOf(centerC - 1.4, centerR + 0.8) + 0.35,
+      draw: () => glyph(city.alchemy!.last!, centerC - 1.6, centerR + 1.1, 12, 90, { huge: true, feet: false }),
+    });
+  }
+
   for (const building of city.buildings) {
     props.push({
       depth: depthOf(building.col + 0.5, building.row + 0.5),

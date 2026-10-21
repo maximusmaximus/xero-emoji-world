@@ -4,7 +4,7 @@ import { Info, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { drawCity, defaultCamera, panBy, zoomAt, type Camera, type Hit } from "@/city/draw";
 import { loadCity, saveCity } from "@/city/save";
-import { CITY_VERSION, createCity, eraLabel, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
+import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
 import { addVeniceKeys, developCity, narrateLife, pulseWatch, searchLife, veniceStatus } from "@/lib/world-api";
 
@@ -441,11 +441,12 @@ function Home() {
           <div>
             <p className="font-display text-2xl leading-none text-cream">Xero</p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-amber">
-              {eraLabel(city.era ?? "camp")} · {city.research ?? 0} research
+              {city.alchemy?.eraName ?? eraLabel(city.era ?? "camp")} · knowledge {city.alchemy?.knowledge ?? 0} · ×{growthOf(city.alchemy).toFixed(2)}
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-mute">
               {watchers} watching · {city.cols}×{city.rows} and past the frame
             </p>
+            {city.alchemy?.prophecy ? <p className="mt-1 max-w-xs text-sm text-cream">{city.alchemy.prophecy}</p> : null}
             {city.focus?.note ? (
               <p className="mt-1 max-w-xs text-sm text-cream">
                 {city.focus.kind}: {city.focus.note}
