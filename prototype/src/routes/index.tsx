@@ -443,7 +443,9 @@ function Home() {
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-amber">
               {eraLabel(city.era ?? "camp")} · {city.research ?? 0} research
             </p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-mute">{watchers} watching</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-mute">
+              {watchers} watching · {city.cols}×{city.rows} and past the frame
+            </p>
             {city.focus?.note ? (
               <p className="mt-1 max-w-xs text-sm text-cream">
                 {city.focus.kind}: {city.focus.note}

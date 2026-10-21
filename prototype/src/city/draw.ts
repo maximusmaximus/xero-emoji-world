@@ -117,6 +117,11 @@ function bounds(city: City) {
   return { minX, minY, maxX, maxY };
 }
 
+function grownEra(era: Era) {
+  const rank: Record<Era, number> = { camp: 0, farm: 1, roads: 2, town: 3, city: 4, skyline: 5 };
+  return rank[era] ?? 0;
+}
+
 function cellHash(col: number, row: number) {
   let h = Math.imul(col | 0, 374761393) ^ Math.imul(row | 0, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -128,39 +133,24 @@ export function viewOf(city: City, width: number, height: number, camera: Camera
   viewPitch = camera.pitch ?? 0.76;
   focusC = (city.cols || 11) / 2;
   focusR = (city.rows || 9) / 2;
-  const box = bounds(city);
-  let minX = box.minX;
-  let minY = box.minY;
-  let maxX = box.maxX;
-  let maxY = box.maxY;
-  let bw = Math.max(1, maxX - minX);
-  let bh = Math.max(1, maxY - minY);
+  const mid = iso(focusC, focusR, 0);
+  const east = iso(focusC + 8, focusR, 0);
+  const south = iso(focusC, focusR + 6, 0);
+  let bw = Math.max(80, Math.abs(east.x - mid.x) * 2);
+  let bh = Math.max(80, Math.abs(south.y - mid.y) * 2);
   const padX = 8;
   const padTop = 58;
   const padBottom = 22;
   const usableW = Math.max(1, width - padX * 2);
   const usableH = Math.max(1, height - padTop - padBottom);
   const aspect = usableW / usableH;
-  if (bw / bh < aspect) {
-    const need = bh * aspect;
-    const extra = (need - bw) / 2;
-    minX -= extra;
-    maxX += extra;
-    bw = need;
-  } else {
-    const need = bw / aspect;
-    const extra = (need - bh) / 2;
-    minY -= extra;
-    maxY += extra;
-    bh = need;
-  }
+  if (bw / bh < aspect) bw = bh * aspect;
+  else bh = bw / aspect;
   const scale = (usableW / bw) * camera.zoom;
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
   return {
     scale,
-    ox: padX + usableW / 2 - cx * scale + camera.panX,
-    oy: padTop + usableH / 2 - cy * scale + camera.panY,
+    ox: padX + usableW / 2 - mid.x * scale + camera.panX,
+    oy: padTop + usableH / 2 - mid.y * scale + camera.panY,
   };
 }
 
@@ -455,6 +445,7 @@ export function drawCity(
       sky?: boolean;
       hit?: { id: string; name: string; role: Hit["role"]; place: string; floor?: number; detail: string };
       cover?: boolean;
+      huge?: boolean;
     },
   ) => {
     if (place?.cover && covered(col, row, z)) return;
@@ -463,8 +454,11 @@ export function drawCity(
     const south = to(iso(col, row + 1, 0));
     const origin = to(iso(col, row, 0));
     const span = Math.max(18, Math.hypot(east.x - origin.x, east.y - origin.y), Math.hypot(south.x - origin.x, south.y - origin.y));
-    const fraction = Math.min(place?.sky ? 0.85 : 0.82, Math.max(0.46, world / 58));
-    const size = place?.sky ? Math.min(56, Math.max(22, span * fraction)) : span * fraction;
+    const age = 1 + Math.min(0.7, (city.tick || 0) / 2400 + grownEra(city.era) * 0.04);
+    const fraction = place?.huge
+      ? Math.min(2.8, (world / 40) * (1 + age * 0.35))
+      : Math.min(0.9, (world / 78) * (1 + (age - 1) * 0.85));
+    const size = place?.sky ? Math.min(78, Math.max(22, span * fraction)) : span * fraction;
     const feet = place?.feet !== false;
     if (feet) {
       ctx.save();
@@ -590,7 +584,7 @@ export function drawCity(
       depth: depthOf(col + 0.5, row + 0.5) - 0.08,
       draw: () => {
         if (junction) {
-          glyph(emoji, col + 0.5, row + 0.5, 0, 26, {
+          glyph(emoji, col + 0.5, row + 0.5, 0, junction ? 18 : 12, {
             cover: true,
             hit: {
               id: `road-${key}`,
@@ -708,7 +702,11 @@ export function drawCity(
           },
         });
         if (crew.cargo) {
-          glyph(crew.cargo, col + 0.78, row + 0.28, 18, 18, { feet: false, cover: true });
+          glyph(crew.cargo, col + 0.42, row + 0.12, 22, 78, {
+            feet: false,
+            huge: true,
+            cover: true,
+          });
         }
       },
     });
@@ -776,6 +774,70 @@ export function drawCity(
         }),
     });
   }
+
+  const yard = ["🪵", "🧱", "🪟", "⚙️", "🛠️", "🌾"];
+  const centerC = (city.cols || 11) / 2;
+  const centerR = (city.rows || 9) / 2;
+  const active = city.buildings.filter((building) => building.rising);
+  const sites = active.filter((building) => Math.abs(building.col - centerC) < 9 && Math.abs(building.row - centerR) < 9).slice(0, 3);
+  if (sites.length === 0) {
+    sites.push({
+      id: "city-yard",
+      name: "City yard",
+      col: centerC - 1,
+      row: centerR + 1,
+      material: 0,
+      kind: "block",
+      targetFloors: 4,
+      rising: true,
+      apartments: [],
+    });
+  }
+  sites.forEach((building, site) => {
+      const left = Math.max(1, building.targetFloors - building.apartments.length);
+      yard.slice(0, Math.min(yard.length, 2 + left)).forEach((emoji, index) => {
+        const col = building.col - 0.55 + (index % 3) * 0.62;
+        const row = building.row + 1.35 + Math.floor(index / 3) * 0.45;
+        props.push({
+          depth: depthOf(col, row) + 0.2,
+          draw: () =>
+            glyph(emoji, col, row, 6 + index * 4, 86, {
+              huge: true,
+              hit: {
+                id: `yard-${building.id}-${emoji}`,
+                name: "Construction",
+                role: "item",
+                place: building.name,
+                detail: `${building.name} is an open site. ${left} floors still need this ${emoji}. The pile stays huge so you can watch it being built.`,
+              },
+            }),
+        });
+      });
+      props.push({
+        depth: depthOf(building.col + 0.2, building.row + 0.2) + 0.3,
+        draw: () => glyph("🏗️", building.col + 0.25, building.row + 0.2, building.apartments.length * FH + 8, 96, { huge: true, feet: false }),
+      });
+      if (site === 0) {
+        Object.entries(city.stock ?? {}).forEach(([good, count], index) => {
+          if (!count) return;
+          const emoji = good === "timber" ? "🪵" : good === "brick" ? "🧱" : good === "steel" ? "⚙️" : good === "glass" ? "🪟" : good === "tools" ? "🛠️" : "🌾";
+          props.push({
+            depth: depthOf(building.col - 1.1, building.row + index * 0.4) + 0.15,
+            draw: () =>
+              glyph(emoji, building.col - 1.15, building.row + 0.2 + index * 0.38, 8, 60 + Math.min(40, count * 6), {
+                huge: true,
+                hit: {
+                  id: `stock-${good}`,
+                  name: good,
+                  role: "item",
+                  place: "the yard",
+                  detail: `${count} ${good} in the city yard. Haulers carry it, huge, to whatever is still rising.`,
+                },
+              }),
+          });
+        });
+      }
+    });
 
   for (const building of city.buildings) {
     props.push({
@@ -896,8 +958,9 @@ function paintBuilding(building: Building) {
         ctx.globalAlpha = apt.lit ? 1 : 0.55;
         drawXero(ctx, resident.emoji, foot.x, foot.y - paneH * 0.04, size, { anchor: "feet" });
         const scene = windowScene(facade, apt.floor, index, city.tick || 0);
+        const sceneGrow = 0.75 + Math.min(1.05, (city.tick || 0) / 1400);
         if (scene && resident.role === "person") {
-          drawXero(ctx, scene, foot.x + paneH * 0.28, foot.y - paneH * 0.02, paneH * 0.72, { anchor: "feet" });
+          drawXero(ctx, scene, foot.x + paneH * 0.28, foot.y - paneH * 0.02, paneH * sceneGrow, { anchor: "feet" });
         }
         ctx.restore();
         if (resident.id === focusId) {
@@ -952,7 +1015,7 @@ function paintBuilding(building: Building) {
 
     const crown = to(iso(col + 0.5, row + 0.5, roofZ + slab + 6));
     if (building.rising || facade === "hospital" || facade === "school" || facade === "shop" || building.kind === "skyscraper") {
-      ctx.font = `600 ${Math.max(10, 11 * view.scale)}px Outfit, sans-serif`;
+      ctx.font = "600 14px Outfit, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const plate = ctx.measureText(building.name).width + 10;
@@ -967,6 +1030,6 @@ function paintBuilding(building: Building) {
   ctx.font = "12px Outfit, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText("drag sideways to turn · drag down to level the view · two fingers move and zoom", 16, height - 16);
+  ctx.fillText(`world ${spanC}×${spanR} · it keeps growing past this frame · drag out to the edge`, 16, height - 16);
   return hits;
 }

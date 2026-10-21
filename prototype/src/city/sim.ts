@@ -697,12 +697,21 @@ function assignWork(city: City, rng: () => number): City {
       const [col, row] = key.split(",").map(Number) as [number, number];
       return col <= 1 || row <= 1 || col >= next.cols - 2 || row >= next.rows - 2;
     });
-    if (edge.length === 0 && atEdge && (next.cols < 48 || next.rows < 36)) {
-      next = {
-        ...next,
-        cols: Math.min(48, next.cols + 2),
-        rows: Math.min(36, next.rows + 2),
-      };
+    if (edge.length === 0 && atEdge && (next.cols < 72 || next.rows < 54)) {
+      const cols = Math.min(72, next.cols + 2);
+      const rows = Math.min(54, next.rows + 2);
+      next = pushBeat(
+        { ...next, cols, rows },
+        {
+          id: `beat-${next.tick}-spread`,
+          tick: next.tick,
+          emoji: "🗺️",
+          text: `The world spreads to ${cols} by ${rows}. The new ground is past the edge of the frame.`,
+          subjectId: "world",
+          subjectName: "the map",
+          place: "the edge",
+        },
+      );
     } else if (edge.length > 0) {
       const dest = pick(rng, edge);
       const from = next.roads[next.roads.length - 1]!.split(",").map(Number) as [number, number];
