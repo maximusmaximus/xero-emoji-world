@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { laneMismatch, projectPoint, type Shot } from "./signs.ts";
+import { laneMismatch, pitchAfterPull, projectPoint, type Shot } from "./signs.ts";
 
 const shots: Shot[] = [
   { yaw: 0, pitch: 0.76, focusC: 7, focusR: 6 },
   { yaw: 0.9, pitch: 0.35, focusC: 4, focusR: 11 },
   { yaw: -1.2, pitch: 1.05, focusC: 12, focusR: 3 },
 ];
+
+describe("pull", () => {
+  it("lowers the camera when the pointer is pulled up, and raises it when pulled down", () => {
+    const pitch = 0.76;
+    assert.ok(pitchAfterPull(pitch, -40) < pitch);
+    assert.ok(pitchAfterPull(pitch, 40) > pitch);
+  });
+});
 
 describe("lane signs", () => {
   it("points along the lane at the sign, including far from the camera origin", () => {

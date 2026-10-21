@@ -67,7 +67,10 @@ export function laneSignCorners(col: number, row: number, alongCol: boolean, spa
   };
 }
 
-/** Radians between the sign's arrow and the lane through this cell. Zero means they match. */
+/** Pointer dy is screen-down. Pulling up lowers the camera so the view follows the hand. */
+export function pitchAfterPull(pitch: number, dy: number, rate = 0.0011) {
+  return Math.min(1.15, Math.max(0.18, pitch + dy * rate));
+}
 export function laneMismatch(shot: Shot, col: number, row: number, alongCol: boolean) {
   const g = laneSignCorners(col, row, alongCol);
   const p0 = projectPoint(g.p0[0], g.p0[1], g.p0[2], shot);

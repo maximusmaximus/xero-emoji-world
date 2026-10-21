@@ -1,5 +1,5 @@
 import { drawXero, drawXeroOnto } from "./xero-emoji";
-import { laneSignCorners, placedPoint, projectPoint } from "./signs";
+import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./signs";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -142,7 +142,7 @@ export function panBy(camera: Camera, dx: number, dy: number): Camera {
   return { ...camera, panX: camera.panX + dx, panY: camera.panY + dy };
 }
 
-/** Grab a ground point and move it with the cursor. A sideways pull turns the city clockwise, the way the hand goes. */
+/** Grab a ground point and move it with the cursor. Pull up to lower the view, pull sideways and the city turns with the hand. */
 export function pullBy(
   city: City,
   width: number,
@@ -178,7 +178,7 @@ export function pullBy(
   const next: Camera = {
     ...camera,
     yaw: (camera.yaw || 0) + dx * turn,
-    pitch: Math.min(1.15, Math.max(0.18, (camera.pitch ?? 0.76) - dy * 0.0011)),
+    pitch: pitchAfterPull(camera.pitch ?? 0.76, dy),
   };
   const after = viewOf(city, width, height, next);
   const held = iso(col, row, 0);
