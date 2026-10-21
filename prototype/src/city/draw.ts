@@ -1,4 +1,4 @@
-import { drawXero, drawXeroOnto } from "./xero-emoji";
+import { drawXero } from "./xero-emoji";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -631,22 +631,21 @@ export function drawCity(
           });
           return;
         }
-        const pad = 0.18;
-        const tile = top(col + pad, row + pad, 2, 1 - pad * 2, 1 - pad * 2).map(to);
-        drawXeroOnto(ctx, emoji, tile[0]!, tile[1]!, tile[3]!);
-        const hit = to(iso(col + 0.5, row + 0.5, 2));
-        hits.push({
-          id: `road-${key}`,
-          name: "Road",
-          emoji,
-          role: "road",
-          place: "the road",
-          floor: 0,
-          detail: `A stretch of road made of ${emoji}. It lies on the ground and turns with the city.`,
-          x: hit.x - 16,
-          y: hit.y - 10,
-          w: 32,
-          h: 20,
+        const bend = (east || west) && (north || south);
+        const dc = east || west ? 1 : 0;
+        const dr = !bend && (north || south) ? 1 : bend ? 1 : 0;
+        glyph(emoji, col + 0.5, row + 0.5, 2, 20, {
+          dc: bend ? 1 : dc,
+          dr: bend ? 1 : dr,
+          feet: false,
+          cover: true,
+          hit: {
+            id: `road-${key}`,
+            name: "Road",
+            role: "road",
+            place: "the road",
+            detail: `A stretch of road made of ${emoji}. It points along the street, upright, not pasted flat.`,
+          },
         });
       },
     });
@@ -910,9 +909,13 @@ function paintBuilding(building: Building) {
     };
     const stamp = (pts: Point[], c: number, r: number, emoji: string, cSpan = 1, rSpan = 1) => {
       const quadPts = cell(pts, c, r, cSpan, rSpan);
+      const cx = (quadPts[0]!.x + quadPts[1]!.x + quadPts[2]!.x + quadPts[3]!.x) / 4;
+      const cy = (quadPts[0]!.y + quadPts[1]!.y + quadPts[2]!.y + quadPts[3]!.y) / 4;
       const w = Math.hypot(quadPts[1]!.x - quadPts[0]!.x, quadPts[1]!.y - quadPts[0]!.y);
-      if (w < 2.5) return;
-      drawXeroOnto(ctx, emoji, quadPts[0]!, quadPts[1]!, quadPts[3]!);
+      const h = Math.hypot(quadPts[3]!.x - quadPts[0]!.x, quadPts[3]!.y - quadPts[0]!.y);
+      const size = Math.min(w, h);
+      if (size < 3) return;
+      drawXero(ctx, emoji, cx, cy, size, { anchor: "center" });
     };
 
     const base = top(col + 0.08, row + 0.12, 0, 1.05, 1.08).map(to);
@@ -1012,8 +1015,11 @@ function paintBuilding(building: Building) {
         const p0 = lerp(topA, botA, rr / 4);
         const p1 = lerp(topB, botB, rr / 4);
         const p3 = lerp(topA, botA, (rr + 1) / 4);
-        if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < 3) continue;
-        drawXeroOnto(ctx, rr === 0 || cc === 0 ? skin.pier : skin.roof, p0, p1, p3);
+        const cx = (p0.x + p1.x + p3.x + (p1.x + p3.x - p0.x)) / 4;
+        const cy = (p0.y + p1.y + p3.y + (p1.y + p3.y - p0.y)) / 4;
+        const size = Math.min(Math.hypot(p1.x - p0.x, p1.y - p0.y), Math.hypot(p3.x - p0.x, p3.y - p0.y));
+        if (size < 3) continue;
+        drawXero(ctx, rr === 0 || cc === 0 ? skin.pier : skin.roof, cx, cy, size, { anchor: "center" });
       }
     }
     glyph(skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
