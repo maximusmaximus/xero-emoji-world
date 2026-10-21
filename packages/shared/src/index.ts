@@ -6,3 +6,4 @@ export * from './reducer.js';
 export * from './simulation.js';
 export * from './protocol.js';
 export * from './world.js';
+export * from './venice-models.js';

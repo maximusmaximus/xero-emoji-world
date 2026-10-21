@@ -5,3 +5,4 @@ backups/
 .env
 *.log
 *.tsbuildinfo
+.secrets/
