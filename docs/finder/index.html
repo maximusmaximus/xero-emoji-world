@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xero Worlds · Emoji Finder</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:linear-gradient(#fcf6ea,#e8f0fa) fixed;color:#322c46}
+header{padding:28px 20px 8px;max-width:980px;margin:auto}h1{margin:0 0 4px;font-size:30px}header p{margin:4px 0;color:#6e6496}
+#q{width:100%;box-sizing:border-box;font-size:20px;padding:14px 16px;border:2px solid #8259b4;border-radius:14px;margin-top:12px}
+main{max-width:980px;margin:auto;padding:8px 20px 40px}#n{color:#6e6496;margin:8px 0}
+.r{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:14px;padding:12px;margin:8px 0;box-shadow:0 1px 3px #0002}
+.r img{width:56px;height:56px;flex:none}.nm{font-weight:600}.cp{color:#8a80aa;font-size:13px;font-family:ui-monospace,monospace}
+.pg{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}.pg span{background:#efe7fa;border-radius:8px;padding:3px 8px;font-size:14px}
+.pg span b{color:#8259b4}a{color:#8259b4}
+</style></head><body>
+<header><h1>Xero Worlds · Emoji Finder</h1>
+<p>Search any of the 3,963 Xero Emoji by glyph (paste 🍕), name (pizza) or codepoint (U+1F355 or 1f355) and see every page of the book it appears on.</p>
+<p>Data: <a href="emoji-pages.json">emoji-pages.json</a> · <a href="emoji-pages.csv">emoji-pages.csv</a> · Book: Xero Worlds v1 (2026) · Art: <a href="https://github.com/maximusmaximus/xeroemoji">maximusmaximus/xeroemoji</a></p>
+<input id="q" type="search" placeholder="Search: 🍕, pizza, 1f355…" autofocus></header>
+<main><div id="n">Loading…</div><div id="out"></div></main>
+<script>
+const CDN='https://cdn.jsdelivr.net/gh/maximusmaximus/xeroemoji@main/svg/';let D=[],T={};
+const strip=s=>[...s].filter(c=>c!=='\ufe0f').join('');
+const cps=s=>[...s].map(c=>c.codePointAt(0).toString(16)).filter(h=>h!=='fe0f').join('-');
+function norm(q){q=q.trim();if(!q)return null;
+ if(/^(u\+)?[0-9a-f]{2,6}([\s_\-]+(u\+)?[0-9a-f]{2,6})*$/i.test(q))return{cp:q.toLowerCase().replace(/u\+/g,'').split(/[\s_\-]+/).join('-')};
+ if(/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(q))return{glyph:cps(q)};return{text:q.toLowerCase()}}
+function show(){const q=document.getElementById('q').value,n=norm(q);history.replaceState(null,'',q?'?q='+encodeURIComponent(q):location.pathname);
+ let R=D;if(n){if(n.glyph)R=D.filter(r=>r.k===n.glyph);else if(n.cp)R=D.filter(r=>r.k===n.cp||r.k.startsWith(n.cp+'-'));else R=D.filter(r=>r.name.toLowerCase().includes(n.text)||r.group.toLowerCase().includes(n.text)||r.subgroup.toLowerCase().includes(n.text))}
+ document.getElementById('n').textContent=(n?R.length+' match'+(R.length==1?'':'es'):D.length+' emoji')+(R.length>200?' (showing 200)':'');
+ document.getElementById('out').innerHTML=R.slice(0,200).map(r=>`<div class="r"><img loading="lazy" src="${CDN}${r.file}" alt="${r.emoji}"><div><div class="nm">${r.emoji} ${r.name}</div><div class="cp">U+${r.codepoints.split(' ').join(' U+')} · ${r.group} / ${r.subgroup}</div><div class="pg">${r.pages.length?r.pages.map(p=>`<span><b>p. ${p}</b> ${T[p]||''}</span>`).join(''):'<span>Listed in the Emoji Finder (pp. 517–527)</span>'}</div></div></div>`).join('')}
+fetch('emoji-pages.json').then(r=>r.json()).then(j=>{T=j.page_titles;D=j.emoji.map(r=>Object.assign(r,{k:r.file.replace('.svg','').split('-').filter(h=>h!=='fe0f').join('-')}));
+ const p=new URLSearchParams(location.search).get('q');if(p)document.getElementById('q').value=p;show()});
+document.getElementById('q').addEventListener('input',show);
+</script></body></html>
