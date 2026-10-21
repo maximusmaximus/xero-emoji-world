@@ -2948,7 +2948,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 ⛺,tent,26FA,26fa.svg,Travel & Places,place-other,359,140 214 341 407 464
 🌁,foggy,1F301,1f301.svg,Travel & Places,place-other,359,341
 🌃,night with stars,1F303,1f303.svg,Travel & Places,place-other,359,152 341
-🏙️,cityscape,1F3D9 FE0F,1f3d9.svg,Travel & Places,place-other,360,6 7 105 342
+🏙️,cityscape,1F3D9 FE0F,1f3d9.svg,Travel & Places,place-other,360,6 7 10 105 342
 🌄,sunrise over mountains,1F304,1f304.svg,Travel & Places,place-other,360,59 342
 🌅,sunrise,1F305,1f305.svg,Travel & Places,place-other,360,227 342
 🌆,cityscape at dusk,1F306,1f306.svg,Travel & Places,place-other,360,342
@@ -3316,7 +3316,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🪔,diya lamp,1FA94,1fa94.svg,Objects,light & video,433,341 411 430 437
 📔,notebook with decorative cover,1F4D4,1f4d4.svg,Objects,book-paper,433,411
 📕,closed book,1F4D5,1f4d5.svg,Objects,book-paper,433,22 411
-📖,open book,1F4D6,1f4d6.svg,Objects,book-paper,433,6 18 22 63 67 241 248 249 411 529
+📖,open book,1F4D6,1f4d6.svg,Objects,book-paper,433,6 10 18 22 63 67 241 248 249 411 529
 📗,green book,1F4D7,1f4d7.svg,Objects,book-paper,434,22 412
 📘,blue book,1F4D8,1f4d8.svg,Objects,book-paper,434,22 412
 📙,orange book,1F4D9,1f4d9.svg,Objects,book-paper,434,412
