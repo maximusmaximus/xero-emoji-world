@@ -41,7 +41,8 @@ export class StoryPanel {
     const world = w ? `<span title="era / knowledge / growth multiplier">${esc(w.essence)} ${esc(w.eraName)} · 🧠 ${w.knowledge} · ×${growthMultiplier(w).toFixed(2)}</span>`
       + `<span title="emoji materials">${esc(mats)}</span>`
       + (pw ? `<span title="wonder under construction">${esc(pw.emoji)} ${esc(pw.name)}</span>` : '')
-      + `<span title="who steers the world">🔮 ${esc(w.oracle)}</span>` : '';
+      + `<span title="who steers the world">🔮 ${esc(w.oracle)}</span>`
+      + (w.oracleBudget ? `<span title="estimated oracle spend today (UTC)">${w.oracleBudget.capped ? '⛔' : '💸'} $${w.oracleBudget.spentUsd.toFixed(3)} / $${w.oracleBudget.capUsd}${w.oracleBudget.capped ? ' cap reached' : ''}</span>` : '') : '';
     this.stats.innerHTML = `<span>⏱️ tick ${s.tick}</span><span>🧑 ${st.population}</span><span>🏢 ${st.buildings}</span><span>🚪 ${st.apartments}</span><span>📦 ${st.items}</span><span>${s.weather} ${s.districts.length} districts</span>${world}`;
   }
   push(a: CityAction, force = false) {

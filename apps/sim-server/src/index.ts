@@ -43,7 +43,7 @@ async function route(req: IncomingMessage, res: ServerResponse) {
   const p = url.pathname;
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
   if (p === '/healthz') return json(res, { ok: true, tick: engine.state.tick, era: engine.state.world?.era, oracle: oracle.name });
-  if (p === '/api/world') return json(res, engine.state.world);
+  if (p === '/api/world') return json(res, { ...engine.state.world, oracleBudget: oracle.budget?.status() ?? engine.state.world?.oracleBudget });
   if (p === '/api/state') return json(res, engine.state);
   if (p === '/api/search') return json(res, await store.search(url.searchParams.get('q') ?? '', 25));
   const story = p.match(/^\/api\/entity\/([^/]+)\/story$/);

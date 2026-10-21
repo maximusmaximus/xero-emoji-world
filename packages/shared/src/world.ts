@@ -41,7 +41,10 @@ export interface WorldState {
   chronicle: string[];
   lastDecreeTick: number;
   oracle: string;
+  /** Oracle spend for the current UTC day, as of the last decree (absent when no LLM is configured). */
+  oracleBudget?: OracleBudget;
 }
+export interface OracleBudget { day: string; spentUsd: number; capUsd: number; remainingUsd: number; calls: number; capped: boolean }
 
 /** What an oracle may return. Everything is optional and sanitised before use. */
 export interface Decree {

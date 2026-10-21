@@ -12,7 +12,7 @@ import { EventEmitter } from 'node:events';
 import { createInitialCity, indexCity, step, type CityAction, type CityIndex, type CityState, type StepOptions } from '@xew/shared';
 import { config } from './config.js';
 import { entityDocs } from './entities.js';
-import { LocalOracle, type Oracle } from './oracle.js';
+import { BudgetExceededError, LocalOracle, type Oracle } from './oracle.js';
 import type { VectorStore } from './store/vector-store.js';
 
 export class CityEngine extends EventEmitter {
@@ -83,10 +83,15 @@ export class CityEngine extends EventEmitter {
     // Both oracles read state synchronously (the LLM request body is built before the first await), so no clone is needed.
     const snapshot = this.state; const recent = [...this.recent];
     try {
-      this.pendingDecree = { decree: await this.oracle.decree(snapshot, recent), source: this.oracle.source, oracle: this.oracle.name };
+      const decree = await this.oracle.decree(snapshot, recent);
+      this.pendingDecree = { decree, source: this.oracle.source, oracle: this.oracle.name, budget: this.oracle.budget?.status() };
     } catch (e) {
-      console.warn(`[oracle] ${this.oracle.name} failed (${(e as Error).message}); local oracle decides this time`);
-      this.pendingDecree = { decree: await this.fallback.decree(snapshot), source: 'local', oracle: 'local (fallback)' };
+      const capped = e instanceof BudgetExceededError;
+      if (!capped) console.warn(`[oracle] ${this.oracle.name} failed (${(e as Error).message}); local oracle decides this time`);
+      this.pendingDecree = {
+        decree: await this.fallback.decree(snapshot), source: 'local',
+        oracle: capped ? 'local (daily budget reached)' : 'local (fallback)', budget: this.oracle.budget?.status(),
+      };
     } finally { this.consulting = false; }
   }
 

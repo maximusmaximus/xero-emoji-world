@@ -12,9 +12,20 @@
  * or times out, the deterministic LocalOracle decides instead and the world keeps growing.
  */
 import { BEHAVIOUR_KEYS, ORACLE_PALETTE, localDecree, ensureWorld, worldSummary, type CityState, type Decree } from '@xew/shared';
+import { DailyBudget, type BudgetStatus, type Usage } from './budget.js';
 import { config } from './config.js';
 
-export interface Oracle { readonly name: string; readonly source: 'oracle' | 'local'; decree(state: CityState, recent: string[]): Promise<Decree>; }
+export interface Oracle {
+  readonly name: string; readonly source: 'oracle' | 'local';
+  decree(state: CityState, recent: string[]): Promise<Decree>;
+  /** Present on budgeted oracles. */
+  budget?: DailyBudget;
+}
+
+/** Thrown when the daily cap is reached; the engine then uses the local oracle. */
+export class BudgetExceededError extends Error {
+  constructor(readonly status: BudgetStatus) { super(`daily budget reached ($${status.spentUsd.toFixed(4)} of $${status.capUsd})`); }
+}
 
 export class LocalOracle implements Oracle {
   readonly name = 'local'; readonly source = 'local' as const;
@@ -34,22 +45,27 @@ Use ONLY emojis from this palette: `;
 
 export class LLMOracle implements Oracle {
   readonly source = 'oracle' as const; readonly name: string;
-  constructor(private url: string, private key: string, private model: string, private timeoutMs: number) { this.name = `llm:${model}`; }
+  constructor(private url: string, private key: string, private model: string, private timeoutMs: number, readonly budget?: DailyBudget) { this.name = `llm:${model}`; }
   async decree(state: CityState, recent: string[]): Promise<Decree> {
+    if (this.budget && !this.budget.canSpend()) throw new BudgetExceededError(this.budget.status());
+    const system = SYSTEM_PROMPT + ORACLE_PALETTE().join(' '); const user = JSON.stringify(worldSummary(state, recent));
     const res = await fetch(this.url, {
       method: 'POST', signal: AbortSignal.timeout(this.timeoutMs),
       headers: { 'content-type': 'application/json', authorization: `Bearer ${this.key}` },
       body: JSON.stringify({
         model: this.model, temperature: 0.9, response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT + ORACLE_PALETTE().join(' ') },
-          { role: 'user', content: JSON.stringify(worldSummary(state, recent)) },
+          { role: 'system', content: system },
+          { role: 'user', content: user },
         ],
       }),
     });
     if (!res.ok) throw new Error(`oracle HTTP ${res.status}`);
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    return parseDecree(json.choices?.[0]?.message?.content ?? '');
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[]; usage?: Usage };
+    const content = json.choices?.[0]?.message?.content ?? '';
+    // record before parsing: a malformed reply still cost tokens
+    this.budget?.record(json.usage, { in: system.length + user.length, out: content.length });
+    return parseDecree(content);
   }
 }
 
@@ -63,5 +79,5 @@ export function parseDecree(text: string): Decree {
 export function createOracle(): Oracle {
   const o = config.oracle;
   const useLlm = o.kind === 'llm' || (o.kind === 'auto' && !!o.key);
-  return useLlm && o.key ? new LLMOracle(o.url, o.key, o.model, o.timeoutMs) : new LocalOracle();
+  return useLlm && o.key ? new LLMOracle(o.url, o.key, o.model, o.timeoutMs, new DailyBudget(o.dailyBudgetUsd, o.prices, o.budgetPath)) : new LocalOracle();
 }

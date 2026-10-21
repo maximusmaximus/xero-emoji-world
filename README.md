@@ -51,6 +51,19 @@ The city is built **out of emojis**, not just decorated with them.
 | `ORACLE_MODEL` | `grok-4.7` | model id |
 | `ORACLE_EVERY_TICKS` | `120` | how often the oracle is consulted |
 | `ORACLE_TIMEOUT_MS` | `30000` | inference timeout; on timeout the local oracle decides |
+| `ORACLE_DAILY_BUDGET_USD` | `1` | cap on **estimated** oracle spend per UTC day; over it, the local oracle decides until 00:00 UTC |
+| `ORACLE_PRICE_INPUT_PER_M` | `3` | USD per 1M prompt tokens (estimate only; check current xAI pricing) |
+| `ORACLE_PRICE_CACHED_INPUT_PER_M` | `0.75` | USD per 1M cached prompt tokens |
+| `ORACLE_PRICE_OUTPUT_PER_M` | `15` | USD per 1M completion + reasoning tokens |
+| `ORACLE_BUDGET_PATH` | `$BACKUP_DIR/oracle-budget.json` | where the day's spend is persisted (survives restarts) |
+
+**Oracle budget.** After each xAI call, the server estimates its cost from the response's `usage` block:
+`(prompt − cached) × input + cached × cachedInput + (completion + reasoning) × output`, with prices per 1M tokens.
+If `usage` is missing, it estimates tokens as characters ÷ 4.
+Spend is kept per UTC day in a small JSON file, so a restart doesn't reset it.
+Once the day's spend reaches `ORACLE_DAILY_BUDGET_USD`, no further LLM calls are made that day. The built-in local oracle takes over, and the ⓘ panel shows `🔮 local (daily budget reached) ⛔ $x / $cap cap reached`.
+`/api/world` returns the live `oracleBudget` (`day, spentUsd, capUsd, remainingUsd, calls, capped`).
+These figures are estimates; xAI's console is the source of truth for billing.
 
 All other variables are in [.env.example](.env.example).
 

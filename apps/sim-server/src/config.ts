@@ -51,6 +51,15 @@ export const config = {
     model: env('ORACLE_MODEL', 'grok-4.7'),
     everyTicks: num('ORACLE_EVERY_TICKS', 120),
     timeoutMs: num('ORACLE_TIMEOUT_MS', 30000),
+    /** Hard cap on estimated LLM spend per UTC day; over it, the local oracle decides. */
+    dailyBudgetUsd: num('ORACLE_DAILY_BUDGET_USD', 1),
+    /** USD per 1M tokens, used to estimate spend from response `usage`. Check current xAI pricing. */
+    prices: {
+      inputPerM: num('ORACLE_PRICE_INPUT_PER_M', 3),
+      cachedInputPerM: num('ORACLE_PRICE_CACHED_INPUT_PER_M', 0.75),
+      outputPerM: num('ORACLE_PRICE_OUTPUT_PER_M', 15),
+    },
+    budgetPath: env('ORACLE_BUDGET_PATH', `${env('BACKUP_DIR', './backups')}/oracle-budget.json`),
   },
   backup: { intervalMin: num('BACKUP_INTERVAL_MIN', 60), dir: env('BACKUP_DIR', './backups'), keep: num('BACKUP_KEEP', 48) },
   /** Snapshot the full city state to the DB every N ticks (actions are written every tick). */

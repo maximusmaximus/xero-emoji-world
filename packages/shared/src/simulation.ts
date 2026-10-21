@@ -10,7 +10,7 @@ import { generateBuilding, generateDistrict, generateFloor, generateItem, genera
 import { applyAction, indexCity, recomputeStats, type CityIndex } from './reducer.js';
 import { Rng } from './rng.js';
 import { WORLD_BEHAVIOURS, dynamicWeight, harvestAction, decreeAction } from './world-behaviours.js';
-import { FLOOR_COST, HARVEST_EVERY as HARVEST_TICKS, ensureWorld, has, spend, type BehaviourKey, type Decree } from './world.js';
+import { FLOOR_COST, HARVEST_EVERY as HARVEST_TICKS, ensureWorld, has, spend, type BehaviourKey, type Decree, type OracleBudget } from './world.js';
 import type { Apartment, CityAction, CityState, Person } from './types.js';
 
 import type { SimContext, Behaviour } from './sim-util.js';
@@ -196,7 +196,7 @@ export function measure(state: CityState, idx: CityIndex) {
 export interface StepOptions {
   actionsPerTick: number; now: string;
   /** A decree from an oracle, applied first this tick (sanitised inside). */
-  decree?: { decree: Decree; source: 'oracle' | 'local'; oracle: string };
+  decree?: { decree: Decree; source: 'oracle' | 'local'; oracle: string; budget?: OracleBudget };
 }
 
 /** Advance one tick. Mutates `state`/`idx` and returns the actions in order. */
@@ -214,7 +214,7 @@ export function step(state: CityState, idx: CityIndex, opts: StepOptions): CityA
     // patch and clients replaying the stream would double-apply them (lockstep divergence).
     applyAction(state, idx, structuredClone(a)); out.push(a);
   };
-  if (opts.decree) emit(decreeAction(c, opts.decree.decree, opts.decree.source, opts.decree.oracle));
+  if (opts.decree) emit(decreeAction(c, opts.decree.decree, opts.decree.source, opts.decree.oracle, opts.decree.budget));
   if (tick % HARVEST_TICKS === 0) emit(harvestAction(c));
   const all = [...BEHAVIOURS, ...WORLD_BEHAVIOURS];
   const weighted = all.map(([k, b, base]) => [b, base * (state.world?.boosts[k] ?? 1) * dynamicWeight(k, c)] as [Behaviour, number]).filter(([, wt]) => wt > 0);
