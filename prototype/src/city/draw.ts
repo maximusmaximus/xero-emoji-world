@@ -1,4 +1,5 @@
 import { drawXero, drawXeroOnto } from "./xero-emoji";
+import { laneSignCorners, placedPoint, projectPoint } from "./signs";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -41,50 +42,16 @@ let viewPitch = 0.76;
 let focusC = 5;
 let focusR = 4;
 
-function aim() {
-  const az = viewYaw + Math.PI * 1.25;
-  const elev = Math.min(1.2, Math.max(0.14, viewPitch));
-  const dist = 36;
-  const tx = focusC;
-  const ty = focusR;
-  const tz = 1.5;
-  const ex = tx + Math.cos(az) * Math.cos(elev) * dist;
-  const ey = ty + Math.sin(az) * Math.cos(elev) * dist;
-  const ez = tz + Math.sin(elev) * dist;
-  let fx = tx - ex;
-  let fy = ty - ey;
-  let fz = tz - ez;
-  const fl = Math.hypot(fx, fy, fz) || 1;
-  fx /= fl;
-  fy /= fl;
-  fz /= fl;
-  let rx = fy;
-  let ry = -fx;
-  const rl = Math.hypot(rx, ry) || 1;
-  rx /= rl;
-  ry /= rl;
-  const ux = ry * fz - 0 * fy;
-  const uy = 0 * fx - rx * fz;
-  const uz = rx * fy - ry * fx;
-  return { ex, ey, ez, fx, fy, fz, rx, ry, ux, uy, uz };
+function shot() {
+  return { yaw: viewYaw, pitch: viewPitch, focusC, focusR };
 }
 
 function placed(col: number, row: number, z: number) {
-  const cam = aim();
-  const dx = col - cam.ex;
-  const dy = row - cam.ey;
-  const dz = z / 54 - cam.ez;
-  return {
-    camX: dx * cam.rx + dy * cam.ry,
-    camY: dx * cam.ux + dy * cam.uy + dz * cam.uz,
-    camZ: dx * cam.fx + dy * cam.fy + dz * cam.fz,
-  };
+  return placedPoint(col, row, z, shot());
 }
 
 function iso(col: number, row: number, z = 0): Point {
-  const p = placed(col, row, z);
-  const s = 640 / Math.max(0.4, p.camZ);
-  return { x: p.camX * s, y: -p.camY * s };
+  return projectPoint(col, row, z, shot());
 }
 
 function depthOf(col: number, row: number) {
@@ -747,11 +714,29 @@ export function drawCity(
         if (hash % 5 === 0) mark("💧", across ? col + 0.2 : col + 0.08, across ? row + 0.08 : row + 0.2, 10, across);
         const nextIsJunction = across ? onRow(col + 1) : onRow(row + 1);
         if (nextIsJunction) {
-          mark(across ? "➡️" : "⬇️", across ? col + 0.72 : col + 0.4, across ? row + 0.38 : row + 0.72, 12, across, {
+          const signC = across ? col + 0.72 : col + 0.4;
+          const signR = across ? row + 0.38 : row + 0.72;
+          const plate = laneSignCorners(signC, signR, across);
+          const p0 = to(iso(plate.p0[0], plate.p0[1], plate.p0[2]));
+          const p1 = to(iso(plate.p1[0], plate.p1[1], plate.p1[2]));
+          const p3 = to(iso(plate.p3[0], plate.p3[1], plate.p3[2]));
+          drawXeroOnto(ctx, "➡️", p0, p1, p3);
+          const xs = [p0.x, p1.x, p3.x];
+          const ys = [p0.y, p1.y, p3.y];
+          hits.push({
+            id: `street-${key}-➡️`,
             name: "Lane",
-            detail: "A lane arrow before the crosswalk. The stop line is the white bar at the mouth of the intersection.",
-          }, true);
-          thin(across ? 0.0 : 0.0, "⬜", 0.02);
+            emoji: "➡️",
+            role: "road",
+            place: "the street",
+            floor: 0,
+            detail: "A lane arrow before the crosswalk. It lies on the pavement and points the way the lane runs.",
+            x: Math.min(...xs),
+            y: Math.min(...ys),
+            w: Math.max(...xs) - Math.min(...xs),
+            h: Math.max(...ys) - Math.min(...ys),
+          });
+          thin(0, "⬜", 0.02);
         }
         if (hash % 7 === 0) mark("🚌", across ? col + 0.5 : col + 0.2, across ? row + 0.2 : row + 0.5, 18, across);
       },
