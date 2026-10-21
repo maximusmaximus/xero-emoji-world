@@ -24,7 +24,7 @@ const STORY_SYSTEM =
   "Voice of Xero, a living emoji city that people are watching right now. One or two short sentences. No markdown. Match the era you are given: a camp is small and physical, a skyline talks about towers, emoji roads, fields, and the sky. The higher the research and the longer the city has been watched, the more sophisticated the detail.";
 
 const DEVELOP_SYSTEM =
-  "You propose the next two buildings for Xero, an emoji city people are watching. Reply with JSON only, no markdown: {\"developments\":[{\"name\":\"Two Words\",\"kind\":\"hut|farmhouse|house|block|tower|skyscraper\",\"emoji\":\"one emoji\",\"note\":\"one sentence\"}]}. More watchers means a more sophisticated building the current era can actually build. Names are unique and concrete.";
+  "You propose the next two buildings for Xero, an emoji city people are watching. Reply with JSON only, no markdown: {\"developments\":[{\"name\":\"Two Words\",\"kind\":\"hut|farmhouse|house|store|gas|school|hospital|block|tower|skyscraper\",\"emoji\":\"one emoji\",\"note\":\"one sentence\"}]}. Each reply must be more sophisticated than the last: add real civic life, stores, gas stations, schools, and hospitals when the era can support them. More watchers means a richer, more specific building. Names are unique and concrete.";
 
 type Ledger = { day: string; spentUsd: number; byKey?: Record<string, number> };
 type Budget = { spentUsd: number; capUsd: number; remainingUsd: number; day: string };
@@ -34,7 +34,7 @@ const vectorCache = new Map<string, number[]>();
 const developCache = new Map<string, Development[]>();
 let queue: Promise<unknown> = Promise.resolve();
 
-const KINDS = ["hut", "farmhouse", "house", "block", "tower", "skyscraper"] as const;
+const KINDS = ["hut", "farmhouse", "house", "store", "gas", "school", "hospital", "block", "tower", "skyscraper"] as const;
 type DevKind = (typeof KINDS)[number];
 export type Development = { name: string; kind: DevKind; emoji: string; note: string };
 
@@ -504,19 +504,19 @@ function localDevelopments(era: string, watchers: number): Development[] {
     ],
     roads: [
       { name: "Signal House", kind: "house", emoji: "🚦", note: "A house at the crossing that watches the carts." },
-      { name: "Cartwright House", kind: "house", emoji: "🛞", note: "Where the wheels are mended." },
+      { name: "North Fuel", kind: "gas", emoji: "⛽", note: "A two-pump station where the road leaves the fields." },
     ],
     town: [
-      { name: "Market Block", kind: "block", emoji: "🏪", note: "A block of shops under one roof." },
-      { name: "Lantern Court", kind: rich ? "block" : "house", emoji: "🏮", note: "Courts lit after the roads go quiet." },
+      { name: "Corner Market", kind: "store", emoji: "🏪", note: "A shop with a full glass front and an awning over the walk." },
+      { name: "River School", kind: "school", emoji: "🏫", note: "Classrooms above a yard where the children already stand in the windows." },
     ],
     city: [
-      { name: "Archive Tower", kind: "tower", emoji: "📚", note: "A tower that keeps the city's notes." },
-      { name: "Harbor Tower", kind: "tower", emoji: "⚓", note: "A tower aimed at the road that leaves town." },
+      { name: "Mercy Hospital", kind: "hospital", emoji: "🏥", note: "Wards stacked over an emergency door, lit all night." },
+      { name: "Harbor Market", kind: "store", emoji: "🛒", note: "A market block that took the place of an empty lot." },
     ],
     skyline: [
-      { name: "Observatory Spire", kind: "skyscraper", emoji: "🔭", note: "A spire tall enough to see the planets they have been watching." },
-      { name: "Crown Spire", kind: "skyscraper", emoji: "🏙️", note: "The next spire, raised because more people are looking." },
+      { name: "Observatory Spire", kind: "skyscraper", emoji: "🔭", note: "A spire tall enough to see the moon they have been watching." },
+      { name: "Civic Hospital", kind: rich ? "hospital" : "school", emoji: "🏥", note: "The next civic building, larger because more people are looking." },
     ],
   };
   return table[era] ?? table.camp!;
@@ -610,17 +610,25 @@ function parseDevelopments(text: string): Development[] {
       const rawKind = String(row.kind || "").toLowerCase();
       const kind = KINDS.includes(rawKind as DevKind)
         ? (rawKind as DevKind)
-        : rawKind.includes("sky") || rawKind.includes("spire")
-          ? "skyscraper"
-          : rawKind.includes("tower")
-            ? "tower"
-            : rawKind.includes("farm") || rawKind.includes("barn")
-              ? "farmhouse"
-              : rawKind.includes("block")
-                ? "block"
-                : rawKind.includes("house")
-                  ? "house"
-                  : "hut";
+        : rawKind.includes("gas") || rawKind.includes("fuel")
+          ? "gas"
+          : rawKind.includes("school") || rawKind.includes("library")
+            ? "school"
+            : rawKind.includes("hospital") || rawKind.includes("clinic")
+              ? "hospital"
+              : rawKind.includes("store") || rawKind.includes("shop") || rawKind.includes("market")
+                ? "store"
+                : rawKind.includes("sky") || rawKind.includes("spire")
+                  ? "skyscraper"
+                  : rawKind.includes("tower")
+                    ? "tower"
+                    : rawKind.includes("farm") || rawKind.includes("barn")
+                      ? "farmhouse"
+                      : rawKind.includes("block")
+                        ? "block"
+                        : rawKind.includes("house")
+                          ? "house"
+                          : "hut";
       const name = String(row.name || "").replace(/\s+/g, " ").trim().slice(0, 32);
       const note = String(row.note || "").replace(/\s+/g, " ").trim().slice(0, 160);
       const emoji = Array.from(String(row.emoji || "🏗️")).slice(0, 2).join("") || "🏗️";

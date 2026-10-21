@@ -1,7 +1,7 @@
 export const CITY_VERSION = 2;
 
 export type Role = "person" | "pet" | "item";
-export type Kind = "hut" | "farmhouse" | "house" | "block" | "tower" | "skyscraper";
+export type Kind = "hut" | "farmhouse" | "house" | "store" | "gas" | "school" | "hospital" | "block" | "tower" | "skyscraper";
 export type Era = "camp" | "farm" | "roads" | "town" | "city" | "skyline";
 export type Task = "raise" | "pave" | "tend" | "visit" | "study" | "haul";
 export type Goods = "timber" | "grain" | "brick" | "steel" | "glass" | "tools";
@@ -103,6 +103,7 @@ export type City = {
   beats: Beat[];
   plans?: Plan[];
   watchers?: number;
+  sophistication?: number;
   stock?: Stock;
   works?: Works[];
   infra?: Infra[];
@@ -135,6 +136,10 @@ const SUFFIX: Record<Kind, string> = {
   hut: "Camp",
   farmhouse: "Farm",
   house: "House",
+  store: "Market",
+  gas: "Fuel",
+  school: "School",
+  hospital: "Hospital",
   block: "Court",
   tower: "Tower",
   skyscraper: "Spire",
@@ -153,6 +158,10 @@ const COST: Record<Kind, Partial<Stock>> = {
   hut: { timber: 1 },
   farmhouse: { timber: 1, grain: 1 },
   house: { timber: 1, brick: 1 },
+  store: { timber: 1, brick: 1 },
+  gas: { brick: 1, steel: 1 },
+  school: { brick: 2, glass: 1 },
+  hospital: { brick: 2, glass: 1, steel: 1 },
   block: { brick: 2, glass: 1 },
   tower: { brick: 1, steel: 1, glass: 1 },
   skyscraper: { steel: 2, glass: 1, tools: 1 },
@@ -319,7 +328,10 @@ function makeResident(rng: () => number, tick: number, n: number, role: Role): R
 }
 
 function floorsFor(kind: Kind, rng: () => number) {
-  if (kind === "hut" || kind === "farmhouse") return 2;
+  if (kind === "gas") return 1;
+  if (kind === "hut" || kind === "farmhouse" || kind === "store") return 2;
+  if (kind === "school") return 3 + Math.floor(rng() * 2);
+  if (kind === "hospital") return 4 + Math.floor(rng() * 2);
   if (kind === "house") return 3 + Math.floor(rng() * 2);
   if (kind === "block") return 5 + Math.floor(rng() * 2);
   if (kind === "tower") return 8 + Math.floor(rng() * 3);
@@ -468,10 +480,10 @@ function addFloor(building: Building, rng: () => number, tick: number): Building
 
 function kindsFor(era: Era): Kind[] {
   const at = eraIndex(era);
-  if (at >= 5) return ["skyscraper", "tower", "block"];
-  if (at >= 4) return ["tower", "block", "house"];
-  if (at >= 3) return ["block", "house", "farmhouse"];
-  if (at >= 2) return ["house", "farmhouse", "hut"];
+  if (at >= 5) return ["skyscraper", "hospital", "school", "store", "gas", "tower", "block"];
+  if (at >= 4) return ["hospital", "school", "store", "gas", "tower", "block", "house"];
+  if (at >= 3) return ["school", "store", "block", "house", "farmhouse"];
+  if (at >= 2) return ["store", "gas", "house", "farmhouse", "hut"];
   if (at >= 1) return ["farmhouse", "hut"];
   return ["hut"];
 }
@@ -483,6 +495,10 @@ function kindFor(era: Era, rng: () => number, city: City): Kind | null {
     hut: 4 + audience,
     farmhouse: 4 + audience,
     house: 5 + audience,
+    store: 6 + audience,
+    gas: 3 + audience,
+    school: 3 + audience,
+    hospital: 3 + audience,
     block: 4 + audience,
     tower: 4 + audience,
     skyscraper: 4 + audience,
@@ -501,7 +517,7 @@ export function queuePlans(
   incoming: { name: string; kind: Kind; emoji: string; note: string }[],
 ): City {
   const plans = [...(city.plans ?? [])];
-  const allowed: Kind[] = ["hut", "farmhouse", "house", "block", "tower", "skyscraper"];
+  const allowed: Kind[] = ["hut", "farmhouse", "house", "store", "gas", "school", "hospital", "block", "tower", "skyscraper"];
   for (const item of incoming) {
     if (!allowed.includes(item.kind)) continue;
     if (plans.some((plan) => plan.name === item.name)) continue;
@@ -514,7 +530,11 @@ export function queuePlans(
       used: false,
     });
   }
-  return { ...city, plans: plans.slice(-16) };
+  return {
+    ...city,
+    plans: plans.slice(-16),
+    sophistication: (city.sophistication ?? 0) + Math.max(1, incoming.length),
+  };
 }
 
 function spawn(city: City, crew: Omit<Crew, "progress"> & { progress?: number }): City {
@@ -1056,6 +1076,15 @@ export function stepCity(city: City): City {
     if (!building.rising || !next.stock) continue;
     const good = shortGood(next.stock, building.kind);
     if (good) next = spawnHaul(next, good, building.col, building.row, building.id);
+  }
+  if (next.tick % 24 === 0) {
+    const missing = (["store", "gas", "school", "hospital"] as Kind[]).filter(
+      (kind) => kindsFor(next.era).includes(kind) && !next.buildings.some((building) => building.kind === kind),
+    );
+    if (missing[0]) {
+      const staked = stake(next, rng, missing[0]);
+      if (staked) next = staked;
+    }
   }
   if (next.crews.length < 12) next = assignWork(next, rng);
   return next;

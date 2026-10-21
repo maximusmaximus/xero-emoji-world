@@ -280,16 +280,96 @@ export function drawCity(
   const to = (p: Point) => screen(p, view);
 
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#26221c";
+  const sky = ctx.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, "#0c121c");
+  sky.addColorStop(0.28, "#1d3148");
+  sky.addColorStop(0.46, "#c45c3e");
+  sky.addColorStop(0.56, "#f2c37a");
+  sky.addColorStop(0.64, "#6a7d45");
+  sky.addColorStop(1, "#172016");
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, height);
+  const horizon = height * 0.57;
+  ctx.fillStyle = "#243528";
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 8);
+  for (let x = 0; x <= width; x += 28) {
+    const hill = horizon - 10 - Math.sin(x * 0.012) * 22 - ((x * 17) % 19);
+    ctx.lineTo(x, hill);
+  }
+  ctx.lineTo(width, height);
+  ctx.lineTo(0, height);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255, 220, 170, 0.45)";
+  ctx.fillRect(0, horizon, width, 2);
+  const moonR = Math.min(width, height) * 0.14;
+  const moonX = width * 0.16;
+  const moonY = height * 0.15;
+  ctx.fillStyle = "#f7f3ea";
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(170, 164, 154, 0.45)";
+  ctx.beginPath();
+  ctx.arc(moonX - moonR * 0.25, moonY - moonR * 0.12, moonR * 0.22, 0, Math.PI * 2);
+  ctx.arc(moonX + moonR * 0.28, moonY + moonR * 0.18, moonR * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  const sunR = Math.min(width, height) * 0.18;
+  const sunX = width * 0.84;
+  const sunY = height * 0.2;
+  const glow = ctx.createRadialGradient(sunX, sunY, sunR * 0.15, sunX, sunY, sunR);
+  glow.addColorStop(0, "#fff8dc");
+  glow.addColorStop(0.42, "#f0a020");
+  glow.addColorStop(1, "rgba(240, 110, 40, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(244, 236, 220, 0.2)";
+  for (let i = 0; i < 6; i++) {
+    const cx = ((i * 240 + phase * 0.2) % (width + 200)) - 100;
+    const cy = height * (0.1 + (i % 3) * 0.05);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 78, 16, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 40, cy + 6, 46, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  hits.push(
+    {
+      id: "sky-moon",
+      name: "Moon",
+      emoji: "🌕",
+      role: "sky",
+      place: "the sky",
+      floor: 0,
+      detail: "A huge moon sitting on the horizon. It stays while the city grows under it.",
+      x: moonX - moonR,
+      y: moonY - moonR,
+      w: moonR * 2,
+      h: moonR * 2,
+    },
+    {
+      id: "sky-sun",
+      name: "Sun",
+      emoji: "☀️",
+      role: "sky",
+      place: "the sky",
+      floor: 0,
+      detail: "A huge sun low on the other side of the horizon, washing the far land.",
+      x: sunX - sunR * 0.55,
+      y: sunY - sunR * 0.55,
+      w: sunR * 1.1,
+      h: sunR * 1.1,
+    },
+  );
 
   const occupied = new Set(city.buildings.map((b) => `${b.col},${b.row}`));
   const spanC = city.cols || 11;
   const spanR = city.rows || 9;
-  const minC = -3;
-  const minR = -3;
-  const maxC = spanC + 3;
-  const maxR = spanR + 3;
+  const minC = -6;
+  const minR = -6;
+  const maxC = spanC + 6;
+  const maxR = spanR + 6;
 
   const roadSet = new Set(city.roads ?? []);
   const farmAt = new Map((city.farms ?? []).map((farm) => [`${farm.col},${farm.row}`, farm]));
@@ -304,19 +384,25 @@ export function drawCity(
     const key = `${tile.col},${tile.row}`;
     const road = roadSet.has(key);
     const farm = farmAt.has(key);
-    const inside = tile.col >= 0 && tile.row >= 0 && tile.col < spanC && tile.row < spanR;
-    const drop = road || !inside ? 5 : 0;
+    const insideDistrict = tile.col >= 0 && tile.row >= 0 && tile.col < spanC && tile.row < spanR;
+    const drop = road || !insideDistrict ? 4 : 0;
     const pts = top(tile.col, tile.row, -drop).map(to);
     quad(ctx, pts);
-    if (!inside) ctx.fillStyle = "#211e1a";
-    else if (occupied.has(key)) ctx.fillStyle = "#221c17";
-    else if (road) ctx.fillStyle = (tile.col + tile.row) % 2 === 0 ? "#3a342c" : "#312c26";
-    else if (farm) ctx.fillStyle = (tile.col + tile.row) % 2 === 0 ? "#6a5428" : "#5c4922";
-    else ctx.fillStyle = (tile.col + tile.row) % 2 === 0 ? "#3e4d34" : "#35442d";
+    if (!insideDistrict) {
+      ctx.fillStyle = tile.row > spanR + 1 || tile.col < -2 ? "#1d4c56" : "#3b4e34";
+    } else if (occupied.has(key)) ctx.fillStyle = "#241c16";
+    else if (road) ctx.fillStyle = "#463f36";
+    else if (farm) ctx.fillStyle = "#74602c";
+    else ctx.fillStyle = (cellHash(tile.col, tile.row) % 3 === 0) ? "#4e673c" : "#466038";
     ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.28)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
+    if (insideDistrict && (road || farm)) {
+      ctx.strokeStyle = "rgba(0,0,0,0.16)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
 
   const props: { depth: number; draw: () => void }[] = [];
@@ -633,14 +719,14 @@ export function drawCity(
       });
     });
   }
-  const skyBodies = ["⭐", "✨", "🌟", "🌙", "🪐", "🌍", "☀️", "☄️", "🌌", "🌠", "🛸", "🌕"];
-  const skyCount = Math.min(skyBodies.length, 4 + Math.floor((city.tick || 0) / 80));
+  const skyBodies = ["⭐", "✨", "🌟", "🪐", "☄️", "🌠"];
+  const skyCount = Math.min(skyBodies.length, 3 + Math.floor((city.sophistication ?? 0) / 2));
   for (let i = 0; i < skyCount; i++) {
     const emoji = skyBodies[i]!;
     const col = ((i * 2.6 + phase * 0.004) % (spanC + 6)) - 2;
     const row = (i % 4) * 0.8 - 2.2;
     const z = 210 + (i % 4) * 28;
-    const world = emoji === "🌙" || emoji === "🪐" || emoji === "🌍" || emoji === "☀️" ? 28 : 16;
+    const world = emoji === "🪐" ? 22 : 14;
     props.push({
       depth: -1000 - i,
       draw: () =>
@@ -673,14 +759,41 @@ export function drawCity(
     const floors = building.apartments.length;
     const { col, row } = building;
     if (floors === 0) {
-      glyph("🪵", col + 0.35, row + 0.55, 6, 26);
-      glyph("🚩", col + 0.7, row + 0.35, 16, 28);
+      glyph("🪵", col + 0.35, row + 0.55, 6, 34);
+      glyph("🚩", col + 0.7, row + 0.35, 16, 34);
       return;
     }
+    const name = building.name.toLowerCase();
+    const facade =
+      building.kind === "gas" || /gas|fuel/.test(name)
+        ? "gas"
+        : building.kind === "store" || /market|store|shop/.test(name)
+          ? "shop"
+          : building.kind === "school" || /school|archive|library/.test(name)
+            ? "school"
+            : building.kind === "hospital" || /hospital|clinic|mercy/.test(name)
+              ? "hospital"
+              : building.kind === "farmhouse"
+                ? "barn"
+                : building.kind === "tower" || building.kind === "skyscraper"
+                  ? "tower"
+                  : "home";
     const mat = MATERIALS[building.material % MATERIALS.length] ?? MATERIALS[0];
+    const wallColor =
+      facade === "hospital"
+        ? ["#d9ddd8", "#e8e6e1", "#c5cdc8", "#f4f1ea"]
+        : facade === "school"
+          ? ["#b4533a", "#c46a45", "#8d3d2c", "#d7a48a"]
+          : facade === "shop"
+            ? ["#8a6232", "#a87840", "#6b4c28", "#c9a36a"]
+            : facade === "gas"
+              ? ["#3e4650", "#4c5662", "#2c333b", "#6a7380"]
+              : facade === "barn"
+                ? ["#8a4b32", "#a35b3c", "#6e3b28", "#c4845a"]
+                : ["#5c534c", "#6a6158", "#3e3934", "#7d756c"];
     const base = top(col + 0.08, row + 0.12, 0, 1.05, 1.08).map(to);
     quad(ctx, base);
-    ctx.fillStyle = "rgba(0,0,0,0.32)";
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
     ctx.fill();
 
     const height = floors * FH;
@@ -691,67 +804,62 @@ export function drawCity(
         return { side, depth: depthOf(midC, midR) };
       })
       .sort((a, b) => a.depth - b.depth);
-    const shade = ["#5c4638", "#3d4a3c", "#2a2420", "#3e4a56"];
     for (const side of sides) {
       const pts = wall(col, row, 0, height, side.side).map(to);
       quad(ctx, pts);
-      ctx.fillStyle = shade[side.side] ?? mat.left;
+      ctx.fillStyle = wallColor[side.side] ?? mat.left;
       ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.45)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
 
+    const soph = Math.min(6, city.sophistication ?? Math.floor((city.research || 0) / 500));
+    const front = sides.slice(-2);
     for (const apt of building.apartments) {
       const z0 = (apt.floor - 1) * FH;
       const z1 = apt.floor * FH;
-      const openings: { foot: Point; head: Point; along: Point }[] = [];
-      const near = sides.slice(-2);
-      for (const side of near) {
-        const panes = side.side === 2 ? 1 : side.side === 3 ? 2 : 3;
-        const paneWall = wall(col, row, z0 + FH * 0.18, z1 - FH * 0.1, side.side).map(to);
+      const floorOpenings: Point[][] = [];
+      for (const side of front) {
+        const storefront = apt.floor === 1 && (facade === "shop" || facade === "gas" || facade === "hospital");
+        const panes = storefront ? 1 : facade === "tower" ? 2 + Math.min(2, Math.floor(soph / 2)) : facade === "school" ? 3 : 2;
+        const paneWall = wall(col, row, z0 + FH * 0.22, z1 - FH * 0.16, side.side).map(to);
         for (let pane = 0; pane < panes; pane++) {
           const cell = split(paneWall[0]!, paneWall[1]!, paneWall[2]!, paneWall[3]!, pane, panes);
-          const shrunk = inset(cell, side.side === 2 ? 0.34 : 0.2);
+          const shrunk = inset(cell, storefront ? 0.08 : 0.16);
           quad(ctx, shrunk);
-          if (apt.lit && side.side !== 2) {
-            ctx.fillStyle = side.side === 0 ? "rgba(242, 197, 122, 0.62)" : "rgba(186, 214, 204, 0.5)";
-            ctx.shadowColor = "rgba(232,165,75,0.7)";
-            ctx.shadowBlur = 8;
-          } else {
-            ctx.fillStyle = "#100e0c";
-            ctx.shadowBlur = 0;
-          }
+          ctx.fillStyle = apt.lit ? "rgba(255, 214, 150, 0.55)" : "#16130f";
           ctx.fill();
-          ctx.shadowBlur = 0;
-          if (side.side !== 2) {
-            openings.push({
-              foot: { x: (shrunk[0]!.x + shrunk[1]!.x) / 2, y: (shrunk[0]!.y + shrunk[1]!.y) / 2 },
-              head: { x: (shrunk[2]!.x + shrunk[3]!.x) / 2, y: (shrunk[2]!.y + shrunk[3]!.y) / 2 },
-              along: { x: shrunk[1]!.x - shrunk[0]!.x, y: shrunk[1]!.y - shrunk[0]!.y },
-            });
+          if (storefront && side.side === front[front.length - 1]?.side) {
+            const awning = wall(col, row, z1 - FH * 0.08, z1 + FH * 0.02, side.side).map(to);
+            quad(ctx, inset(awning, 0.02));
+            ctx.fillStyle = facade === "gas" ? "#d64545" : facade === "hospital" ? "#d64545" : "#c45c2a";
+            ctx.fill();
           }
+          floorOpenings.push(shrunk);
         }
       }
-      apt.residents.forEach((resident, index) => {
-        const opening = openings[index % Math.max(1, openings.length)];
-        if (!opening) return;
-        const share = Math.floor(index / Math.max(1, openings.length));
-        const nudge = resident.role === "person" ? 0 : resident.role === "pet" ? 0.34 : -0.34;
-        const foot = {
-          x: opening.foot.x + opening.along.x * (nudge + share * 0.12),
-          y: opening.foot.y + opening.along.y * (nudge + share * 0.12),
-        };
-        const paneH = Math.hypot(opening.head.x - opening.foot.x, opening.head.y - opening.foot.y);
-        const size = Math.max(10, paneH * (resident.role === "person" ? 0.92 : resident.role === "pet" ? 0.5 : 0.42));
-        ctx.globalAlpha = apt.lit ? 1 : 0.6;
-        drawXero(ctx, resident.emoji, foot.x, foot.y, size, { anchor: "feet" });
-        ctx.globalAlpha = 1;
+      const people = [...apt.residents].sort((a, b) => (a.role === "person" ? 0 : 1) - (b.role === "person" ? 0 : 1));
+      people.forEach((resident, index) => {
+        const pane = floorOpenings[index];
+        if (!pane) return;
+        const foot = { x: (pane[0]!.x + pane[1]!.x) / 2, y: (pane[0]!.y + pane[1]!.y) / 2 };
+        const head = { x: (pane[2]!.x + pane[3]!.x) / 2, y: (pane[2]!.y + pane[3]!.y) / 2 };
+        const paneH = Math.max(8, Math.hypot(head.x - foot.x, head.y - foot.y));
+        const size = paneH * (resident.role === "person" ? 1.45 : 1.05);
+        ctx.save();
+        quad(ctx, pane);
+        ctx.clip();
+        ctx.globalAlpha = apt.lit ? 1 : 0.55;
+        drawXero(ctx, resident.emoji, foot.x, foot.y - paneH * 0.04, size, { anchor: "feet" });
+        ctx.restore();
         if (resident.id === focusId) {
+          quad(ctx, pane);
           ctx.strokeStyle = palette.teal;
           ctx.lineWidth = 2;
-          ctx.strokeRect(foot.x - size * 0.5, foot.y - size, size, size);
+          ctx.stroke();
         }
+        const xs = pane.map((p) => p.x);
+        const ys = pane.map((p) => p.y);
+        const minX = Math.min(...xs);
+        const minY = Math.min(...ys);
         hits.push({
           id: resident.id,
           name: resident.name,
@@ -759,58 +867,35 @@ export function drawCity(
           role: resident.role,
           place: building.name,
           floor: apt.floor,
-          detail: `${resident.name} the ${resident.role} lives at ${building.name}, floor ${apt.floor}. The city is in the ${city.era} era, research ${city.research}, and people are watching it get more sophisticated.`,
-          x: foot.x - size * 0.5,
-          y: foot.y - size,
-          w: size,
-          h: size,
+          detail: `${resident.name} stands inside a window at ${building.name}, floor ${apt.floor}. The glass cuts the glyph so nothing from the room shows on the wall.`,
+          x: minX,
+          y: minY,
+          w: Math.max(...xs) - minX,
+          h: Math.max(...ys) - minY,
         });
       });
     }
 
     const roofZ = floors * FH;
-    const slab = 8;
+    const slab = facade === "gas" ? 4 : 7;
     for (const side of sides) {
       const fascia = wall(col, row, roofZ, roofZ + slab, side.side).map(to);
       quad(ctx, fascia);
-      ctx.fillStyle = side.side === 2 ? "#241e1a" : mat.edge;
+      ctx.fillStyle = facade === "hospital" ? "#f4f1ea" : facade === "gas" ? "#2a3138" : mat.edge;
       ctx.fill();
     }
-    quad(ctx, top(col - 0.04, row - 0.04, roofZ + slab, 1.08, 1.08).map(to));
-    ctx.fillStyle = mat.top;
+    quad(ctx, top(col - 0.02, row - 0.02, roofZ + slab, 1.04, 1.04).map(to));
+    ctx.fillStyle = facade === "gas" ? "#e23b3b" : facade === "school" ? "#8d3d2c" : mat.top;
     ctx.fill();
-    ctx.strokeStyle = mat.edge;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(243,234,215,0.35)";
-    ctx.lineWidth = 1.25;
-    ctx.beginPath();
-    for (const [c, r] of [
-      [col, row],
-      [col + 1, row],
-      [col, row + 1],
-      [col + 1, row + 1],
-    ] as const) {
-      const a = to(iso(c, r, 0));
-      const b = to(iso(c, r, roofZ + slab));
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-    }
-    ctx.stroke();
-    const nearSides = new Set(sides.slice(-2).map((side) => side.side));
-    if (nearSides.has(0)) glyph("🚪", col + 1.04, row + 0.5, 0, 22);
-    if (nearSides.has(2)) glyph("🪜", col - 0.04, row + 0.55, FH, 20);
-    if (nearSides.has(3)) glyph("🪴", col + 0.5, row - 0.04, 4, 16);
-    if (nearSides.has(1)) glyph("🪧", col + 0.5, row + 1.04, FH * 0.45, 16);
-    if (building.rising) glyph("🏗️", col + 0.55, row + 0.35, roofZ + slab, 30);
+    if (facade === "gas") glyph("⛽", col + 0.5, row + 0.72, 2, 40);
+    if (facade === "shop") glyph("🏪", col + 0.5, row + 0.2, roofZ + slab, 36);
+    if (facade === "school") glyph("🏫", col + 0.5, row + 0.35, roofZ + slab, 40);
+    if (facade === "hospital") glyph("🏥", col + 0.5, row + 0.35, roofZ + slab, 42);
+    if (facade === "tower" && soph > 0) glyph(soph > 3 ? "🏙️" : "📡", col + 0.72, row + 0.28, roofZ + slab, 28);
+    if (building.rising) glyph("🏗️", col + 0.28, row + 0.62, roofZ + slab, 34);
 
-    if (building.material % 2 === 0) {
-      const cap = ["📡", "🛰️", "📺", "🪺", "🎐"][building.material % 5]!;
-      glyph(cap, col + 0.72, row + 0.28, roofZ + slab, 20);
-    }
-
-    const crown = to(iso(col + 0.5, row + 0.5, roofZ + 1));
-    if (building.rising || building.kind === "tower" || building.kind === "skyscraper" || building.kind === "farmhouse") {
+    const crown = to(iso(col + 0.5, row + 0.5, roofZ + slab + 6));
+    if (building.rising || facade === "hospital" || facade === "school" || facade === "shop" || building.kind === "skyscraper") {
       ctx.font = `600 ${Math.max(10, 11 * view.scale)}px Outfit, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
