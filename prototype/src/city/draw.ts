@@ -1,4 +1,4 @@
-import { drawXero } from "./xero-emoji";
+import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -612,40 +612,60 @@ export function drawCity(
     let west = roadSet.has(`${col - 1},${row}`);
     let south = roadSet.has(`${col},${row + 1}`);
     let north = roadSet.has(`${col},${row - 1}`);
-    const links = Number(east) + Number(west) + Number(south) + Number(north);
-    const junction = links >= 3 && (east || west) && (north || south);
-    const emoji = junction && (col + row) % 6 === 0 ? "🚦" : "🛣️";
     props.push({
       depth: depthOf(col + 0.5, row + 0.5) - 0.08,
       draw: () => {
-        if (junction) {
-          glyph(emoji, col + 0.5, row + 0.5, 0, junction ? 18 : 12, {
-            cover: true,
-            hit: {
-              id: `road-${key}`,
-              name: "Crossing",
-              role: "road",
-              place: "the road",
-              detail: "A crossing where the emoji roads meet. Carts have to take a turn.",
-            },
-          });
-          return;
+        const crossing = (east || west) && (north || south) && col % 5 === 0 && row % 5 === 0;
+        const band = (c0: number, r0: number, c1: number, r1: number) =>
+          [iso(c0, r0, 2), iso(c1, r0, 2), iso(c1, r1, 2), iso(c0, r1, 2)].map(to);
+        const pave = (quad: Point[], emoji: string) => {
+          let p0 = quad[0]!;
+          let p1 = quad[1]!;
+          let p3 = quad[3]!;
+          if (p1.x < p0.x) {
+            const next = { x: p1.x + (p3.x - p0.x), y: p1.y + (p3.y - p0.y) };
+            p1 = p0;
+            p0 = quad[1]!;
+            p3 = next;
+          }
+          drawXeroOnto(ctx, emoji, p0, p1, p3);
+        };
+        if (crossing) {
+          pave(band(col, row, col + 1, row + 0.18), "⬜");
+          pave(band(col, row + 0.82, col + 1, row + 1), "⬜");
+          pave(band(col, row + 0.18, col + 0.18, row + 0.82), "⬜");
+          pave(band(col + 0.82, row + 0.18, col + 1, row + 0.82), "⬜");
+          pave(band(col + 0.18, row + 0.42, col + 0.82, row + 0.58), "⬜");
+          pave(band(col + 0.42, row + 0.18, col + 0.58, row + 0.82), "⬜");
+          glyph("🚦", col + 0.5, row + 0.5, 2, 16, { feet: false, cover: true });
+        } else if (east || west) {
+          pave(band(col, row, col + 1, row + 0.16), "⬜");
+          pave(band(col, row + 0.16, col + 1, row + 0.46), "⬛");
+          pave(band(col, row + 0.46, col + 1, row + 0.54), "🟨");
+          pave(band(col, row + 0.54, col + 1, row + 0.84), "⬛");
+          pave(band(col, row + 0.84, col + 1, row + 1), "⬜");
+        } else {
+          pave(band(col, row, col + 0.16, row + 1), "⬜");
+          pave(band(col + 0.16, row, col + 0.46, row + 1), "⬛");
+          pave(band(col + 0.46, row, col + 0.54, row + 1), "🟨");
+          pave(band(col + 0.54, row, col + 0.84, row + 1), "⬛");
+          pave(band(col + 0.84, row, col + 1, row + 1), "⬜");
         }
-        const bend = (east || west) && (north || south);
-        const dc = east || west ? 1 : 0;
-        const dr = !bend && (north || south) ? 1 : bend ? 1 : 0;
-        glyph(emoji, col + 0.5, row + 0.5, 2, 20, {
-          dc: bend ? 1 : dc,
-          dr: bend ? 1 : dr,
-          feet: false,
-          cover: true,
-          hit: {
-            id: `road-${key}`,
-            name: "Road",
-            role: "road",
-            place: "the road",
-            detail: `A stretch of road made of ${emoji}. It points along the street, upright, not pasted flat.`,
-          },
+        const hit = to(iso(col + 0.5, row + 0.5, 2));
+        hits.push({
+          id: `road-${key}`,
+          name: crossing ? "Crossing" : "Road",
+          emoji: "🛣️",
+          role: "road",
+          place: "the street",
+          floor: 0,
+          detail: crossing
+            ? "A crossing paved in emoji: sidewalk, crosswalk stripes, and a light."
+            : "Emoji lanes, a yellow divider, and a sidewalk along each curb.",
+          x: hit.x - 18,
+          y: hit.y - 12,
+          w: 36,
+          h: 24,
         });
       },
     });
@@ -885,7 +905,7 @@ function paintBuilding(building: Building) {
         : facade === "school"
           ? { mass: "🟥", bay: "🪟", pier: "🟥", roof: "🟥", crown: "🕐", sill: "📚" }
           : facade === "shop"
-            ? { mass: "🟫", bay: "🪟", pier: "🏪", roof: "🟫", crown: "🛍️", sill: "🍞" }
+            ? { mass: "🟫", bay: "🪟", pier: "🟫", roof: "🟫", crown: "🛍️", sill: "🍞" }
             : facade === "gas"
               ? { mass: "⬜", bay: "🪟", pier: "🟥", roof: "🟥", crown: "⛽", sill: "🔧" }
               : facade === "barn"
@@ -916,6 +936,18 @@ function paintBuilding(building: Building) {
       const size = Math.min(w, h);
       if (size < 3) return;
       drawXero(ctx, emoji, cx, cy, size, { anchor: "center" });
+    };
+    const placeOnFace = (quadPts: Point[], emoji: string) => {
+      let tl = quadPts[0]!;
+      let tr = quadPts[1]!;
+      let bl = quadPts[3]!;
+      let br = quadPts[2]!;
+      if (tr.x < tl.x) {
+        [tl, tr] = [tr, tl];
+        [bl, br] = [br, bl];
+      }
+      if (Math.hypot(tr.x - tl.x, tr.y - tl.y) < 3) return;
+      drawXeroOnto(ctx, emoji, tl, tr, bl);
     };
 
     const base = top(col + 0.08, row + 0.12, 0, 1.05, 1.08).map(to);
@@ -953,13 +985,13 @@ function paintBuilding(building: Building) {
           }
         }
         if (facingStreet) {
-          stamp(pts, 1, y0 + 1, open ? "🏗️" : skin.bay, 3, 3);
-          stamp(pts, 6, y0 + 1, open ? "🏗️" : skin.bay, 3, 3);
+          placeOnFace(inset(cell(pts, 1, y0 + 1, 3, 3), 0.08), open ? "🏗️" : skin.bay);
+          placeOnFace(inset(cell(pts, 6, y0 + 1, 3, 3), 0.08), open ? "🏗️" : skin.bay);
           if (floor === 1 && !open) stamp(pts, 4, y0 + 4, skin.sill);
         }
       }
       if (facingStreet && side.side === frontMost) {
-        stamp(pts, 4, 1, "🚪", 2, 4);
+        placeOnFace(cell(pts, 4, 1, 2, 4), "🚪");
       }
     }
 
@@ -970,17 +1002,21 @@ function paintBuilding(building: Building) {
       const pts = wall(col, row, 0, height, host.side).map(to);
       const y0 = (apt.floor - 1) * rowsEach;
       people.slice(0, 2).forEach((resident, index) => {
-        const pane = cell(pts, index === 0 ? 1 : 6, y0 + 1, 3, 3);
-        const foot = { x: (pane[3]!.x + pane[2]!.x) / 2, y: (pane[3]!.y + pane[2]!.y) / 2 };
-        const head = { x: (pane[0]!.x + pane[1]!.x) / 2, y: (pane[0]!.y + pane[1]!.y) / 2 };
-        const paneH = Math.max(8, Math.hypot(head.x - foot.x, head.y - foot.y));
+        const pane = inset(cell(pts, index === 0 ? 1 : 6, y0 + 1, 3, 3), 0.28);
+        const flip = pane[1]!.x < pane[0]!.x;
+        const foot = { x: (pane[2]!.x + pane[3]!.x) / 2, y: (pane[2]!.y + pane[3]!.y) / 2 };
+        const paneW = Math.hypot(pane[1]!.x - pane[0]!.x, pane[1]!.y - pane[0]!.y);
+        const paneH = Math.hypot(pane[3]!.x - pane[0]!.x, pane[3]!.y - pane[0]!.y);
+        const size = Math.min(paneW, paneH) * 0.9;
         ctx.save();
         quad(ctx, pane);
         ctx.clip();
-        ctx.globalAlpha = apt.lit ? 1 : 0.55;
-        drawXero(ctx, resident.emoji, foot.x, foot.y, paneH * 1.35, { anchor: "feet" });
+        ctx.fillStyle = apt.lit ? "rgba(255, 206, 140, 0.94)" : "rgba(16, 18, 24, 0.94)";
+        ctx.fill();
+        drawXero(ctx, resident.emoji, foot.x, foot.y, size, { anchor: "feet", flip });
         if (resident.role === "person") {
-          drawXero(ctx, windowScene(facade, apt.floor, index, city.tick || 0), foot.x + paneH * 0.35, foot.y, paneH * 0.7, { anchor: "feet" });
+          const scene = windowScene(facade, apt.floor, index, city.tick || 0);
+          drawXero(ctx, scene, foot.x + (flip ? -1 : 1) * size * 0.28, foot.y, size * 0.42, { anchor: "feet", flip });
         }
         ctx.restore();
         const xs = pane.map((p) => p.x);
