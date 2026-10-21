@@ -28,7 +28,7 @@ describe('generator', () => {
     const s = createInitialCity('xew', NOW);
     const walk = (v: unknown): void => {
       if (Array.isArray(v)) v.forEach(walk);
-      else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) k === 'emoji' ? expect(emojiInfo(x as string), String(x)).toBeDefined() : walk(x);
+      else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { if (k === 'emoji') expect(emojiInfo(x as string), String(x)).toBeDefined(); else walk(x); }
     };
     walk(s);
   });
