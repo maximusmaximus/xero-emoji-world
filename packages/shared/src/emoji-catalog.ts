@@ -20,7 +20,9 @@ export type EmojiRole =
   | 'tower' | 'house' | 'civic' | 'shop' | 'landmark' | 'vehicle' | 'transit'
   | 'aircraft' | 'boat' | 'furniture' | 'appliance' | 'gadget' | 'clothing'
   | 'decor' | 'tool' | 'hobby' | 'sport' | 'construction' | 'event' | 'sky'
-  | 'water' | 'road' | 'money' | 'music' | 'book' | 'toy' | 'plant';
+  | 'water' | 'road' | 'money' | 'music' | 'book' | 'toy' | 'plant'
+  /** Raw or crafted world material, the building blocks of emoji-alchemy. */
+  | 'element';
 
 export interface EmojiInfo {
   glyph: string;
@@ -356,6 +358,27 @@ const ROWS: Row[] = [
   ['⬛', 'black large square', 'symbols', 'road', '0.6'],
   ['🟩', 'green square', 'symbols', 'plant', '12.0'],
   ['🟫', 'brown square', 'symbols', 'construction', '12.0'],
+  // ---------- elements: the building blocks of emoji-alchemy ----------
+  ['🪵', 'wood', 'objects', 'element', '13.0'],
+  ['📜', 'scroll', 'objects', 'element,book', '0.6'],
+  ['⚙️', 'gear', 'objects', 'element,tool', '1.0'],
+  ['💎', 'gem stone', 'objects', 'element', '0.6'],
+  ['🌾', 'sheaf of rice', 'plants', 'element,plant', '0.6'],
+  ['⛏️', 'pick', 'objects', 'element,tool', '1.0'],
+  ['🔮', 'crystal ball', 'objects', 'element', '0.6'],
+  ['🧪', 'test tube', 'objects', 'element', '11.0'],
+  ['🌋', 'volcano', 'travel', 'element,landmark', '0.6'],
+  ['🪨', 'rock', 'objects', 'element', '13.0'],
+  ['⚡', 'high voltage', 'weather', 'element', '0.6'],
+  ['🧲', 'magnet', 'objects', 'element', '11.0'],
+  ['🌀', 'cyclone', 'weather', 'element,sky', '0.6'],
+  ['🧬', 'dna', 'objects', 'element', '11.0'],
+  ['🐉', 'dragon', 'animals', 'element,landmark', '5.0'],
+  ['🦄', 'unicorn', 'animals', 'element,landmark', '1.0'],
+  ['🌌', 'milky way', 'travel', 'element,sky', '0.6'],
+  ['🪄', 'magic wand', 'objects', 'element', '13.0'],
+  ['🫧', 'bubbles', 'objects', 'element', '14.0'],
+  ['🍯', 'honey pot', 'food', 'element,food', '0.6'],
 ];
 
 const toCodepoints = (g: string): string[] =>
