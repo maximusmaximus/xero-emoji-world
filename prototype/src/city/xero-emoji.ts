@@ -56,7 +56,7 @@ export function drawXero(
   x: number,
   y: number,
   size: number,
-  pose?: { rotation?: number; flip?: boolean; anchor?: "center" | "feet" },
+  pose?: { rotation?: number; flip?: boolean; anchor?: "center" | "feet"; squash?: number },
 ) {
   const img = loadXero(emoji);
   const anchor = pose?.anchor ?? "center";
@@ -71,6 +71,8 @@ export function drawXero(
   ctx.translate(x, y);
   if (pose?.rotation) ctx.rotate(pose.rotation);
   if (pose?.flip) ctx.scale(-1, 1);
+  // Squash along the car's own up-axis so the roof stays perpendicular to the lane and the wheels stay on it.
+  if (pose?.squash && pose.squash !== 1) ctx.scale(1, pose.squash);
   const top = anchor === "feet" ? -size : -size / 2;
   ctx.drawImage(img, -size / 2, top, size, size);
   ctx.restore();

@@ -66,6 +66,21 @@ export type Crew = {
   progress: number;
   targetId: string;
   cargo?: string;
+  /** Set when this crew stepped aside for someone else this tick. */
+  yield?: string;
+};
+
+export type Vehicle = {
+  id: string;
+  emoji: string;
+  name: string;
+  col: number;
+  row: number;
+  destCol: number;
+  destRow: number;
+  progress: number;
+  wait: number;
+  lane: number;
 };
 
 export type Focus = {
@@ -125,6 +140,7 @@ export type City = {
   stock?: Stock;
   works?: Works[];
   infra?: Infra[];
+  vehicles?: Vehicle[];
 };
 
 const ERA_ORDER: Era[] = ["camp", "farm", "roads", "town", "city", "skyline"];
@@ -1229,6 +1245,188 @@ function stepAlchemy(city: City, rng: () => number): City {
   return beat ? pushBeat({ ...city, alchemy }, beat) : { ...city, alchemy };
 }
 
+const FLEET = [
+  { emoji: "🚗", name: "Car" },
+  { emoji: "🚕", name: "Taxi" },
+  { emoji: "🚌", name: "Bus" },
+  { emoji: "🚚", name: "Truck" },
+  { emoji: "🚓", name: "Patrol" },
+  { emoji: "🚲", name: "Bicycle" },
+];
+
+function onAvenue(col: number, row: number) {
+  const band = (value: number) => ((value % 3) + 3) % 3 === 1;
+  return band(col) || band(row);
+}
+
+function vehiclePos(v: Vehicle) {
+  const dirC = v.destCol - v.col;
+  const dirR = v.destRow - v.row;
+  const len = Math.hypot(dirC, dirR) || 1;
+  const side = v.lane ? 0.22 : -0.22;
+  return {
+    col: v.col + dirC * v.progress + (-dirR / len) * side,
+    row: v.row + dirR * v.progress + (dirC / len) * side,
+  };
+}
+
+function crewPos(crew: Crew) {
+  return {
+    col: crew.col + (crew.destCol - crew.col) * crew.progress,
+    row: crew.row + (crew.destRow - crew.row) * crew.progress,
+  };
+}
+
+function nextAvenue(city: City, col: number, row: number, fromCol: number, fromRow: number): [number, number] {
+  const roads = new Set(city.roads);
+  const options = DIRS.map(([dc, dr]) => [col + dc, row + dr] as [number, number]).filter(([c, r]) => {
+    if (c === fromCol && r === fromRow) return false;
+    if (c < 0 || r < 0 || c >= city.cols || r >= city.rows) return false;
+    return roads.has(keyOf(c, r)) && onAvenue(c, r);
+  });
+  const straight = options.find(([c, r]) => c - col === col - fromCol && r - row === row - fromRow);
+  if (straight) return straight;
+  if (options.length) return options[(col * 3 + row + city.tick) % options.length]!;
+  return [fromCol, fromRow];
+}
+
+function ensureFleet(city: City): City {
+  if (eraIndex(city.era) < 2) return city;
+  const avenues = city.roads.filter((key) => {
+    const [col, row] = key.split(",").map(Number) as [number, number];
+    return onAvenue(col, row);
+  });
+  if (avenues.length < 6) return city;
+  const want = Math.min(FLEET.length, 2 + eraIndex(city.era));
+  const have = city.vehicles ?? [];
+  if (have.length >= want) return city;
+  const vehicles = [...have];
+  for (let i = have.length; i < want; i++) {
+    const spec = FLEET[i % FLEET.length]!;
+    const at = avenues[(i * 5 + 2) % avenues.length]!.split(",").map(Number) as [number, number];
+    const hop = nextAvenue(city, at[0], at[1], at[0], at[1] + 1);
+    if (hop[0] === at[0] && hop[1] === at[1]) continue;
+    vehicles.push({
+      id: `veh-${spec.name}-${i}`,
+      emoji: spec.emoji,
+      name: spec.name,
+      col: at[0],
+      row: at[1],
+      destCol: hop[0],
+      destRow: hop[1],
+      progress: (i * 0.17) % 1,
+      wait: 0,
+      lane: i % 2,
+    });
+  }
+  return vehicles.length === have.length ? city : { ...city, vehicles };
+}
+
+/** Cars, crews, and walkers check the thing in front of them before they move. */
+function stepTraffic(city: City): City {
+  let next = ensureFleet(city);
+  const fleet = next.vehicles;
+  if (!fleet?.length) return next;
+  const people = next.crews.map((crew) => ({ crew, ...crewPos(crew) }));
+  const held = new Set<string>();
+  let note: Beat | null = null;
+  const vehicles = fleet.map((vehicle, index) => {
+    const here = vehiclePos(vehicle);
+    const dirC = vehicle.destCol - vehicle.col;
+    const dirR = vehicle.destRow - vehicle.row;
+    const ahead = fleet.some((other, otherIndex) => {
+      if (otherIndex === index) return false;
+      const there = vehiclePos(other);
+      const dc = there.col - here.col;
+      const dr = there.row - here.row;
+      return Math.hypot(dc, dr) < 0.4 && dc * dirC + dr * dirR > 0.05;
+    });
+    const person = people.find(
+      (p) =>
+        (p.crew.task === "enter" || p.crew.task === "visit" || p.crew.task === "tend") &&
+        Math.hypot(p.col - here.col, p.row - here.row) < 0.6,
+    );
+    if (person) held.add(person.crew.id);
+    if ((ahead || person) && vehicle.wait > 16) {
+      return { ...vehicle, lane: vehicle.lane ? 0 : 1, wait: 0, progress: Math.min(0.95, vehicle.progress + 0.02) };
+    }
+    if (ahead || person) {
+      if (!note && next.tick % 20 === 0) {
+        note = {
+          id: `beat-${next.tick}-meet-${vehicle.id}`,
+          tick: next.tick,
+          emoji: vehicle.emoji,
+          text: person
+            ? `${vehicle.name} brakes. ${person.crew.name} steps out of the lane.`
+            : `${vehicle.name} stops short so it does not run into the vehicle ahead.`,
+          subjectId: vehicle.id,
+          subjectName: vehicle.name,
+          place: "the lane",
+        };
+      }
+      return { ...vehicle, wait: vehicle.wait + 1 };
+    }
+    const pace = vehicle.emoji === "🚲" ? 0.034 : vehicle.emoji === "🚌" || vehicle.emoji === "🚚" ? 0.018 : 0.026;
+    const progress = vehicle.progress + pace;
+    if (progress < 1) return { ...vehicle, progress, wait: 0 };
+    const hop = nextAvenue(next, vehicle.destCol, vehicle.destRow, vehicle.col, vehicle.row);
+    const taken = fleet.some(
+      (other, otherIndex) =>
+        otherIndex !== index && other.destCol === hop[0] && other.destRow === hop[1] && other.progress > 0.45,
+    );
+    if (taken) {
+      const hopAway = nextAvenue(next, vehicle.col, vehicle.row, hop[0], hop[1]);
+      return {
+        ...vehicle,
+        destCol: hopAway[0],
+        destRow: hopAway[1],
+        progress: 0.2,
+        wait: 0,
+        lane: vehicle.lane ? 0 : 1,
+      };
+    }
+    return {
+      ...vehicle,
+      col: vehicle.destCol,
+      row: vehicle.destRow,
+      destCol: hop[0],
+      destRow: hop[1],
+      progress: 0,
+      wait: 0,
+    };
+  });
+  const crews = next.crews.map((crew) => {
+    if (!held.has(crew.id)) return crew.yield ? { ...crew, yield: undefined } : crew;
+    return { ...crew, progress: Math.max(0, crew.progress - 0.04), yield: "lane" };
+  });
+  for (let i = 0; i < crews.length; i++) {
+    const a = crews[i]!;
+    if (a.task === "haul" || a.task === "raise") continue;
+    const pa = crewPos(a);
+    for (let j = i + 1; j < crews.length; j++) {
+      const b = crews[j]!;
+      if (b.task === "haul" || b.task === "raise") continue;
+      const pb = crewPos(b);
+      if (Math.hypot(pa.col - pb.col, pa.row - pb.row) > 0.34) continue;
+      crews[j] = { ...b, progress: Math.max(0, b.progress - 0.03), yield: a.name };
+      if (!note && next.tick % 24 === 0) {
+        note = {
+          id: `beat-${next.tick}-pass-${a.id}`,
+          tick: next.tick,
+          emoji: a.emoji,
+          text: `${a.name} and ${b.name} meet and step around each other.`,
+          subjectId: a.id,
+          subjectName: a.name,
+          place: "the sidewalk",
+        };
+      }
+      break;
+    }
+  }
+  next = { ...next, vehicles, crews };
+  return note ? pushBeat(next, note) : next;
+}
+
 export function stepCity(city: City): City {
   if (city.version !== CITY_VERSION) return city;
   const rng = mulberry32(hash(`${city.seed}:${city.tick + 1}`));
@@ -1317,6 +1515,7 @@ export function stepCity(city: City): City {
   }
   if (next.crews.length < 16) next = assignWork(next, rng);
   next = stepAlchemy(next, rng);
+  next = stepTraffic(next);
   return next;
 }
 

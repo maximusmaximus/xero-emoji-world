@@ -525,7 +525,9 @@ export function drawCity(
       turn.flip = dx < 0;
     }
     const anchor = feet ? "feet" : "center";
-    drawXero(ctx, emoji, p.x, p.y, size, { rotation: turn.rotation, flip: turn.flip, anchor });
+    // Side-view vehicles: wheels follow the lane, and the roof is squashed toward the road so it stays perpendicular to it.
+    const squash = ride ? 0.5 + 0.42 * Math.sin(Math.min(1.2, Math.max(0.14, viewPitch))) : 1;
+    drawXero(ctx, emoji, p.x, p.y, size, { rotation: turn.rotation, flip: turn.flip, anchor, squash });
     if (place?.hit) {
       const top = anchor === "feet" ? p.y - size : p.y - size / 2;
       hits.push({
@@ -648,8 +650,8 @@ export function drawCity(
           hit?: { name: string; detail: string },
           ride = false,
         ) =>
-          glyph(emoji, c, r, 3, world, {
-            feet: false,
+          glyph(emoji, c, r, ride ? 0 : 2, world, {
+            feet: ride,
             cover: true,
             dc: alongCol ? 1 : 0,
             dr: alongCol ? 0 : 1,
@@ -809,7 +811,8 @@ export function drawCity(
     }
   }
   for (const crew of city.crews ?? []) {
-    const col = crew.col + (crew.destCol - crew.col) * crew.progress;
+    const aside = crew.yield ? 0.2 : 0;
+    const col = crew.col + (crew.destCol - crew.col) * crew.progress + aside;
     const row = crew.row + (crew.destRow - crew.row) * crew.progress;
     props.push({
       depth: depthOf(col + 0.5, row + 0.5),
@@ -839,43 +842,36 @@ export function drawCity(
       },
     });
   }
-  if (roads.length > 3 && grown >= 2) {
-    const rides = [
-      { emoji: "🚲", world: 20, speed: 0.15, name: "Bicycle" },
-      { emoji: "🚗", world: 26, speed: 0.22, name: "Car" },
-      { emoji: "🚜", world: 28, speed: 0.08, name: "Tractor" },
-      { emoji: "🚌", world: 32, speed: 0.12, name: "Bus" },
-      { emoji: "🚚", world: 30, speed: 0.1, name: "Truck" },
-    ];
-    rides.forEach((ride, index) => {
-      if (grown < 3 && index > 1) return;
-      const travel = (phase * ride.speed + index * 3) % roads.length;
-      const i = Math.floor(travel);
-      const f = travel - i;
-      const a = roads[i]!.split(",").map(Number) as [number, number];
-      const b = roads[(i + 1) % roads.length]!.split(",").map(Number) as [number, number];
-      const col = a[0] + (b[0] - a[0]) * f + 0.5;
-      const row = a[1] + (b[1] - a[1]) * f + 0.5;
-      const dc = b[0] - a[0];
-      const dr = b[1] - a[1];
+  if (roads.length > 3) {
+    for (const vehicle of city.vehicles ?? []) {
+      const dirC = vehicle.destCol - vehicle.col;
+      const dirR = vehicle.destRow - vehicle.row;
+      const len = Math.hypot(dirC, dirR) || 1;
+      const side = vehicle.lane ? 0.16 : -0.16;
+      const col = vehicle.col + dirC * vehicle.progress + 0.5 + (-dirR / len) * side;
+      const row = vehicle.row + dirR * vehicle.progress + 0.5 + (dirC / len) * side;
+      if (col < minC || row < minR || col >= maxC || row >= maxR) continue;
       props.push({
-        depth: depthOf(col, row),
+        depth: depthOf(col, row) + 0.02,
         draw: () =>
-          glyph(ride.emoji, col, row, 0, ride.world, {
+          glyph(vehicle.emoji, col, row, 0, vehicle.emoji === "🚌" || vehicle.emoji === "🚚" ? 30 : 24, {
             cover: true,
-            dc,
-            dr,
+            feet: true,
+            dc: dirC,
+            dr: dirR,
             ride: true,
             hit: {
-              id: `ride-${index}`,
-              name: ride.name,
+              id: vehicle.id,
+              name: vehicle.name,
               role: "ride",
-              place: "the road",
-              detail: `A ${ride.emoji} following the emoji road. It only exists while the city is being watched.`,
+              place: "the lane",
+              detail: vehicle.wait
+                ? `${vehicle.name} is stopped. The lane ahead is taken, so it waits instead of driving through.`
+                : `${vehicle.name} is in the travel lane. Its wheels follow the street and its roof stays square to the pavement.`,
             },
           }),
       });
-    });
+    }
   }
   const skyBodies = ["⭐", "✨", "🌟", "🪐", "☄️", "🌠"];
   const skyCount = Math.min(skyBodies.length, 3 + Math.floor((city.sophistication ?? 0) / 2));
