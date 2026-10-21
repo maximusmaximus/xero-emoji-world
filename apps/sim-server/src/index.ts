@@ -8,6 +8,7 @@
  *   GET  /api/backup/download       live export of the whole DB (ndjson.gz)
  *   GET  /api/backup/list           scheduled snapshots on disk
  *   GET  /api/backup/file/:name     download a scheduled snapshot
+ *   GET  /api/world                 emoji-alchemy state: era, materials, recipes, wonders, chronicle
  *   GET  /healthz
  */
 import { createReadStream } from 'node:fs';
@@ -19,13 +20,15 @@ import { backupName, backupStream, listBackups, scheduleBackups } from './backup
 import { config } from './config.js';
 import { createEmbedder } from './embedder.js';
 import { CityEngine } from './engine.js';
+import { createOracle } from './oracle.js';
 import { MemoryStore } from './store/memory.js';
 import { QdrantStore } from './store/qdrant.js';
 
 const embedder = createEmbedder();
 const store = process.env.STORE === 'memory' ? new MemoryStore(embedder) : new QdrantStore(embedder);
 await store.init();
-const engine = new CityEngine(store);
+const oracle = createOracle();
+const engine = new CityEngine(store, oracle);
 await engine.boot();
 engine.start();
 scheduleBackups(store, () => engine.state.tick);
@@ -39,7 +42,8 @@ async function route(req: IncomingMessage, res: ServerResponse) {
   const url = new URL(req.url ?? '/', 'http://x');
   const p = url.pathname;
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
-  if (p === '/healthz') return json(res, { ok: true, tick: engine.state.tick });
+  if (p === '/healthz') return json(res, { ok: true, tick: engine.state.tick, era: engine.state.world?.era, oracle: oracle.name });
+  if (p === '/api/world') return json(res, engine.state.world);
   if (p === '/api/state') return json(res, engine.state);
   if (p === '/api/search') return json(res, await store.search(url.searchParams.get('q') ?? '', 25));
   const story = p.match(/^\/api\/entity\/([^/]+)\/story$/);
@@ -81,6 +85,6 @@ wss.on('connection', (ws) => {
   ws.on('close', () => { engine.off('action', onAction); engine.off('tick', onTick); });
 });
 
-server.listen(config.port, () => console.log(`[xew] sim-server on :${config.port} (store=${process.env.STORE ?? 'qdrant'}, embedder=${embedder.name})`));
+server.listen(config.port, () => console.log(`[xew] sim-server on :${config.port} (store=${process.env.STORE ?? 'qdrant'}, embedder=${embedder.name}, oracle=${oracle.name})`));
 const shutdown = async () => { engine.stop(); await store.saveSnapshot(engine.state); process.exit(0); };
 process.on('SIGINT', shutdown); process.on('SIGTERM', shutdown);

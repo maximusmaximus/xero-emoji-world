@@ -9,9 +9,10 @@
  *   3. Start ticking. Every action is written to the DB and broadcast to listeners.
  */
 import { EventEmitter } from 'node:events';
-import { createInitialCity, indexCity, step, type CityAction, type CityIndex, type CityState } from '@xew/shared';
+import { createInitialCity, indexCity, step, type CityAction, type CityIndex, type CityState, type StepOptions } from '@xew/shared';
 import { config } from './config.js';
 import { entityDocs } from './entities.js';
+import { LocalOracle, type Oracle } from './oracle.js';
 import type { VectorStore } from './store/vector-store.js';
 
 export class CityEngine extends EventEmitter {
@@ -20,8 +21,13 @@ export class CityEngine extends EventEmitter {
   private timer?: NodeJS.Timeout;
   private writeQueue: CityAction[] = [];
   private flushing = false;
+  /** Recent story lines fed to the oracle as context. */
+  private recent: string[] = [];
+  private pendingDecree?: StepOptions['decree'];
+  private consulting = false;
+  private fallback = new LocalOracle();
 
-  constructor(private store: VectorStore) { super(); }
+  constructor(private store: VectorStore, private oracle: Oracle = new LocalOracle()) { super(); }
 
   async boot() {
     const snap = await this.store.loadSnapshot();
@@ -58,12 +64,30 @@ export class CityEngine extends EventEmitter {
 
   private tick() {
     const now = new Date().toISOString();
-    const actions = step(this.state, this.idx, { actionsPerTick: config.actionsPerTick, now });
+    const decree = this.pendingDecree; this.pendingDecree = undefined;
+    const actions = step(this.state, this.idx, { actionsPerTick: config.actionsPerTick, now, decree });
+    for (const a of actions) if (a.type !== 'world.harvest' && a.type !== 'world.crafted') this.recent.push(a.text);
+    if (this.recent.length > 40) this.recent.splice(0, this.recent.length - 40);
+    if (this.state.tick % config.oracle.everyTicks === 0) void this.consult();
     this.emit('tick', this.state.tick, now);
     for (const a of actions) this.emit('action', a);
     this.writeQueue.push(...actions);
     void this.flush(actions);
     if (this.state.tick % config.snapshotEveryTicks === 0) void this.store.saveSnapshot(this.state).catch((e) => console.error('[engine] snapshot', e));
+  }
+
+  /** Ask the oracle for a decree without blocking the tick loop; fall back to the local oracle. */
+  async consult() {
+    if (this.consulting) return;
+    this.consulting = true;
+    // Both oracles read state synchronously (the LLM request body is built before the first await), so no clone is needed.
+    const snapshot = this.state; const recent = [...this.recent];
+    try {
+      this.pendingDecree = { decree: await this.oracle.decree(snapshot, recent), source: this.oracle.source, oracle: this.oracle.name };
+    } catch (e) {
+      console.warn(`[oracle] ${this.oracle.name} failed (${(e as Error).message}); local oracle decides this time`);
+      this.pendingDecree = { decree: await this.fallback.decree(snapshot), source: 'local', oracle: 'local (fallback)' };
+    } finally { this.consulting = false; }
   }
 
   /** Persist actions + touched entities. Queue survives transient DB outages. */

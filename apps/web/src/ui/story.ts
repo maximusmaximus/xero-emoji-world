@@ -1,5 +1,5 @@
 /** The "i" panel: live life-story feed (lockstep with the canvas), stats, search, backups. */
-import { API, type CityAction, type CityState } from '@xew/shared';
+import { API, growthMultiplier, pendingWonder, type CityAction, type CityState } from '@xew/shared';
 import { api } from '../net.js';
 
 const MAX_LINES = 400;
@@ -34,7 +34,15 @@ export class StoryPanel {
   set visible(v: boolean) { this.root.hidden = !v; }
   updateStats(s: CityState) {
     const st = s.stats;
-    this.stats.innerHTML = `<span>⏱️ tick ${s.tick}</span><span>🧑 ${st.population}</span><span>🏢 ${st.buildings}</span><span>🚪 ${st.apartments}</span><span>📦 ${st.items}</span><span>${s.weather} ${s.districts.length} districts</span>`;
+    const w = s.world;
+    const mats = w ? Object.entries(w.materials).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([e, n]) => `${e}${n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : n}`).join(' ') : '';
+    const pw = w ? pendingWonder(w) : undefined;
+    const world = w ? `<span title="era / knowledge / growth multiplier">${esc(w.essence)} ${esc(w.eraName)} · 🧠 ${w.knowledge} · ×${growthMultiplier(w).toFixed(2)}</span>`
+      + `<span title="emoji materials">${esc(mats)}</span>`
+      + (pw ? `<span title="wonder under construction">${esc(pw.emoji)} ${esc(pw.name)}</span>` : '')
+      + `<span title="who steers the world">🔮 ${esc(w.oracle)}</span>` : '';
+    this.stats.innerHTML = `<span>⏱️ tick ${s.tick}</span><span>🧑 ${st.population}</span><span>🏢 ${st.buildings}</span><span>🚪 ${st.apartments}</span><span>📦 ${st.items}</span><span>${s.weather} ${s.districts.length} districts</span>${world}`;
   }
   push(a: CityAction, force = false) {
     if (this.root.hidden && !force) return;
