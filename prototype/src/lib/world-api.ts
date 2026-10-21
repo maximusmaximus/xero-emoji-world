@@ -49,7 +49,28 @@ export const developCity = createServerFn({ method: "POST" })
     noteClientKeys(data.keys);
     return develop(data);
   });
-  export const addVeniceKeys = createServerFn({ method: "POST" })
+  export const loadWorld = createServerFn({ method: "POST" })
+  .validator(() => ({}))
+  .handler(async () => {
+    const { loadPersistedCity } = await import("./world-store.server");
+    return (await loadPersistedCity()) ?? { city: null, updatedAt: "" };
+  });
+
+export const saveWorld = createServerFn({ method: "POST" })
+  .validator((input: { city: unknown; kind?: string; summary?: string; source?: string }) => ({
+    city: input?.city,
+    kind: String(input?.kind ?? "snapshot").slice(0, 24),
+    summary: String(input?.summary ?? "").slice(0, 240),
+    source: String(input?.source ?? "sim").slice(0, 24),
+  }))
+  .handler(async ({ data }) => {
+    const { persistCity } = await import("./world-store.server");
+    const city = data.city as import("../city/sim").City;
+    if (!city || !Array.isArray(city.buildings)) return { ok: false as const, at: "", repo: { committed: false, pushed: false, detail: "no city" } };
+    return persistCity(city, data);
+  });
+
+export const addVeniceKeys = createServerFn({ method: "POST" })
   .validator((input: { keys: string }) => ({ keys: String(input?.keys ?? "").slice(0, 4000) }))
   .handler(async ({ data }) => {
     const { addVeniceKeys: add } = await import("./venice.server");

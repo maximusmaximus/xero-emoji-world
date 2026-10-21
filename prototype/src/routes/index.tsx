@@ -6,7 +6,7 @@ import { drawCity, defaultCamera, panBy, pullBy, zoomAt, type Camera, type Hit }
 import { loadCity, saveCity } from "@/city/save";
 import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
-import { addVeniceKeys, developCity, narrateLife, pulseWatch, searchLife, veniceStatus } from "@/lib/world-api";
+import { addVeniceKeys, developCity, loadWorld, narrateLife, pulseWatch, saveWorld, searchLife, veniceStatus } from "@/lib/world-api";
 
 export const Route = createFileRoute("/")({
   loader: () => veniceStatus({ data: { keys: "" } }),
@@ -46,6 +46,14 @@ function rememberLocal(raw: string) {
   return { added, text, count: next.size };
 }
 
+function countdownLabel(resetsAt: string, now: number) {
+  const ms = Math.max(0, new Date(resetsAt).getTime() - now);
+  const hours = Math.floor(ms / 3_600_000);
+  const minutes = Math.floor((ms % 3_600_000) / 60_000);
+  const seconds = Math.floor((ms % 60_000) / 1000);
+  return hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes}m ${seconds}s`;
+}
+
 function censusOf(city: City) {
   const counts = new Map<string, number>();
   for (const building of city.buildings) counts.set(building.kind, (counts.get(building.kind) ?? 0) + 1);
@@ -80,6 +88,8 @@ function Home() {
   const search = useServerFn(searchLife);
   const pullStatus = useServerFn(veniceStatus);
   const saveKeys = useServerFn(addVeniceKeys);
+  const remember = useServerFn(saveWorld);
+  const recall = useServerFn(loadWorld);
   const pulse = useServerFn(pulseWatch);
   const develop = useServerFn(developCity);
   const [status, setStatus] = useState(initialStatus);
@@ -99,6 +109,7 @@ function Home() {
   const [watchers, setWatchers] = useState(1);
   const [credit, setCredit] = useState(true);
   const [budget, setBudget] = useState(initialStatus.budget);
+  const [clock, setClock] = useState(Date.now());
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitsRef = useRef<Hit[]>([]);
   const camRef = useRef<Camera>(defaultCamera());
@@ -120,19 +131,44 @@ function Home() {
   focusRef.current = focus?.id ?? null;
 
   useEffect(() => {
-    const saved = loadCity();
-    if (saved) {
-      cityRef.current = saved;
-      setCity(saved);
-    }
-    keepRef.current = true;
+    let stop = false;
+    recall({ data: {} })
+      .then((row) => {
+        if (stop) return;
+        const stored = row?.city?.version === CITY_VERSION ? row.city : loadCity();
+        if (stored) {
+          cityRef.current = stored;
+          setCity(stored);
+        }
+      })
+      .catch(() => {
+        const stored = loadCity();
+        if (!stop && stored) {
+          cityRef.current = stored;
+          setCity(stored);
+        }
+      })
+      .finally(() => {
+        keepRef.current = true;
+      });
     const flush = () => saveCity(cityRef.current);
     window.addEventListener("pagehide", flush);
     return () => {
+      stop = true;
       flush();
       window.removeEventListener("pagehide", flush);
     };
-  }, []);
+  }, [recall]);
+
+  useEffect(() => {
+    if (!status.infra?.localCapped) return;
+    const id = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [status.infra?.localCapped]);
+
+  useEffect(() => {
+    if (status.infra?.localCapped && !status.infra.contributedReady) setKeysOpen(true);
+  }, [status.infra?.localCapped, status.infra?.contributedReady]);
 
   useEffect(() => {
     let stop = false;
@@ -186,11 +222,21 @@ function Home() {
     };
     const loop = () => {
       frame += 1;
-      if (cityRef.current.version === CITY_VERSION) {
+      if (cityRef.current.version === CITY_VERSION && keepRef.current) {
         const pace = Math.min(4, Math.max(1, watchersRef.current));
         for (let step = 0; step < pace; step += 1) cityRef.current = stepCity(cityRef.current);
         if (frame % 10 === 0) setCity(cityRef.current);
-        if (keepRef.current && frame % 90 === 0) saveCity(cityRef.current);
+        if (keepRef.current && frame % 600 === 0) {
+          saveCity(cityRef.current);
+          void remember({
+            data: {
+              city: cityRef.current,
+              kind: "snapshot",
+              summary: `${cityRef.current.era} · ${cityRef.current.buildings.length} buildings`,
+              source: "sim",
+            },
+          }).catch(() => undefined);
+        }
       }
       paint(frame);
       raf = requestAnimationFrame(loop);
@@ -245,7 +291,17 @@ function Home() {
           cityRef.current = queuePlans(cityRef.current, plan.developments, plan.focus);
           setCity(cityRef.current);
           setBudget((prev) => (plan.budget.spentUsd >= prev.spentUsd ? plan.budget : prev));
-          if (plan.live) setStatus((prev) => ({ ...prev, live: true, detail: plan.model }));
+          if (plan.live) {
+            setStatus((prev) => ({ ...prev, live: true, detail: plan.model, infra: { ...prev.infra, source: plan.source } }));
+            void remember({
+              data: {
+                city: cityRef.current,
+                kind: "develop",
+                summary: plan.developments.map((item) => item.name).join(", ") || plan.focus.note,
+                source: plan.source,
+              },
+            }).catch(() => undefined);
+          }
         })
         .catch((err) => {
           setStatus((prev) => ({
@@ -260,7 +316,7 @@ function Home() {
       stop = true;
       window.clearInterval(timer);
     };
-  }, [develop, pulse]);
+  }, [develop, pulse, remember]);
 
   function fingerPair() {
     const pts = [...pointers.current.values()];
@@ -393,6 +449,11 @@ function Home() {
       setStory(result.text);
       setBudget(result.budget);
       setStoryNote(result.cached ? "Replay, no charge" : result.live ? "Charged to today's dollar" : "Local line, no charge");
+      if (result.live) {
+        void remember({
+          data: { city: cityRef.current, kind: "story", summary: result.text, source: result.source },
+        }).catch(() => undefined);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "The city could not speak");
     } finally {
@@ -481,10 +542,23 @@ function Home() {
             aria-label="Venice keys"
             onClick={() => setKeysOpen((open) => !open)}
           >
-            {status.needsKey ? "Venice needs a key" : status.live ? "Venice live" : "Venice offline"}
+            {status.infra?.localCapped && status.infra.contributedReady && status.live
+              ? "Venice live · contributed"
+              : status.infra?.localCapped
+                ? "Venice paused"
+                : status.needsKey
+                  ? "Venice needs a key"
+                  : status.live
+                    ? "Venice live"
+                    : "Venice offline"}
             {status.detail ? ` · ${status.detail}` : ""}
             {status.keyCount > 1 ? ` · ${status.keyCount} keys` : ""} · {budget.spentUsd.toFixed(3)} of $1
           </button>
+          {status.infra?.localCapped && (
+            <p data-testid="venice-countdown" className="mt-1 text-right text-[11px] text-amber">
+              Local inference returns in {countdownLabel(status.infra.resetsAt, clock)}
+            </p>
+          )}
           {keysOpen && (
             <form
               className="absolute right-0 top-12 w-72 rounded-card border border-line bg-panel p-3"
@@ -517,9 +591,11 @@ function Home() {
               }}
             >
               <p className="text-xs text-mute">
-                {status.needsKey
-                  ? "This Venice key is used up. Paste another to keep stories, search, and new buildings running. Extra keys stay in this browser and are not written to the repo."
-                  : "Paste more Venice keys, one per line. They stay in this browser and on this host, not in the repo."}
+                {status.infra?.localCapped
+                  ? "The host dollar is spent for today. Paste a Venice key to keep the city growing until it resets. Keys stay in this browser and on this host, not in the repo."
+                  : status.needsKey
+                    ? "This Venice key is used up. Paste another to keep stories, search, and new buildings running. Extra keys stay in this browser and are not written to the repo."
+                    : "Paste more Venice keys, one per line. They stay in this browser and on this host, not in the repo."}
               </p>
               <textarea
                 value={keyDraft}

@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { countdown, pickPool, type KeySource } from "../city/pool.ts";
 
 /** Selected 2026-10-19 against the live Venice catalog. Private only. */
 export const WORLD_MODEL = "grok-4-20";
@@ -139,7 +140,8 @@ function pushKeys(out: string[], raw: string) {
 }
 
 function readDotEnv() {
-  const files = [process.env.VENICE_ENV_PATH, "/workspace/.env", ".env"].filter(Boolean) as string[];
+  const isolated = process.env.VENICE_ISOLATED === "1";
+  const files = (isolated ? [process.env.VENICE_ENV_PATH] : [process.env.VENICE_ENV_PATH, "/workspace/.env", ".env"]).filter(Boolean) as string[];
   const found: string[] = [];
   for (const file of files) {
     try {
@@ -155,7 +157,31 @@ function readDotEnv() {
 }
 
 function keyPaths() {
+  if (process.env.VENICE_ISOLATED === "1") {
+    return [process.env.VENICE_KEY_PATH].filter(Boolean) as string[];
+  }
   return [...new Set([process.env.VENICE_KEY_PATH, KEY_PATH, "/tmp/xero-venice.keys"].filter(Boolean) as string[])];
+}
+
+function localKeySet() {
+  const out: string[] = [];
+  pushKeys(out, process.env.VENICE_API_KEY || "");
+  pushKeys(out, process.env.VENICE_INFERENCE_KEY || "");
+  pushKeys(out, readDotEnv());
+  return new Set(out);
+}
+
+function sourceOf(key: string): KeySource {
+  return localKeySet().has(key) ? "local" : "contributed";
+}
+
+function poolFor(ledger: Ledger) {
+  return readVeniceKeys().map((key) => ({
+    key,
+    source: sourceOf(key),
+    spentUsd: spentFor(ledger, key),
+    dead: deadKeys.has(keyId(key)),
+  }));
 }
 
 export function noteClientKeys(raw: string) {
@@ -183,8 +209,15 @@ function spentFor(ledger: Ledger, key: string) {
 }
 
 function activeKey(ledger: Ledger): string {
-  const keys = readVeniceKeys();
-  return keys.find((key) => !deadKeys.has(keyId(key)) && spentFor(ledger, key) < DAILY_BUDGET_USD) || "";
+  return pickPool(poolFor(ledger)).chosen?.key || "";
+}
+
+export function testingSpend(key: string, usd: number) {
+  const ledger = readLedger();
+  const byKey = { ...(ledger.byKey ?? {}) };
+  byKey[keyId(key)] = usd;
+  const spentUsd = Object.values(byKey).reduce((sum, n) => sum + n, 0);
+  writeLedger({ day: ledger.day, spentUsd, byKey });
 }
 
 function charge(usd: number) {
@@ -290,23 +323,31 @@ export function addVeniceKeys(raw: string): { added: number; keyCount: number; p
 }
 
 export async function veniceStatus() {
-  const keys = readVeniceKeys();
   const ledger = readLedger();
-  const key = activeKey(ledger);
+  const pool = pickPool(poolFor(ledger));
+  const key = pool.chosen?.key || "";
   const spent = key ? spentFor(ledger, key) : 0;
   const probe = await veniceProbe();
-  const needsKey = keys.length === 0 || !keys.some((item) => !deadKeys.has(keyId(item)) && spentFor(ledger, item) < DAILY_BUDGET_USD) || probe.detail === "key expired";
+  const reset = countdown();
+  const needsKey = !pool.chosen || probe.detail === "key expired";
   return {
     voice: WORLD_MODEL,
     embed: EMBED_MODEL,
     embedDim: EMBED_DIM,
     privacy: "private" as const,
-    keyPresent: keys.length > 0,
-    keyCount: keys.length,
+    keyPresent: readVeniceKeys().length > 0,
+    keyCount: readVeniceKeys().length,
     live: probe.ok,
     needsKey,
     detail: needsKey && probe.detail === "key expired" ? "key expired" : lastInference.ok ? lastInference.detail : probe.detail,
     budget: budgetOf({ ...ledger, spentUsd: spent }),
+    infra: {
+      localCapped: pool.localCapped,
+      contributedReady: pool.contributedReady,
+      source: pool.source,
+      resetsAt: reset.resetsAt,
+      countdown: pool.localCapped ? reset.label : "",
+    },
   };
 }
 
@@ -332,11 +373,12 @@ export async function narrate(input: NarrateInput): Promise<{
   live: boolean;
   cached: boolean;
   budget: Budget;
+  source: KeySource | "none";
 }> {
   const cacheKey = `${input.name}|${input.place}|${input.facts}`;
   const hit = storyCache.get(cacheKey);
   if (hit) {
-    return { text: hit, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()) };
+    return { text: hit, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()), source: pickPool(poolFor(readLedger())).source };
   }
   const key = veniceKey();
   if (!key) {
@@ -347,6 +389,7 @@ export async function narrate(input: NarrateInput): Promise<{
       live: false,
       cached: false,
       budget: budgetOf(readLedger()),
+      source: "none" as const,
     };
   }
   const user = `${input.emoji} ${input.name} (${input.role}) at ${input.place}. Era ${input.era || "camp"}, research ${input.research || 0}, watched for ${input.tick || 0} ticks. People are watching, so speak at that level of sophistication. ${input.facts || "Just arrived."}`;
@@ -362,6 +405,7 @@ export async function narrate(input: NarrateInput): Promise<{
         live: false,
         cached: false,
         budget: budgetOf(ledger),
+        source: "none" as const,
       };
     }
     const res = await veniceFetch(CHAT_URL, liveKey, {
@@ -400,7 +444,7 @@ export async function narrate(input: NarrateInput): Promise<{
       completion * VOICE_OUTPUT_USD;
     storyCache.set(cacheKey, text);
     noteInference(true, WORLD_MODEL);
-    return { text, model: WORLD_MODEL, live: true, cached: false, budget: charge(spent) };
+    return { text, model: WORLD_MODEL, live: true, cached: false, budget: charge(spent), source: sourceOf(liveKey) };
   });
 }
 
@@ -556,6 +600,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
   live: boolean;
   cached: boolean;
   budget: Budget;
+  source: KeySource | "none";
 }> {
   const era = input.era || "camp";
   const watchers = Math.max(1, Math.min(12, input.watchers || 1));
@@ -563,7 +608,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
   const cacheKey = `${era}|${watchers}|${have.join(",")}`;
   const cached = developCache.get(cacheKey);
   if (cached) {
-    return { developments: cached.developments, focus: cached.focus, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()) };
+    return { developments: cached.developments, focus: cached.focus, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()), source: pickPool(poolFor(readLedger())).source };
   }
   const fallback = () => ({
     developments: localDevelopments(era, watchers),
@@ -572,6 +617,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
     live: false,
     cached: false,
     budget: budgetOf(readLedger()),
+    source: "none" as const,
   });
   if (!veniceKey()) {
     noteInference(false, "no key on this host");
@@ -618,7 +664,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
       Math.max(0, prompt - cachedTokens) * VOICE_INPUT_USD + cachedTokens * VOICE_CACHE_USD + completion * VOICE_OUTPUT_USD;
     if (parsed.developments.length) developCache.set(cacheKey, { developments, focus });
     noteInference(parsed.developments.length > 0, parsed.developments.length > 0 ? WORLD_MODEL : "plan unreadable");
-    return { developments, focus, model: WORLD_MODEL, live: parsed.developments.length > 0, cached: false, budget: charge(spent) };
+    return { developments, focus, model: WORLD_MODEL, live: parsed.developments.length > 0, cached: false, budget: charge(spent), source: sourceOf(liveKey) };
   });
 }
 
