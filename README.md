@@ -1,5 +1,3 @@
-<p align="center"><a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Xero Worlds cover poster, horizontal 24x18" width="100%"></a><br><a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4">Horizontal 24×18 poster</a> <sub>(PDF, 9.9 MB — large download)</sub></p>
-
 # Xero Emoji World
 
 ![Xero, a future city still being built. Moon and farms on the left, a packed skyline in the middle, sun and a construction yard on the right.](public/x-banner.jpg)
