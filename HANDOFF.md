@@ -27,6 +27,8 @@ The code is written but has **never been installed, compiled or run**. Start her
 - **iPhone Safari has no element Fullscreen API.** The fallbacks are `scrollTo(0,1)` and the PWA manifest (`display: fullscreen`) via "Add to Home Screen". iPadOS supports `webkitRequestFullscreen`.
 
 ## 4. Invariants (don't break)
+- `step()` applies a *copy* of each patch, so emitted actions stay immutable. Mutating an emitted patch breaks client lockstep. This was a latent bug: a floor added in the same tick as a `setLot` was double-applied on clients.
+- Oracle and LLM output only enters state through `sanitizeDecree` → `world.decree` action.
 - Only patches mutate state, and the client and server use the same reducer.
 - `step()` randomness comes only from `Rng.at(seed, 'tick', tick)`. No `Math.random` in `packages/shared`.
 - Every `emoji` field must exist in `EMOJI_CATALOG` (there's a test for this).
