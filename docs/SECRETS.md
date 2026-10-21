@@ -32,5 +32,8 @@ To see when PRs are reviewed, approved, or merged:
 2. In GitHub Settings → Notifications, enable email for Pull request reviews and merges.
 3. An Automation is set up to notify on PR merges for this repo.
 
-## Grok / agent workflow
-Prototype and product development is Grok-driven. Agents open feature-branch PRs with improvements. Review and merge on GitHub. Keys remain only in local `.env` or GitHub secrets — never in commits or PR diffs.
+## Venice inference key
+
+The host key is `VENICE_INFERENCE_KEY` in `.env` locally, or the same variable in the production environment. Never commit it.
+
+Extra keys are pasted in the Venice badge on the city. The browser keeps them in `localStorage` and sends them with the next story, search, or building plan, so a save still works when the production disk is read-only. If the active key is rejected or its daily dollar is spent, that panel opens and asks for another key. Stories, search, and new buildings wait on it. The city itself keeps running.

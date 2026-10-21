@@ -9,9 +9,42 @@ import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
 import { addVeniceKeys, developCity, narrateLife, pulseWatch, searchLife, veniceStatus } from "@/lib/world-api";
 
 export const Route = createFileRoute("/")({
-  loader: () => veniceStatus(),
+  loader: () => veniceStatus({ data: { keys: "" } }),
   component: Home,
 });
+
+const KEY_STORE = "xero-venice-keys";
+
+function storedKeys() {
+  try {
+    return localStorage.getItem(KEY_STORE) || "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberLocal(raw: string) {
+  const next = new Set(
+    storedKeys()
+      .split(/[\s,]+/)
+      .map((part) => part.trim())
+      .filter((part) => part.length >= 20),
+  );
+  let added = 0;
+  for (const part of raw.split(/[\s,]+/)) {
+    const trimmed = part.trim();
+    if (trimmed.length < 20 || trimmed.length > 200 || next.has(trimmed)) continue;
+    next.add(trimmed);
+    added += 1;
+  }
+  const text = [...next].join("\n");
+  try {
+    localStorage.setItem(KEY_STORE, text);
+  } catch {
+    /* private mode still sends the draft */
+  }
+  return { added, text, count: next.size };
+}
 
 function XeroLine({ text }: { text: string }) {
   return (
@@ -95,7 +128,7 @@ function Home() {
   useEffect(() => {
     let stop = false;
     const pull = () => {
-      pullStatus()
+      pullStatus({ data: { keys: storedKeys() } })
         .then((next) => {
           if (stop || !next) return;
           setStatus(next);
@@ -194,6 +227,7 @@ function Home() {
               era: cityRef.current.era,
               watchers: count,
               have: cityRef.current.buildings.map((building) => building.kind),
+              keys: storedKeys(),
             },
           });
           if (stop) return;
@@ -327,6 +361,7 @@ function Home() {
           era: cityRef.current.era,
           research: cityRef.current.research,
           tick: cityRef.current.tick,
+          keys: storedKeys(),
         },
       });
       setStory(result.text);
@@ -348,6 +383,7 @@ function Home() {
         data: {
           query,
           beats: cityRef.current.beats.map((beat) => ({ id: beat.id, text: beat.text })),
+          keys: storedKeys(),
         },
       });
       setHits(result.hits);
@@ -364,6 +400,10 @@ function Home() {
     const timer = window.setTimeout(() => setCredit(false), 3000);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (status.needsKey) setKeysOpen(true);
+  }, [status.needsKey]);
 
   const latest = city.beats[0];
 
@@ -404,7 +444,7 @@ function Home() {
             aria-expanded={keysOpen}
             onClick={() => setKeysOpen((open) => !open)}
           >
-            {status.live ? "Venice live" : "Venice offline"}
+            {status.needsKey ? "Venice needs a key" : status.live ? "Venice live" : "Venice offline"}
             {status.detail ? ` · ${status.detail}` : ""}
             {status.keyCount > 1 ? ` · ${status.keyCount} keys` : ""} · {budget.spentUsd.toFixed(3)} of $1
           </button>
@@ -413,21 +453,37 @@ function Home() {
               className="absolute right-0 top-12 w-72 rounded-card border border-line bg-panel p-3"
               onSubmit={(event) => {
                 event.preventDefault();
-                saveKeys({ data: { keys: keyDraft } })
-                  .then((result) => {
-                    setKeyNote(result.added ? `Added ${result.added}. ${result.keyCount} on this host.` : `Already saved. ${result.keyCount} on this host.`);
+                const local = rememberLocal(keyDraft);
+                const keys = local.text || keyDraft;
+                saveKeys({ data: { keys } })
+                  .then(async (result) => {
+                    setKeyNote(
+                      result.added
+                        ? `Added ${result.added}. ${result.keyCount} ready.`
+                        : `Saved. ${result.keyCount || local.count} ready.`,
+                    );
                     setKeyDraft("");
-                    return pullStatus();
-                  })
-                  .then((next) => {
+                    const next = await pullStatus({ data: { keys: storedKeys() || keys } }).catch(() => null);
                     if (!next) return;
                     setStatus(next);
                     setBudget((prev) => (next.budget.spentUsd >= prev.spentUsd ? next.budget : prev));
+                    if (next.live) setKeysOpen(false);
                   })
-                  .catch(() => setKeyNote("Could not save the keys."));
+                  .catch(() => {
+                    if (local.count > 0) {
+                      setKeyNote("Saved in this browser. Paste it again if a new device needs it.");
+                      setKeyDraft("");
+                      return;
+                    }
+                    setKeyNote("Could not save the keys.");
+                  });
               }}
             >
-              <p className="text-xs text-mute">Paste more Venice keys, one per line. They stay on this host and are not written to the repo.</p>
+              <p className="text-xs text-mute">
+                {status.needsKey
+                  ? "This Venice key is used up. Paste another to keep stories, search, and new buildings running. Extra keys stay in this browser and are not written to the repo."
+                  : "Paste more Venice keys, one per line. They stay in this browser and on this host, not in the repo."}
+              </p>
               <textarea
                 value={keyDraft}
                 onChange={(event) => setKeyDraft(event.target.value)}

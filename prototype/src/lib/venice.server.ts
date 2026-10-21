@@ -42,6 +42,32 @@ function budgetFile() {
   return process.env.VENICE_BUDGET_PATH || "/workspace/.secrets/budget.json";
 }
 
+function budgetPaths() {
+  return [...new Set([budgetFile(), "/tmp/xero-venice-budget.json"])];
+}
+
+let memoryLedger: Ledger | null = null;
+const memoryKeys: string[] = [];
+const deadKeys = new Set<string>();
+
+function readLedger(): Ledger {
+  const day = dayKey();
+  if (memoryLedger?.day === day) return memoryLedger;
+  for (const path of budgetPaths()) {
+    try {
+      const parsed = JSON.parse(readFileSync(path, "utf8")) as Ledger;
+      if (parsed.day === day && Number.isFinite(parsed.spentUsd)) {
+        memoryLedger = { day, spentUsd: parsed.spentUsd, byKey: parsed.byKey };
+        return memoryLedger;
+      }
+    } catch {
+      /* next store */
+    }
+  }
+  memoryLedger = { day, spentUsd: 0 };
+  return memoryLedger;
+}
+
 function dayKey(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Los_Angeles",
@@ -55,23 +81,17 @@ function tokens(text: string) {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
-function readLedger(): Ledger {
-  const day = dayKey();
-  try {
-    const parsed = JSON.parse(readFileSync(budgetFile(), "utf8")) as Ledger;
-    if (parsed.day === day && Number.isFinite(parsed.spentUsd)) {
-      return { day, spentUsd: parsed.spentUsd, byKey: parsed.byKey };
-    }
-  } catch {
-    /* new day or first run */
-  }
-  return { day, spentUsd: 0 };
-}
-
 function writeLedger(ledger: Ledger) {
-  const path = budgetFile();
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(ledger));
+  memoryLedger = ledger;
+  for (const path of budgetPaths()) {
+    try {
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, JSON.stringify(ledger));
+      return;
+    } catch {
+      /* read-only prod disk, keep the in-memory ledger */
+    }
+  }
 }
 
 function budgetOf(ledger: Ledger): Budget {
@@ -84,6 +104,10 @@ function budgetOf(ledger: Ledger): Budget {
   };
 }
 
+function retireKey(status: number, key: string) {
+  if (status === 401 || status === 403 || status === 402) deadKeys.add(keyId(key));
+}
+
 function keyId(key: string) {
   let h = 2166136261;
   for (let i = 0; i < key.length; i++) {
@@ -93,18 +117,50 @@ function keyId(key: string) {
   return (h >>> 0).toString(16);
 }
 
+function pushKeys(out: string[], raw: string) {
+  for (const part of raw.split(/[\s,]+/)) {
+    const trimmed = part.trim().replace(/^["']|["']$/g, "");
+    if (trimmed.length >= 20 && trimmed.length <= 200 && !out.includes(trimmed)) out.push(trimmed);
+  }
+}
+
+function readDotEnv() {
+  const files = [process.env.VENICE_ENV_PATH, "/workspace/.env", ".env"].filter(Boolean) as string[];
+  const found: string[] = [];
+  for (const file of files) {
+    try {
+      for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+        const match = line.match(/^(?:VENICE_API_KEY|VENICE_INFERENCE_KEY)\s*=\s*(.*)$/);
+        if (match?.[1]) found.push(match[1].trim());
+      }
+    } catch {
+      /* no env file on this host */
+    }
+  }
+  return found.join("\n");
+}
+
+function keyPaths() {
+  return [...new Set([process.env.VENICE_KEY_PATH, KEY_PATH, "/tmp/xero-venice.keys"].filter(Boolean) as string[])];
+}
+
+export function noteClientKeys(raw: string) {
+  pushKeys(memoryKeys, raw);
+}
+
 export function readVeniceKeys(): string[] {
   const out: string[] = [];
-  const fromEnv = process.env.VENICE_API_KEY || process.env.VENICE_INFERENCE_KEY || "";
-  if (fromEnv.trim()) out.push(fromEnv.trim());
-  try {
-    for (const line of readFileSync(KEY_PATH, "utf8").split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (trimmed && !out.includes(trimmed)) out.push(trimmed);
+  pushKeys(out, process.env.VENICE_API_KEY || "");
+  pushKeys(out, process.env.VENICE_INFERENCE_KEY || "");
+  pushKeys(out, readDotEnv());
+  for (const path of keyPaths()) {
+    try {
+      pushKeys(out, readFileSync(path, "utf8"));
+    } catch {
+      /* missing store */
     }
-  } catch {
-    /* no file yet */
   }
+  for (const key of memoryKeys) pushKeys(out, key);
   return out;
 }
 
@@ -114,7 +170,7 @@ function spentFor(ledger: Ledger, key: string) {
 
 function activeKey(ledger: Ledger): string {
   const keys = readVeniceKeys();
-  return keys.find((key) => spentFor(ledger, key) < DAILY_BUDGET_USD) || keys[0] || "";
+  return keys.find((key) => !deadKeys.has(keyId(key)) && spentFor(ledger, key) < DAILY_BUDGET_USD) || "";
 }
 
 function charge(usd: number) {
@@ -168,7 +224,10 @@ export async function veniceProbe(force = false): Promise<{ ok: boolean; detail:
   try {
     const res = await veniceFetch(MODELS_URL, key);
     if (!res.ok) {
-      const detail = `key rejected ${res.status}`;
+      if (res.status === 401 || res.status === 403 || res.status === 402) deadKeys.add(keyId(key));
+      const spare = activeKey(readLedger());
+      if (spare && spare !== key) return veniceProbe(true);
+      const detail = res.status === 401 || res.status === 403 ? "key expired" : `key rejected ${res.status}`;
       probeCache = { at: Date.now(), ok: false, detail };
       noteInference(false, detail);
       return { ok: false, detail };
@@ -188,22 +247,32 @@ export function veniceKey(): string {
   return activeKey(readLedger());
 }
 
-export function addVeniceKeys(raw: string): { added: number; keyCount: number } {
-  const incoming = raw
-    .split(/[\s,]+/)
-    .map((part) => part.trim())
-    .filter((part) => part.length >= 20 && part.length <= 200);
+export function addVeniceKeys(raw: string): { added: number; keyCount: number; persisted: boolean } {
   const existing = readVeniceKeys();
+  const incoming: string[] = [];
+  pushKeys(incoming, raw);
   const next = [...existing];
   let added = 0;
   for (const key of incoming) {
     if (next.includes(key)) continue;
     next.push(key);
     added += 1;
+    deadKeys.delete(keyId(key));
   }
-  mkdirSync(dirname(KEY_PATH), { recursive: true });
-  writeFileSync(KEY_PATH, `${next.join("\n")}\n`, { mode: 0o600 });
-  return { added, keyCount: next.length };
+  noteClientKeys(next.join("\n"));
+  let persisted = false;
+  for (const path of keyPaths()) {
+    try {
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, `${next.join("\n")}\n`, { mode: 0o600 });
+      persisted = true;
+      break;
+    } catch {
+      /* production disk is often read-only */
+    }
+  }
+  probeCache = { at: 0, ok: false, detail: "" };
+  return { added, keyCount: readVeniceKeys().length, persisted };
 }
 
 export async function veniceStatus() {
@@ -212,6 +281,7 @@ export async function veniceStatus() {
   const key = activeKey(ledger);
   const spent = key ? spentFor(ledger, key) : 0;
   const probe = await veniceProbe();
+  const needsKey = keys.length === 0 || !keys.some((item) => !deadKeys.has(keyId(item)) && spentFor(ledger, item) < DAILY_BUDGET_USD) || probe.detail === "key expired";
   return {
     voice: WORLD_MODEL,
     embed: EMBED_MODEL,
@@ -220,7 +290,8 @@ export async function veniceStatus() {
     keyPresent: keys.length > 0,
     keyCount: keys.length,
     live: probe.ok,
-    detail: lastInference.ok ? lastInference.detail : probe.detail,
+    needsKey,
+    detail: needsKey && probe.detail === "key expired" ? "key expired" : lastInference.ok ? lastInference.detail : probe.detail,
     budget: budgetOf({ ...ledger, spentUsd: spent }),
   };
 }
@@ -291,7 +362,8 @@ export async function narrate(input: NarrateInput): Promise<{
         ],
     });
     if (!res.ok) {
-      noteInference(false, `voice ${res.status}`);
+      retireKey(res.status, liveKey);
+      noteInference(false, res.status === 401 || res.status === 403 ? "key expired" : `voice ${res.status}`);
       const detail = await res.text();
       throw new Error(`Venice voice ${res.status}: ${detail.slice(0, 180)}`);
     }
@@ -389,6 +461,7 @@ export async function searchLife(query: string, beats: BeatIn[]): Promise<{
     }
     const res = await veniceFetch(EMBED_URL, liveKey, { model: EMBED_MODEL, encoding_format: "float", input: missing });
     if (!res.ok) {
+      retireKey(res.status, liveKey);
       const detail = await res.text();
       throw new Error(`Venice memory ${res.status}: ${detail.slice(0, 180)}`);
     }
@@ -496,7 +569,8 @@ export async function developCity(input: { era: string; watchers: number; have: 
         ],
     });
     if (!res.ok) {
-      noteInference(false, `voice ${res.status}`);
+      retireKey(res.status, liveKey);
+      noteInference(false, res.status === 401 || res.status === 403 ? "key expired" : `voice ${res.status}`);
       return fallback();
     }
     const json = (await res.json()) as {
