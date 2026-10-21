@@ -741,7 +741,7 @@ export function drawCity(
           mark(parked, across ? col + 0.5 : col + 0.84, across ? row + 0.84 : row + 0.5, 16, across, {
             name: "Curb lane",
             detail: `${parked} is parked at the curb, out of the travel lane. The double yellow stays in the middle.`,
-          }, true);
+          });
         }
         if (hash % 6 === 1) mark("⚫", across ? col + 0.42 : col + 0.55, across ? row + 0.55 : row + 0.42, 9, across);
         if (hash % 5 === 0) mark("💧", across ? col + 0.2 : col + 0.08, across ? row + 0.08 : row + 0.2, 10, across);
@@ -753,7 +753,7 @@ export function drawCity(
           }, true);
           thin(across ? 0.0 : 0.0, "⬜", 0.02);
         }
-        if (hash % 7 === 0) mark("🚌", across ? col + 0.5 : col + 0.2, across ? row + 0.2 : row + 0.5, 18, across, undefined, true);
+        if (hash % 7 === 0) mark("🚌", across ? col + 0.5 : col + 0.2, across ? row + 0.2 : row + 0.5, 18, across);
       },
     });
   }
@@ -832,7 +832,6 @@ export function drawCity(
           cover: true,
           dc: crew.destCol - crew.col,
           dr: crew.destRow - crew.row,
-          ride: crew.emoji === "🚚",
           hit: {
             id: crew.id,
             name: crew.name,
@@ -865,12 +864,12 @@ export function drawCity(
       props.push({
         depth: depthOf(col, row) + 0.02,
         draw: () =>
-          glyph(vehicle.emoji, col, row, 0, vehicle.emoji === "🚌" || vehicle.emoji === "🚚" ? 30 : 24, {
+          glyph(vehicle.emoji, col, row, 2, vehicle.emoji === "🚌" || vehicle.emoji === "🚚" ? 30 : 24, {
             cover: true,
             feet: true,
             dc: dirC,
             dr: dirR,
-            ride: true,
+            ride: false,
             hit: {
               id: vehicle.id,
               name: vehicle.name,
@@ -878,7 +877,7 @@ export function drawCity(
               place: "the lane",
               detail: vehicle.wait
                 ? `${vehicle.name} is stopped. The lane ahead is taken, so it waits instead of driving through.`
-                : `${vehicle.name} is in the travel lane. Its wheels follow the street and its roof stays square to the pavement.`,
+                : `${vehicle.name} stays upright in the lane, the same way the bikes sit, and only turns to face the way it is going.`,
             },
           }),
       });
@@ -986,12 +985,15 @@ export function drawCity(
 }
 
 function paintBuilding(building: Building) {
+    ctx.save();
+    ctx.globalAlpha = 1;
     const floors = building.apartments.length;
     const { col, row } = building;
     if (floors === 0) {
       glyph("🪵", col + 0.28, row + 0.62, 0, 18);
       glyph("🧱", col + 0.55, row + 0.62, 0, 16);
       glyph("🚩", col + 0.72, row + 0.4, 10, 18);
+      ctx.restore();
       return;
     }
     const name = building.name.toLowerCase();
@@ -1074,77 +1076,106 @@ function paintBuilding(building: Building) {
       })
       .sort((a, b) => a.depth - b.depth);
     const front = sides.slice(-2);
-    const frontMost = front[front.length - 1]?.side;
 
     for (const side of sides) {
       const pts = wall(col, row, 0, height, side.side).map(to);
       quad(ctx, pts);
-      ctx.fillStyle = "rgba(28, 24, 20, 0.35)";
-      ctx.fill();
       const facingStreet = front.some((item) => item.side === side.side);
-      for (let floor = 0; floor < floors; floor++) {
-        const y0 = floor * rowsEach;
-        const open = building.rising && floor === floors - 1;
-        for (let rr = 0; rr < rowsEach; rr++) {
-          for (let cc = 0; cc < cols; cc++) {
-            const windowBay = facingStreet && rr >= 1 && rr <= 3 && ((cc >= 1 && cc <= 3) || (cc >= 6 && cc <= 8));
-            const door = facingStreet && side.side === frontMost && floor === 0 && cc >= 4 && cc <= 5 && rr >= 1;
-            if (windowBay || door) continue;
-            const pier = cc === 0 || cc === cols - 1 || rr === 0 || rr === rowsEach - 1;
-            stamp(pts, cc, y0 + rr, open ? "🏗️" : pier ? skin.pier : skin.mass);
-          }
-        }
-        if (facingStreet) {
-          placeOnFace(inset(cell(pts, 1, y0 + 1, 3, 3), 0.08), open ? "🏗️" : skin.bay);
-          placeOnFace(inset(cell(pts, 6, y0 + 1, 3, 3), 0.08), open ? "🏗️" : skin.bay);
-          if (floor === 1 && !open) stamp(pts, 4, y0 + 4, skin.sill);
+      ctx.fillStyle = facingStreet ? "#6e4c40" : "#2a211c";
+      ctx.fill();
+      const total = floors * rowsEach;
+      const frontDoor = facingStreet;
+      for (let rr = 0; rr < total; rr++) {
+        for (let cc = 0; cc < cols; cc++) {
+          const pier = cc === 0 || cc === cols - 1 || rr === 0 || rr === total - 1;
+          stamp(pts, cc, rr, building.rising && rr < rowsEach ? "🏗️" : pier ? skin.pier : skin.mass);
         }
       }
-      if (facingStreet && side.side === frontMost) {
-        placeOnFace(cell(pts, 4, 1, 2, 4), "🚪");
-      }
-    }
-
-    for (const apt of building.apartments) {
-      const people = [...apt.residents].sort((a, b) => (a.role === "person" ? 0 : 1) - (b.role === "person" ? 0 : 1));
-      const host = front[front.length - 1];
-      if (!host || people.length === 0) continue;
-      const pts = wall(col, row, 0, height, host.side).map(to);
-      const y0 = (apt.floor - 1) * rowsEach;
-      people.slice(0, 2).forEach((resident, index) => {
-        const pane = inset(cell(pts, index === 0 ? 1 : 6, y0 + 1, 3, 3), 0.28);
-        const flip = pane[1]!.x < pane[0]!.x;
-        const foot = { x: (pane[2]!.x + pane[3]!.x) / 2, y: (pane[2]!.y + pane[3]!.y) / 2 };
-        const paneW = Math.hypot(pane[1]!.x - pane[0]!.x, pane[1]!.y - pane[0]!.y);
-        const paneH = Math.hypot(pane[3]!.x - pane[0]!.x, pane[3]!.y - pane[0]!.y);
-        const size = Math.min(paneW, paneH) * 0.9;
+      // t = 0 is whichever wall edge is lower on screen (the street). t = 1 is the roof.
+      const z0y = (pts[0]!.y + pts[1]!.y) / 2;
+      const z1y = (pts[2]!.y + pts[3]!.y) / 2;
+      const streetLow = z0y >= z1y;
+      const low0 = streetLow ? pts[0]! : pts[3]!;
+      const low1 = streetLow ? pts[1]! : pts[2]!;
+      const high0 = streetLow ? pts[3]! : pts[0]!;
+      const high1 = streetLow ? pts[2]! : pts[1]!;
+      const at = (t: number, u: number) => lerp(lerp(low0, high0, t), lerp(low1, high1, t), u);
+      const faceQuad = (t0: number, t1: number, u0: number, u1: number) => [at(t1, u0), at(t1, u1), at(t0, u1), at(t0, u0)];
+      const doorTop = frontDoor ? Math.min(0.4, 0.75 / floors) : 0;
+      if (facingStreet) {
+        const winT0 = frontDoor ? doorTop + 0.06 : 0.08;
+        const winT1 = 0.9;
+        const pane = faceQuad(winT0, winT1, 0.1, 0.9);
         ctx.save();
         quad(ctx, pane);
         ctx.clip();
-        ctx.fillStyle = apt.lit ? "rgba(255, 206, 140, 0.94)" : "rgba(16, 18, 24, 0.94)";
+        quad(ctx, pane);
+        ctx.fillStyle = "#fff1d4";
         ctx.fill();
-        drawXero(ctx, resident.emoji, foot.x, foot.y, size, { anchor: "feet", flip });
-        if (resident.role === "person") {
-          const scene = windowScene(facade, apt.floor, index, city.tick || 0);
-          drawXero(ctx, scene, foot.x + (flip ? -1 : 1) * size * 0.28, foot.y, size * 0.42, { anchor: "feet", flip });
-        }
+        const floor = faceQuad(winT0, winT0 + (winT1 - winT0) * 0.22, 0.1, 0.9);
+        quad(ctx, floor);
+        ctx.fillStyle = "#e2b56e";
+        ctx.fill();
+        const cast = building.apartments.flatMap((apt) => apt.residents.map((resident) => resident.emoji));
+        const movers = [...(cast.length ? cast.slice(0, 3) : ["🚶", "🧍"]), windowScene(facade, 1, side.side, phase)];
+        const paneH = Math.hypot(at(winT0, 0.5).x - at(winT1, 0.5).x, at(winT0, 0.5).y - at(winT1, 0.5).y);
+        const fig = Math.max(12, Math.min(40, paneH * 0.32));
+        const floorT = winT0 + (winT1 - winT0) * 0.22;
+        movers.forEach((emoji, index) => {
+          const travel = (phase * 0.008 + index * 0.31) % 1;
+          const ping = index % 2 === 0 ? travel : 1 - travel;
+          const onFloor = index < movers.length - 1;
+          const pos = at(onFloor ? floorT : winT0 + (winT1 - winT0) * 0.62, 0.18 + ping * 0.64);
+          drawXero(ctx, emoji, pos.x, pos.y, onFloor ? fig : fig * 0.72, { anchor: "feet", flip: travel > 0.5 });
+        });
+        ctx.restore();
+        ctx.save();
+        quad(ctx, pane);
+        ctx.strokeStyle = "#1c140f";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.beginPath();
+        const mullA = at(winT0, 0.5);
+        const mullB = at(winT1, 0.5);
+        ctx.moveTo(mullA.x, mullA.y);
+        ctx.lineTo(mullB.x, mullB.y);
+        const rail = winT0 + (winT1 - winT0) * 0.48;
+        const railA = at(rail, 0.1);
+        const railB = at(rail, 0.9);
+        ctx.moveTo(railA.x, railA.y);
+        ctx.lineTo(railB.x, railB.y);
+        ctx.stroke();
         ctx.restore();
         const xs = pane.map((p) => p.x);
         const ys = pane.map((p) => p.y);
         hits.push({
-          id: resident.id,
-          name: resident.name,
-          emoji: resident.emoji,
-          role: resident.role,
+          id: `${building.id}-room-${side.side}`,
+          name: building.name,
+          emoji: "🪟",
+          role: "building",
           place: building.name,
-          floor: apt.floor,
-          detail: `${resident.name} is inside ${building.name}, floor ${apt.floor}. The window is one pane in a wall of emoji.`,
+          floor: 1,
+          detail: `A large window in ${building.name}. The wall around it is solid. Inside, ${movers.join(" ")} move across the room.`,
           x: Math.min(...xs),
           y: Math.min(...ys),
           w: Math.max(...xs) - Math.min(...xs),
           h: Math.max(...ys) - Math.min(...ys),
         });
-      });
+      }
+      if (frontDoor) {
+        const opening = faceQuad(0, doorTop, 0.34, 0.66);
+        quad(ctx, opening);
+        ctx.fillStyle = "#1a120e";
+        ctx.fill();
+        quad(ctx, opening);
+        ctx.strokeStyle = "#1a120e";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        const foot = at(0, 0.5);
+        const head = at(doorTop, 0.5);
+        const doorPx = Math.max(14, Math.hypot(head.x - foot.x, head.y - foot.y));
+        drawXero(ctx, "🚪", foot.x, foot.y, doorPx, { anchor: "feet" });
+      }
     }
 
     const roofZ = floors * FH;
@@ -1183,6 +1214,7 @@ function paintBuilding(building: Building) {
     ctx.fillRect(crown.x - plate / 2, crown.y - 8, plate, 16);
     ctx.fillStyle = palette.cream;
     ctx.fillText(building.name, crown.x, crown.y);
+    ctx.restore();
   }
 
   ctx.fillStyle = palette.mute;
