@@ -158,20 +158,32 @@ export function panBy(camera: Camera, dx: number, dy: number): Camera {
   return { ...camera, panX: camera.panX + dx, panY: camera.panY + dy };
 }
 
-/** Turn the view, but keep the ground under the cursor from sliding away. */
-export function orbitBy(city: City, width: number, height: number, camera: Camera, px: number, py: number, dx: number, dy: number): Camera {
+/** Grab a ground point and move it with the cursor. A sideways pull turns the city clockwise, the way the hand goes. */
+export function pullBy(
+  city: City,
+  width: number,
+  height: number,
+  camera: Camera,
+  px: number,
+  py: number,
+  dx: number,
+  dy: number,
+  turn = 0.003,
+): Camera {
   const before = viewOf(city, width, height, camera);
+  const grabX = px - dx;
+  const grabY = py - dy;
   let col = (city.cols || 11) / 2;
   let row = (city.rows || 9) / 2;
   let best = Infinity;
-  const stepC = Math.max(1, Math.floor((city.cols || 11) / 24));
-  const stepR = Math.max(1, Math.floor((city.rows || 9) / 24));
-  for (let r = 0; r <= (city.rows || 9); r += stepR) {
-    for (let c = 0; c <= (city.cols || 11); c += stepC) {
+  const maxC = city.cols || 11;
+  const maxR = city.rows || 9;
+  for (let r = -2; r <= maxR + 2; r += 1) {
+    for (let c = -2; c <= maxC + 2; c += 1) {
       const p = iso(c, r, 0);
       const sx = p.x * before.scale + before.ox;
       const sy = p.y * before.scale + before.oy;
-      const dist = (sx - px) * (sx - px) + (sy - py) * (sy - py);
+      const dist = (sx - grabX) * (sx - grabX) + (sy - grabY) * (sy - grabY);
       if (dist < best) {
         best = dist;
         col = c;
@@ -181,8 +193,8 @@ export function orbitBy(city: City, width: number, height: number, camera: Camer
   }
   const next: Camera = {
     ...camera,
-    yaw: (camera.yaw || 0) - dx * 0.006,
-    pitch: Math.min(1.15, Math.max(0.18, (camera.pitch ?? 0.76) - dy * 0.004)),
+    yaw: (camera.yaw || 0) + dx * turn,
+    pitch: Math.min(1.15, Math.max(0.18, (camera.pitch ?? 0.76) - dy * 0.0011)),
   };
   const after = viewOf(city, width, height, next);
   const held = iso(col, row, 0);
@@ -1141,6 +1153,6 @@ function paintBuilding(building: Building) {
   ctx.font = "12px Outfit, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(`world ${spanC}×${spanR} · drag pulls the city with you · right-drag turns around your hand`, 16, height - 16);
+  ctx.fillText(`world ${spanC}×${spanR} · drag pulls the city with you and turns it the way you pull`, 16, height - 16);
   return hits;
 }

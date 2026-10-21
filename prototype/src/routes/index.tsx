@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Info, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { drawCity, defaultCamera, orbitBy, panBy, zoomAt, type Camera, type Hit } from "@/city/draw";
+import { drawCity, defaultCamera, panBy, pullBy, zoomAt, type Camera, type Hit } from "@/city/draw";
 import { loadCity, saveCity } from "@/city/save";
 import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
@@ -333,13 +333,9 @@ function Home() {
     const dy = event.clientY - g.lastY;
     g.lastX = event.clientX;
     g.lastY = event.clientY;
-    if (g.mode === "pull") {
-      camRef.current = panBy(camRef.current, dx, dy);
-      return;
-    }
-    if (g.mode === "turn") {
+    if (g.mode === "pull" || g.mode === "turn") {
       const rect = canvas.getBoundingClientRect();
-      camRef.current = orbitBy(
+      camRef.current = pullBy(
         cityRef.current,
         canvas.clientWidth,
         canvas.clientHeight,
@@ -348,6 +344,7 @@ function Home() {
         event.clientY - rect.top,
         dx,
         dy,
+        g.mode === "turn" ? 0.005 : 0.0016,
       );
     }
   }
