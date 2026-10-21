@@ -1106,18 +1106,24 @@ export function drawCity(
         });
       }
       if (frontDoor) {
-        const opening = faceQuad(0, doorTop, 0.34, 0.66);
+        const u0 = 0.36;
+        const u1 = 0.64;
+        const opening = faceQuad(0, doorTop, u0, u1);
         quad(ctx, opening);
         ctx.fillStyle = "#1a120e";
         ctx.fill();
-        quad(ctx, opening);
-        ctx.strokeStyle = "#1a120e";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        const topA = at(doorTop, u0);
+        const botA = at(0, u0);
+        const botB = at(0, u1);
+        const widthPx = Math.hypot(botB.x - botA.x, botB.y - botA.y);
+        const heightPx = Math.hypot(topA.x - botA.x, topA.y - botA.y);
+        const doorPx = Math.max(12, Math.min(widthPx, heightPx));
         const foot = at(0, 0.5);
-        const head = at(doorTop, 0.5);
-        const doorPx = Math.max(14, Math.hypot(head.x - foot.x, head.y - foot.y));
+        ctx.save();
+        quad(ctx, pts);
+        ctx.clip();
         drawXero(ctx, "🚪", foot.x, foot.y, doorPx, { anchor: "feet" });
+        ctx.restore();
       }
     }
 
