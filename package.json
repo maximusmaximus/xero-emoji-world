@@ -5,13 +5,27 @@
   "description": "A living, self-building procedurally generated emoji megacity.",
   "license": "MIT",
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "build": "npm run build -w @xew/shared && npm run build -w @xew/sim-server && npm run build -w @xew/web",
     "dev:server": "npm run dev -w @xew/sim-server",
     "dev:web": "npm run dev -w @xew/web",
-    "test": "npm test -w @xew/shared",
-    "typecheck": "tsc -b packages/shared apps/sim-server apps/web"
+    "test": "npm test -w @xew/shared && npm test -w @xew/sim-server",
+    "typecheck": "tsc -b packages/shared apps/sim-server apps/web",
+    "smoke": "node scripts/smoke-e2e.mjs",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
-  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0", "tsx": "^4.19.0" }
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "playwright-core": "^1.64.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^2.1.0"
+  }
 }

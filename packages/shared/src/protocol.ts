@@ -16,6 +16,7 @@ export const API = {
   ws: '/ws',
   sse: '/events',                    // SSE fallback for the life story
   state: '/api/state',
+  world: '/api/world',
   entityStory: (id: string) => `/api/entity/${encodeURIComponent(id)}/story`,
   search: '/api/search?q=',          // semantic search over actions
   backupNow: '/api/backup/download', // streams ndjson.gz of the full DB

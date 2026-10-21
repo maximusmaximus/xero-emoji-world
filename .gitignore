@@ -4,4 +4,5 @@ data/
 backups/
 .env
 *.log
+*.tsbuildinfo
 .secrets/

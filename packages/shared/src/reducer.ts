@@ -2,6 +2,7 @@
  * Shared state reducer: the ONLY way state changes. Server and client both apply
  * the same CityAction.patch, which keeps the browser in lockstep with the sim.
  */
+import { ensureWorld } from './world.js';
 import type { Apartment, Block, Building, CityAction, CityState, District, Lot, StatePatch } from './types.js';
 
 export interface CityIndex {
@@ -12,6 +13,7 @@ export interface CityIndex {
 }
 
 export function indexCity(state: CityState): CityIndex {
+  ensureWorld(state);
   const idx: CityIndex = { districts: new Map(), blocks: new Map(), buildings: new Map(), apartments: new Map() };
   for (const d of state.districts) {
     idx.districts.set(d.id, d);
@@ -79,6 +81,7 @@ export function applyPatch(state: CityState, idx: CityIndex, p: StatePatch): voi
       break;
     }
     case 'setStreet': { const ref = idx.blocks.get(p.blockId); if (ref) ref.block.street = p.street; break; }
+    case 'setWorld': state.world = p.world; break;
     case 'setWeather': state.weather = p.weather; state.sky = p.sky; break;
     case 'batch': for (const sub of p.patches) applyPatch(state, idx, sub); break;
     case 'none': break;

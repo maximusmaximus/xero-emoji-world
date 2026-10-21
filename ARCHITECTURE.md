@@ -44,3 +44,9 @@ The view is a full-bleed isometric diorama, not a cutaway elevation. The ground 
 
 ## Backups
 `GET /api/backup/download` streams a gzipped NDJSON file. It has a header line, then every point from both collections with vectors. Scheduled copies are written every `BACKUP_INTERVAL_MIN` and the newest `BACKUP_KEEP` are kept. `apps/sim-server/scripts/restore.ts` restores a backup.
+
+## World layer (emoji-alchemy + Oracle)
+- `packages/shared/src/world.ts` contains the pure model: materials, recipes, wonders, eras, the compounding multiplier, `sanitizeDecree`, `localDecree` and `worldSummary`.
+- `packages/shared/src/world-behaviours.ts` contains the harvest, alchemy, wonder and decree actions, plus `dynamicWeight` (demand-driven behaviour weights).
+- `apps/sim-server/src/oracle.ts` has `LLMOracle` (OpenAI-compatible chat, JSON mode) and `LocalOracle`. `CityEngine.consult()` runs every `ORACLE_EVERY_TICKS` without blocking and injects the decree into the next `step()`.
+- State: `CityState.world`. Patch: `{ op: 'setWorld' }`. Snapshots from before this layer are back-filled by `ensureWorld` inside `indexCity`.

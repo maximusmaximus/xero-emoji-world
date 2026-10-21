@@ -1,3 +1,4 @@
+import type { WorldState } from './world.js';
 /**
  * City domain model. Hierarchy:
  *   City -> District -> Block -> Lot -> Building -> Floor -> Apartment -> {Person, Item}
@@ -63,6 +64,8 @@ export interface CityState {
   sky: Entity[];
   weather: string;
   stats: { population: number; buildings: number; apartments: number; items: number; actions: number };
+  /** Emoji-alchemy / oracle layer. Optional only so old snapshots still load (see ensureWorld). */
+  world?: WorldState;
 }
 
 /** Everything that happens is an Action. Actions are the unit stored in the vector DB. */
@@ -71,7 +74,8 @@ export type ActionType =
   | 'person.born' | 'person.moved_in' | 'person.moved_out' | 'person.got_job' | 'person.bought'
   | 'person.adopted_pet' | 'person.commuted' | 'person.slept' | 'person.woke' | 'person.married'
   | 'person.celebrated' | 'person.hobby' | 'vehicle.arrived' | 'vehicle.departed' | 'tree.planted'
-  | 'weather.changed' | 'city.event' | 'apartment.lights';
+  | 'weather.changed' | 'city.event' | 'apartment.lights'
+  | 'world.harvest' | 'world.discovery' | 'world.crafted' | 'world.decree' | 'world.wonder_progress' | 'world.wonder_built' | 'world.era' | 'building.stalled';
 
 export interface CityAction {
   id: string;
@@ -99,5 +103,6 @@ export type StatePatch =
   | { op: 'setApartment'; apartment: Apartment }
   | { op: 'setStreet'; blockId: string; street: StreetThing[] }
   | { op: 'setWeather'; weather: string; sky: Entity[] }
+  | { op: 'setWorld'; world: WorldState }
   | { op: 'batch'; patches: StatePatch[] }
   | { op: 'none' };
