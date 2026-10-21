@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Info, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { drawCity, defaultCamera, panBy, zoomAt, type Camera, type Hit } from "@/city/draw";
+import { drawCity, defaultCamera, orbitBy, panBy, zoomAt, type Camera, type Hit } from "@/city/draw";
 import { loadCity, saveCity } from "@/city/save";
 import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
@@ -107,7 +107,7 @@ function Home() {
   const keepRef = useRef(false);
   const pointers = useRef(new Map<number, { x: number; y: number; type: string }>());
   const gesture = useRef({
-    mode: "none" as "none" | "rotate" | "pinch",
+    mode: "none" as "none" | "pull" | "turn" | "pinch",
     lastX: 0,
     lastY: 0,
     lastDist: 0,
@@ -274,12 +274,13 @@ function Home() {
     };
   }
 
-  function armRotate(x: number, y: number) {
-    gesture.current.mode = "rotate";
+  function armPull(x: number, y: number) {
+    gesture.current.mode = "pull";
     gesture.current.lastX = x;
     gesture.current.lastY = y;
   }
-    function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+
+  function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = event.currentTarget;
     canvas.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, type: event.pointerType });
@@ -293,7 +294,13 @@ function Home() {
       g.lastMidY = pair.midY;
       return;
     }
-    armRotate(event.clientX, event.clientY);
+    if (event.button === 2 || event.altKey || event.shiftKey) {
+      g.mode = "turn";
+      g.lastX = event.clientX;
+      g.lastY = event.clientY;
+      return;
+    }
+    armPull(event.clientX, event.clientY);
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -322,21 +329,33 @@ function Home() {
       g.lastMidY = pair.midY;
       return;
     }
-    if (g.mode === "rotate") {
-      const dx = event.clientX - g.lastX;
-      const dy = event.clientY - g.lastY;
-      g.lastX = event.clientX;
-      g.lastY = event.clientY;
-      const yaw = (camRef.current.yaw || 0) + dx * 0.008;
-      const pitch = Math.min(1.2, Math.max(0.14, (camRef.current.pitch ?? 0.76) - dy * 0.005));
-      camRef.current = { ...camRef.current, yaw, pitch };
+    const dx = event.clientX - g.lastX;
+    const dy = event.clientY - g.lastY;
+    g.lastX = event.clientX;
+    g.lastY = event.clientY;
+    if (g.mode === "pull") {
+      camRef.current = panBy(camRef.current, dx, dy);
+      return;
+    }
+    if (g.mode === "turn") {
+      const rect = canvas.getBoundingClientRect();
+      camRef.current = orbitBy(
+        cityRef.current,
+        canvas.clientWidth,
+        canvas.clientHeight,
+        camRef.current,
+        event.clientX - rect.left,
+        event.clientY - rect.top,
+        dx,
+        dy,
+      );
     }
   }
 
   function onPointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
     pointers.current.delete(event.pointerId);
     const g = gesture.current;
-    if (!g.moved && pointers.current.size === 0) {
+    if (!g.moved && pointers.current.size === 0 && event.button !== 2) {
       const canvas = event.currentTarget;
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
@@ -348,7 +367,7 @@ function Home() {
     }
     if (pointers.current.size === 1) {
       const left = [...pointers.current.values()][0];
-      if (left) armRotate(left.x, left.y);
+      if (left) armPull(left.x, left.y);
     }
     if (pointers.current.size === 0) g.mode = "none";
   }
@@ -426,6 +445,7 @@ function Home() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onContextMenu={(event) => event.preventDefault()}
       />
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 p-4">
         <div className="pointer-events-auto flex items-start gap-3">
