@@ -1,5 +1,6 @@
 import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./signs";
+import { floorBands, mayMove, motionOf, roomFor, storyCount } from "./motion";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -774,7 +775,7 @@ export function drawCity(
         }),
     });
   }
-  const walkers = ["🚶", "👩", "👨", "🧒", "🧳", "🐕", "🧑‍💼", "👵"];
+  const walkers = ["🚶", "👩", "👨", "🧒", "🐕", "🧑‍💼", "👵"].filter((emoji) => mayMove(emoji, "self"));
   let walked = 0;
   for (const building of city.buildings) {
     if (!building.apartments.length || walked > 18) continue;
@@ -827,12 +828,8 @@ export function drawCity(
               : `${crew.name} is a ${crew.emoji} doing ${crew.task} work. They only walk while someone is watching.`,
           },
         });
-        if (crew.cargo) {
-          glyph(crew.cargo, col + 0.42, row + 0.12, 22, 78, {
-            feet: false,
-            huge: true,
-            cover: true,
-          });
+        if (crew.cargo && mayMove(crew.cargo, "person")) {
+          glyph(crew.cargo, col + 0.68, row + 0.38, 6, 12, { feet: false, cover: true });
         }
       },
     });
@@ -848,8 +845,8 @@ export function drawCity(
       if (col < minC || row < minR || col >= maxC || row >= maxR) continue;
       props.push({
         depth: depthOf(col, row) + 0.02,
-        draw: () =>
-          glyph(vehicle.emoji, col, row, 2, vehicle.emoji === "🚌" || vehicle.emoji === "🚚" ? 30 : 24, {
+        draw: () => {
+          glyph(vehicle.emoji, col, row, 2, vehicle.emoji === "🚌" || vehicle.emoji === "🚚" || vehicle.emoji === "🚛" ? 30 : 24, {
             cover: true,
             feet: true,
             dc: dirC,
@@ -862,9 +859,13 @@ export function drawCity(
               place: "the lane",
               detail: vehicle.wait
                 ? `${vehicle.name} is stopped. The lane ahead is taken, so it waits instead of driving through.`
-                : `${vehicle.name} stays upright in the lane, the same way the bikes sit, and only turns to face the way it is going.`,
+                : `${vehicle.name} stays in its lane. A load only follows when this vehicle is dragging it.`,
             },
-          }),
+          });
+          if ((vehicle.emoji === "🚚" || vehicle.emoji === "🚛") && mayMove("📦", "vehicle")) {
+            glyph("📦", col - (dirC / len) * 0.42, row - (dirR / len) * 0.42, 2, 13, { feet: true, cover: true });
+          }
+        },
       });
     }
   }
@@ -955,21 +956,7 @@ export function drawCity(
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, width, height);
 
-  function windowScene(facade: string, floor: number, index: number, tick: number) {
-  const scenes: Record<string, string[]> = {
-    shop: ["🛒", "🍞", "🧋", "💳", "🧁"],
-    gas: ["⛽", "🧃", "🚗", "🔧"],
-    school: ["📚", "✏️", "🎒", "🍎"],
-    hospital: ["🩺", "💊", "🛏️", "💉"],
-    barn: ["🐄", "🌾", "🥚", "🥛"],
-    tower: ["💼", "💻", "📞", "☕"],
-    home: ["📺", "☕", "🪴", "🛏️"],
-  };
-  const list = scenes[facade] ?? scenes.home!;
-  return list[(floor + index + Math.floor(tick / 80)) % list.length]!;
-}
-
-function paintBuilding(building: Building) {
+  function paintBuilding(building: Building) {
     ctx.save();
     ctx.globalAlpha = 1;
     const floors = building.apartments.length;
@@ -1086,65 +1073,65 @@ function paintBuilding(building: Building) {
       const high1 = streetLow ? pts[2]! : pts[1]!;
       const at = (t: number, u: number) => lerp(lerp(low0, high0, t), lerp(low1, high1, t), u);
       const faceQuad = (t0: number, t1: number, u0: number, u1: number) => [at(t1, u0), at(t1, u1), at(t0, u1), at(t0, u0)];
-      const doorTop = frontDoor ? Math.min(0.4, 0.75 / floors) : 0;
+      const doorTop = frontDoor ? Math.min(0.28, 0.7 / storyCount(building.kind, floors)) : 0;
       if (facingStreet) {
-        const winT0 = frontDoor ? doorTop + 0.06 : 0.08;
-        const winT1 = 0.9;
-        const pane = faceQuad(winT0, winT1, 0.1, 0.9);
-        ctx.save();
-        quad(ctx, pane);
-        ctx.clip();
-        quad(ctx, pane);
-        ctx.fillStyle = "#fff1d4";
-        ctx.fill();
-        const floor = faceQuad(winT0, winT0 + (winT1 - winT0) * 0.22, 0.1, 0.9);
-        quad(ctx, floor);
-        ctx.fillStyle = "#e2b56e";
-        ctx.fill();
-        const cast = building.apartments.flatMap((apt) => apt.residents.map((resident) => resident.emoji));
-        const movers = [...(cast.length ? cast.slice(0, 3) : ["🚶", "🧍"]), windowScene(facade, 1, side.side, phase)];
-        const paneH = Math.hypot(at(winT0, 0.5).x - at(winT1, 0.5).x, at(winT0, 0.5).y - at(winT1, 0.5).y);
-        const fig = Math.max(12, Math.min(40, paneH * 0.32));
-        const floorT = winT0 + (winT1 - winT0) * 0.22;
-        movers.forEach((emoji, index) => {
-          const travel = (phase * 0.008 + index * 0.31) % 1;
-          const ping = index % 2 === 0 ? travel : 1 - travel;
-          const onFloor = index < movers.length - 1;
-          const pos = at(onFloor ? floorT : winT0 + (winT1 - winT0) * 0.62, 0.18 + ping * 0.64);
-          drawXero(ctx, emoji, pos.x, pos.y, onFloor ? fig : fig * 0.72, { anchor: "feet", flip: travel > 0.5 });
-        });
-        ctx.restore();
-        ctx.save();
-        quad(ctx, pane);
-        ctx.strokeStyle = "#1c140f";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.beginPath();
-        const mullA = at(winT0, 0.5);
-        const mullB = at(winT1, 0.5);
-        ctx.moveTo(mullA.x, mullA.y);
-        ctx.lineTo(mullB.x, mullB.y);
-        const rail = winT0 + (winT1 - winT0) * 0.48;
-        const railA = at(rail, 0.1);
-        const railB = at(rail, 0.9);
-        ctx.moveTo(railA.x, railA.y);
-        ctx.lineTo(railB.x, railB.y);
-        ctx.stroke();
-        ctx.restore();
-        const xs = pane.map((p) => p.x);
-        const ys = pane.map((p) => p.y);
-        hits.push({
-          id: `${building.id}-room-${side.side}`,
-          name: building.name,
-          emoji: "🪟",
-          role: "building",
-          place: building.name,
-          floor: 1,
-          detail: `A large window in ${building.name}. The wall around it is solid. Inside, ${movers.join(" ")} move across the room.`,
-          x: Math.min(...xs),
-          y: Math.min(...ys),
-          w: Math.max(...xs) - Math.min(...xs),
-          h: Math.max(...ys) - Math.min(...ys),
+        const stories = storyCount(building.kind, floors);
+        const bands = floorBands(stories, doorTop);
+        const roomTints = ["#fff1d4", "#f3e2c4", "#efe6f4", "#e7f0ea"];
+        bands.forEach((band, bandIndex) => {
+          const resident = building.apartments[band.story]?.residents.find((person) => motionOf(person.emoji) === "self");
+          const room = roomFor(facade, band.story, resident?.emoji);
+          const pane = faceQuad(band.t0, band.t1, 0.12, 0.88);
+          ctx.save();
+          quad(ctx, pane);
+          ctx.clip();
+          quad(ctx, pane);
+          ctx.fillStyle = roomTints[bandIndex % roomTints.length]!;
+          ctx.fill();
+          const sill = faceQuad(band.t0, band.t0 + (band.t1 - band.t0) * 0.16, 0.12, 0.88);
+          quad(ctx, sill);
+          ctx.fillStyle = "#c9844a";
+          ctx.fill();
+          const paneH = Math.hypot(at(band.t0, 0.5).x - at(band.t1, 0.5).x, at(band.t0, 0.5).y - at(band.t1, 0.5).y);
+          const fig = Math.max(9, Math.min(26, paneH * 0.62));
+          const feetT = band.t0 + (band.t1 - band.t0) * 0.18;
+          for (const item of room.still) {
+            if (mayMove(item.emoji, "self")) continue;
+            const pos = at(feetT, item.u);
+            drawXero(ctx, item.emoji, pos.x, pos.y, fig * 0.55, { anchor: "feet" });
+          }
+          if (mayMove(room.actor, "self")) {
+            const travel = (phase * 0.005 + band.story * 0.23) % 1;
+            const ping = travel < 0.5 ? travel * 2 : (1 - travel) * 2;
+            const pos = at(feetT, 0.28 + ping * 0.44);
+            drawXero(ctx, room.actor, pos.x, pos.y, fig, { anchor: "feet", flip: travel > 0.5 });
+            if (room.carried && mayMove(room.carried, "person")) {
+              const hand = at(feetT + (band.t1 - band.t0) * 0.28, 0.28 + ping * 0.44);
+              drawXero(ctx, room.carried, hand.x, hand.y, fig * 0.38, { anchor: "center" });
+            }
+          }
+          ctx.restore();
+          ctx.save();
+          quad(ctx, pane);
+          ctx.strokeStyle = "#1c140f";
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.restore();
+          const xs = pane.map((p) => p.x);
+          const ys = pane.map((p) => p.y);
+          hits.push({
+            id: `${building.id}-floor-${side.side}-${band.story}`,
+            name: building.name,
+            emoji: "🪟",
+            role: "building",
+            place: building.name,
+            floor: band.story + 1,
+            detail: `Floor ${band.story + 1} of ${building.name}, separated by a slab. ${room.actor} moves in this room. ${room.still.map((item) => item.emoji).join(" ")} stays put${room.carried ? `, and ${room.carried} only moves because ${room.actor} is carrying it` : ""}.`,
+            x: Math.min(...xs),
+            y: Math.min(...ys),
+            w: Math.max(...xs) - Math.min(...xs),
+            h: Math.max(...ys) - Math.min(...ys),
+          });
         });
       }
       if (frontDoor) {
