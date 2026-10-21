@@ -604,18 +604,15 @@ export function drawCity(
       });
     }
   }
+  const buildingByCell = new Map(city.buildings.map((building) => [`${building.col},${building.row}`, building]));
+  const onRow = (value: number) => ((value % 3) + 3) % 3 === 1;
   const roads = city.roads ?? [];
   for (const key of roads) {
     const [col, row] = key.split(",").map(Number) as [number, number];
     if (col < minC || row < minR || col >= maxC || row >= maxR) continue;
-    let east = roadSet.has(`${col + 1},${row}`);
-    let west = roadSet.has(`${col - 1},${row}`);
-    let south = roadSet.has(`${col},${row + 1}`);
-    let north = roadSet.has(`${col},${row - 1}`);
     props.push({
       depth: depthOf(col + 0.5, row + 0.5) - 0.08,
       draw: () => {
-        const crossing = (east || west) && (north || south) && col % 5 === 0 && row % 5 === 0;
         const band = (c0: number, r0: number, c1: number, r1: number) =>
           [iso(c0, r0, 2), iso(c1, r0, 2), iso(c1, r1, 2), iso(c0, r1, 2)].map(to);
         const pave = (quad: Point[], emoji: string) => {
@@ -630,43 +627,108 @@ export function drawCity(
           }
           drawXeroOnto(ctx, emoji, p0, p1, p3);
         };
-        if (crossing) {
-          pave(band(col, row, col + 1, row + 0.18), "⬜");
-          pave(band(col, row + 0.82, col + 1, row + 1), "⬜");
-          pave(band(col, row + 0.18, col + 0.18, row + 0.82), "⬜");
-          pave(band(col + 0.82, row + 0.18, col + 1, row + 0.82), "⬜");
-          pave(band(col + 0.18, row + 0.42, col + 0.82, row + 0.58), "⬜");
-          pave(band(col + 0.42, row + 0.18, col + 0.58, row + 0.82), "⬜");
-          glyph("🚦", col + 0.5, row + 0.5, 2, 16, { feet: false, cover: true });
-        } else if (east || west) {
-          pave(band(col, row, col + 1, row + 0.16), "⬜");
-          pave(band(col, row + 0.16, col + 1, row + 0.46), "⬛");
-          pave(band(col, row + 0.46, col + 1, row + 0.54), "🟨");
-          pave(band(col, row + 0.54, col + 1, row + 0.84), "⬛");
-          pave(band(col, row + 0.84, col + 1, row + 1), "⬜");
-        } else {
-          pave(band(col, row, col + 0.16, row + 1), "⬜");
-          pave(band(col + 0.16, row, col + 0.46, row + 1), "⬛");
-          pave(band(col + 0.46, row, col + 0.54, row + 1), "🟨");
-          pave(band(col + 0.54, row, col + 0.84, row + 1), "⬛");
-          pave(band(col + 0.84, row, col + 1, row + 1), "⬜");
+        const mark = (
+          emoji: string,
+          c: number,
+          r: number,
+          world: number,
+          alongCol: boolean,
+          hit?: { name: string; detail: string },
+          ride = false,
+        ) =>
+          glyph(emoji, c, r, 3, world, {
+            feet: false,
+            cover: true,
+            dc: alongCol ? 1 : 0,
+            dr: alongCol ? 0 : 1,
+            ride,
+            hit: hit
+              ? { id: `street-${key}-${emoji}`, name: hit.name, role: "road", place: "the street", detail: hit.detail }
+              : undefined,
+          });
+        const avenueEW = onRow(row);
+        const avenueNS = onRow(col);
+        const junction = avenueEW && avenueNS;
+        const hash = cellHash(col, row);
+        const front = [1, -1, 0, 0]
+          .map((dc, index) => buildingByCell.get(`${col + dc},${row + [0, 0, 1, -1][index]!}`))
+          .find(Boolean);
+
+        if (!avenueEW && !avenueNS) {
+          pave(band(col, row, col + 1, row + 1), hash % 3 === 0 ? "🟫" : "⬜");
+          const curb = (c0: number, r0: number, c1: number, r1: number) => pave(band(c0, r0, c1, r1), "🪨");
+          if (onRow(row - 1)) curb(col, row, col + 1, row + 0.1);
+          if (onRow(row + 1)) curb(col, row + 0.9, col + 1, row + 1);
+          if (onRow(col - 1)) curb(col, row, col + 0.1, row + 1);
+          if (onRow(col + 1)) curb(col + 0.9, row, col + 1, row + 1);
+          const nearCorner = onRow(row - 1) || onRow(row + 1) || onRow(col - 1) || onRow(col + 1);
+          const kit = ["🌳", "🪑", "🗑️", "📫", "💡", "🪴", "🚲", "🚶", "🐕", "🪧", "🌸", "🛴", "🧒", "♻️"];
+          let piece = kit[hash % kit.length]!;
+          if (front?.kind === "school" || /school/.test(front?.name.toLowerCase() ?? "")) piece = "🚸";
+          else if (front?.kind === "hospital") piece = "♿";
+          else if (front?.kind === "store" || front?.kind === "gas") piece = hash % 2 === 0 ? "☕" : "🛍️";
+          else if (front?.rising) piece = "🚧";
+          else if (nearCorner && hash % 4 === 0) piece = "🚏";
+          else if (nearCorner && hash % 4 === 1) piece = "💡";
+          else if (nearCorner && hash % 5 === 0) piece = "♿";
+          const side = onRow(row + 1) ? 0.72 : onRow(row - 1) ? 0.28 : onRow(col + 1) ? 0.72 : 0.28;
+          const along = onRow(row - 1) || onRow(row + 1);
+          mark(piece, col + (along ? 0.55 : side), row + (along ? side : 0.55), piece === "🌳" ? 18 : 12, along, {
+            name: "Sidewalk",
+            detail: `Sidewalk at the block. ${piece} sits in the furnishing zone, off the walking path, with the curb toward the street.`,
+          });
+          if (hash % 4 === 2) mark("🚮", col + 0.78, row + 0.22, 11, true);
+          return;
         }
-        const hit = to(iso(col + 0.5, row + 0.5, 2));
-        hits.push({
-          id: `road-${key}`,
-          name: crossing ? "Crossing" : "Road",
-          emoji: "🛣️",
-          role: "road",
-          place: "the street",
-          floor: 0,
-          detail: crossing
-            ? "A crossing paved in emoji: sidewalk, crosswalk stripes, and a light."
-            : "Emoji lanes, a yellow divider, and a sidewalk along each curb.",
-          x: hit.x - 18,
-          y: hit.y - 12,
-          w: 36,
-          h: 24,
-        });
+
+        pave(band(col, row, col + 1, row + 1), "⬛");
+        if (junction) {
+          for (let stripe = 0; stripe < 3; stripe++) {
+            const at = 0.02 + stripe * 0.055;
+            pave(band(col + at, row + 0.16, col + at + 0.03, row + 0.84), "⬜");
+            pave(band(col + 0.8 + at, row + 0.16, col + 0.8 + at + 0.03, row + 0.84), "⬜");
+            pave(band(col + 0.16, row + at, col + 0.84, row + at + 0.03), "⬜");
+            pave(band(col + 0.16, row + 0.8 + at, col + 0.84, row + 0.8 + at + 0.03), "⬜");
+          }
+          mark("🚥", col + 0.5, row + 0.5, 18, true, {
+            name: "Intersection",
+            detail: "Two streets cross. Zebra stripes mark each crosswalk, and the signal hangs over the middle.",
+          });
+          if (hash % 2 === 0) mark("🚦", col + 0.82, row + 0.18, 14, false);
+          return;
+        }
+
+        const across = avenueEW;
+        const thin = (at: number, emoji: string, thickness = 0.018) => {
+          if (across) pave(band(col, row + at, col + 1, row + at + thickness), emoji);
+          else pave(band(col + at, row, col + at + thickness, row + 1), emoji);
+        };
+        thin(0.02, "⬜", 0.015);
+        thin(0.965, "⬜", 0.015);
+        thin(0.47, "🟨", 0.012);
+        thin(0.518, "🟨", 0.012);
+        if (hash % 2 === 0) thin(0.3, "⬜", 0.012);
+        if ((across ? col : row) % 4 === 2) {
+          thin(0.78, "🟦", 0.06);
+          mark("🚲", across ? col + 0.5 : col + 0.81, across ? row + 0.81 : row + 0.5, 13, across);
+        } else if (hash % 3 === 0) {
+          const parked = ["🚗", "🚙", "🚕", "🚐"][hash % 4]!;
+          mark(parked, across ? col + 0.5 : col + 0.84, across ? row + 0.84 : row + 0.5, 16, across, {
+            name: "Curb lane",
+            detail: `${parked} is parked at the curb, out of the travel lane. The double yellow stays in the middle.`,
+          }, true);
+        }
+        if (hash % 6 === 1) mark("⚫", across ? col + 0.42 : col + 0.55, across ? row + 0.55 : row + 0.42, 9, across);
+        if (hash % 5 === 0) mark("💧", across ? col + 0.2 : col + 0.08, across ? row + 0.08 : row + 0.2, 10, across);
+        const nextIsJunction = across ? onRow(col + 1) : onRow(row + 1);
+        if (nextIsJunction) {
+          mark(across ? "➡️" : "⬇️", across ? col + 0.72 : col + 0.4, across ? row + 0.38 : row + 0.72, 12, across, {
+            name: "Lane",
+            detail: "A lane arrow before the crosswalk. The stop line is the white bar at the mouth of the intersection.",
+          }, true);
+          thin(across ? 0.0 : 0.0, "⬜", 0.02);
+        }
+        if (hash % 7 === 0) mark("🚌", across ? col + 0.5 : col + 0.2, across ? row + 0.2 : row + 0.5, 18, across, undefined, true);
       },
     });
   }
