@@ -46,6 +46,15 @@ function rememberLocal(raw: string) {
   return { added, text, count: next.size };
 }
 
+function censusOf(city: City) {
+  const counts = new Map<string, number>();
+  for (const building of city.buildings) counts.set(building.kind, (counts.get(building.kind) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([kind, count]) => `${kind}:${count}`)
+    .join(",");
+}
+
 function XeroLine({ text }: { text: string }) {
   return (
     <>
@@ -220,19 +229,20 @@ function Home() {
           watchersRef.current = count;
           setWatchers(count);
           cityRef.current = { ...cityRef.current, watchers: count };
-          const key = `${cityRef.current.era}:${Math.min(8, count)}`;
+          const census = censusOf(cityRef.current);
+          const key = `${cityRef.current.era}:${Math.min(8, count)}:${census}`;
           if (planKey.current === key) return;
           const plan = await develop({
             data: {
               era: cityRef.current.era,
               watchers: count,
-              have: cityRef.current.buildings.map((building) => building.kind),
+              have: censusOf(cityRef.current).split(",").filter(Boolean),
               keys: storedKeys(),
             },
           });
           if (stop) return;
           planKey.current = key;
-          cityRef.current = queuePlans(cityRef.current, plan.developments);
+          cityRef.current = queuePlans(cityRef.current, plan.developments, plan.focus);
           setCity(cityRef.current);
           setBudget((prev) => (plan.budget.spentUsd >= prev.spentUsd ? plan.budget : prev));
           if (plan.live) setStatus((prev) => ({ ...prev, live: true, detail: plan.model }));
@@ -434,6 +444,11 @@ function Home() {
               {eraLabel(city.era ?? "camp")} · {city.research ?? 0} research
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-mute">{watchers} watching</p>
+            {city.focus?.note ? (
+              <p className="mt-1 max-w-xs text-sm text-cream">
+                {city.focus.kind}: {city.focus.note}
+              </p>
+            ) : null}
             <p className="mt-1 max-w-xs text-sm text-mute">{latest ? <XeroLine text={latest.text} /> : null}</p>
           </div>
         </div>

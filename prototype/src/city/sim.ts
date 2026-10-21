@@ -3,7 +3,7 @@ export const CITY_VERSION = 2;
 export type Role = "person" | "pet" | "item";
 export type Kind = "hut" | "farmhouse" | "house" | "store" | "gas" | "school" | "hospital" | "block" | "tower" | "skyscraper";
 export type Era = "camp" | "farm" | "roads" | "town" | "city" | "skyline";
-export type Task = "raise" | "pave" | "tend" | "visit" | "study" | "haul";
+export type Task = "raise" | "pave" | "tend" | "visit" | "study" | "haul" | "enter";
 export type Goods = "timber" | "grain" | "brick" | "steel" | "glass" | "tools";
 export type Stock = Record<Goods, number>;
 
@@ -68,6 +68,12 @@ export type Crew = {
   cargo?: string;
 };
 
+export type Focus = {
+  kind: Kind;
+  note: string;
+  notes?: Partial<Record<Kind, string>>;
+};
+
 export type Plan = {
   id: string;
   name: string;
@@ -104,6 +110,7 @@ export type City = {
   plans?: Plan[];
   watchers?: number;
   sophistication?: number;
+  focus?: Focus;
   stock?: Stock;
   works?: Works[];
   infra?: Infra[];
@@ -506,6 +513,10 @@ function kindFor(era: Era, rng: () => number, city: City): Kind | null {
   const planned = (city.plans ?? []).find(
     (plan) => !plan.used && order.includes(plan.kind) && city.buildings.filter((b) => b.kind === plan.kind).length < caps[plan.kind],
   );
+  const focus = city.focus?.kind;
+  if (focus && order.includes(focus) && city.buildings.filter((b) => b.kind === focus).length < caps[focus] && rng() > 0.3) {
+    return focus;
+  }
   if (planned) return planned.kind;
   const open = order.filter((kind) => city.buildings.filter((b) => b.kind === kind).length < caps[kind]);
   if (open.length === 0) return null;
@@ -515,6 +526,7 @@ function kindFor(era: Era, rng: () => number, city: City): Kind | null {
 export function queuePlans(
   city: City,
   incoming: { name: string; kind: Kind; emoji: string; note: string }[],
+  focus?: { kind?: string; note?: string; notes?: Partial<Record<string, string>> },
 ): City {
   const plans = [...(city.plans ?? [])];
   const allowed: Kind[] = ["hut", "farmhouse", "house", "store", "gas", "school", "hospital", "block", "tower", "skyscraper"];
@@ -530,9 +542,19 @@ export function queuePlans(
       used: false,
     });
   }
+  const kind = allowed.includes(focus?.kind as Kind) ? (focus?.kind as Kind) : city.focus?.kind;
+  const notes: Partial<Record<Kind, string>> = { ...(city.focus?.notes ?? {}) };
+  for (const [key, value] of Object.entries(focus?.notes ?? {})) {
+    if (!allowed.includes(key as Kind) || !value) continue;
+    notes[key as Kind] = value.slice(0, 140);
+  }
+  const nextFocus = kind
+    ? { kind, note: (focus?.note || notes[kind] || city.focus?.note || `${kind} is the next thing to move forward.`).slice(0, 160), notes }
+    : city.focus;
   return {
     ...city,
     plans: plans.slice(-16),
+    focus: nextFocus,
     sophistication: (city.sophistication ?? 0) + Math.max(1, incoming.length),
   };
 }
@@ -626,7 +648,8 @@ function wants(city: City) {
   const farmers = city.crews.filter((c) => c.task === "tend").length;
   const visitors = city.crews.filter((c) => c.task === "visit").length;
   const scholars = city.crews.filter((c) => c.task === "study").length;
-  return { builders, pavers, farmers, visitors, scholars };
+  const entering = city.crews.filter((c) => c.task === "enter").length;
+  return { builders, pavers, farmers, visitors, scholars, entering };
 }
 
 function assignWork(city: City, rng: () => number): City {
@@ -695,6 +718,22 @@ function assignWork(city: City, rng: () => number): City {
         targetId: keyOf(dest.col, dest.row),
       });
     }
+  }
+  if (next.buildings.filter((b) => b.apartments.length > 0).length >= 1 && count.entering < 4) {
+    const homes = next.buildings.filter((b) => b.apartments.length > 0);
+    const to = homes[Math.floor(rng() * homes.length)]!;
+    const person = pick(rng, PEOPLE);
+    next = spawn(next, {
+      id: `crew-${next.tick}-enter-${to.id}`,
+      emoji: person,
+      task: "enter",
+      name: pick(rng, NAMES),
+      col: to.col + (rng() > 0.5 ? 0.1 : 0.9),
+      row: to.row + 1.2,
+      destCol: to.col + 0.5,
+      destRow: to.row + 0.45,
+      targetId: to.id,
+    });
   }
   if (next.buildings.filter((b) => b.apartments.length > 0).length >= 2 && count.visitors < 2 && rng() > 0.55) {
     const homes = next.buildings.filter((b) => b.apartments.some((a) => a.residents.some((r) => r.role === "person")));
@@ -863,6 +902,39 @@ function resolve(city: City, crew: Crew, rng: () => number): { city: City; keep:
         place: barn?.name ?? "the fields",
       });
     }
+    return { city: next, keep: false };
+  }
+  if (crew.task === "enter") {
+    const host = city.buildings.find((b) => b.id === crew.targetId);
+    if (!host?.apartments.length) return { city, keep: false };
+    const guest = makeResident(rng, city.tick, 9, "person");
+    guest.emoji = crew.emoji;
+    guest.name = crew.name;
+    const floor = host.kind === "tower" || host.kind === "skyscraper" ? Math.min(host.apartments.length - 1, 1 + Math.floor(rng() * 2)) : 0;
+    const next = pushBeat(
+      {
+        ...city,
+        buildings: city.buildings.map((b) =>
+          b.id !== host.id
+            ? b
+            : {
+                ...b,
+                apartments: b.apartments.map((apt, index) =>
+                  index !== floor ? apt : { ...apt, lit: true, residents: [...apt.residents, guest].slice(0, 4) },
+                ),
+              },
+        ),
+      },
+      {
+        id: `beat-${city.tick}-enter`,
+        tick: city.tick,
+        emoji: crew.emoji,
+        text: `${crew.name} leaves the sidewalk and steps inside ${host.name}.`,
+        subjectId: host.id,
+        subjectName: crew.name,
+        place: host.name,
+      },
+    );
     return { city: next, keep: false };
   }
   if (crew.task === "visit") {
@@ -1086,7 +1158,7 @@ export function stepCity(city: City): City {
       if (staked) next = staked;
     }
   }
-  if (next.crews.length < 12) next = assignWork(next, rng);
+  if (next.crews.length < 16) next = assignWork(next, rng);
   return next;
 }
 

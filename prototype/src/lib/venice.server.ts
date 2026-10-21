@@ -24,19 +24,33 @@ const STORY_SYSTEM =
   "Voice of Xero, a living emoji city that people are watching right now. One or two short sentences. No markdown. Match the era you are given: a camp is small and physical, a skyline talks about towers, emoji roads, fields, and the sky. The higher the research and the longer the city has been watched, the more sophisticated the detail.";
 
 const DEVELOP_SYSTEM =
-  "You propose the next two buildings for Xero, an emoji city people are watching. Reply with JSON only, no markdown: {\"developments\":[{\"name\":\"Two Words\",\"kind\":\"hut|farmhouse|house|store|gas|school|hospital|block|tower|skyscraper\",\"emoji\":\"one emoji\",\"note\":\"one sentence\"}]}. Each reply must be more sophisticated than the last: add real civic life, stores, gas stations, schools, and hospitals when the era can support them. More watchers means a richer, more specific building. Names are unique and concrete.";
+  "You assess an emoji city and say what each category should do next. Reply with JSON only, no markdown: {\"focus\":\"hut|farmhouse|house|store|gas|school|hospital|block|tower|skyscraper\",\"notes\":{\"store\":\"one short next step\"},\"developments\":[{\"name\":\"Two Words\",\"kind\":\"same kinds as focus\",\"emoji\":\"one emoji\",\"note\":\"one sentence\"}]}. notes must include every category you were given. focus is the category that is furthest behind. developments build that category. Each call is more specific than the last.";
 
 type Ledger = { day: string; spentUsd: number; byKey?: Record<string, number> };
 type Budget = { spentUsd: number; capUsd: number; remainingUsd: number; day: string };
 
 const storyCache = new Map<string, string>();
 const vectorCache = new Map<string, number[]>();
-const developCache = new Map<string, Development[]>();
+const developCache = new Map<string, { developments: Development[]; focus: CityFocus }>();
 let queue: Promise<unknown> = Promise.resolve();
 
 const KINDS = ["hut", "farmhouse", "house", "store", "gas", "school", "hospital", "block", "tower", "skyscraper"] as const;
 type DevKind = (typeof KINDS)[number];
 export type Development = { name: string; kind: DevKind; emoji: string; note: string };
+export type CityFocus = { kind: DevKind; note: string; notes: Partial<Record<DevKind, string>> };
+
+const CATEGORY_NEXT: Record<DevKind, string> = {
+  hut: "Keep a fire and a bed by the door.",
+  farmhouse: "Move the harvest from the field to the kitchen.",
+  house: "Put a light in the front room and a chair on the walk.",
+  store: "Open the awning and start a line on the sidewalk.",
+  gas: "Pull a car off the road and up to the pump.",
+  school: "Line the children up and take them in from the yard.",
+  hospital: "Keep the ground floor lit and walk patients in from the curb.",
+  block: "Fill the ground floor with shops and the rooms above with beds.",
+  tower: "Light more offices and bring workers in off the street.",
+  skyscraper: "Stack another working floor and keep the lobby moving.",
+};
 
 function budgetFile() {
   return process.env.VENICE_BUDGET_PATH || "/workspace/.secrets/budget.json";
@@ -522,8 +536,22 @@ function localDevelopments(era: string, watchers: number): Development[] {
   return table[era] ?? table.camp!;
 }
 
+function localFocus(have: string[]): CityFocus {
+  const counts = new Map<DevKind, number>();
+  for (const item of have) {
+    const [raw, n] = item.split(":");
+    const kind = KINDS.find((entry) => entry === raw);
+    if (kind) counts.set(kind, Number(n) || 0);
+  }
+  const behind = [...KINDS].sort((a, b) => (counts.get(a) ?? 0) - (counts.get(b) ?? 0))[0] ?? "store";
+  const notes: Partial<Record<DevKind, string>> = {};
+  for (const kind of KINDS) if (counts.has(kind) || kind === behind) notes[kind] = CATEGORY_NEXT[kind];
+  return { kind: behind, note: CATEGORY_NEXT[behind], notes };
+}
+
 export async function developCity(input: { era: string; watchers: number; have: string[] }): Promise<{
   developments: Development[];
+  focus: CityFocus;
   model: string;
   live: boolean;
   cached: boolean;
@@ -531,14 +559,15 @@ export async function developCity(input: { era: string; watchers: number; have: 
 }> {
   const era = input.era || "camp";
   const watchers = Math.max(1, Math.min(12, input.watchers || 1));
-  const have = input.have.slice(0, 8).join(",");
-  const cacheKey = `${era}|${watchers}|${have}`;
+  const have = input.have.slice(0, 12);
+  const cacheKey = `${era}|${watchers}|${have.join(",")}`;
   const cached = developCache.get(cacheKey);
   if (cached) {
-    return { developments: cached, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()) };
+    return { developments: cached.developments, focus: cached.focus, model: WORLD_MODEL, live: true, cached: true, budget: budgetOf(readLedger()) };
   }
   const fallback = () => ({
     developments: localDevelopments(era, watchers),
+    focus: localFocus(have),
     model: WORLD_MODEL,
     live: false,
     cached: false,
@@ -548,8 +577,9 @@ export async function developCity(input: { era: string; watchers: number; have: 
     noteInference(false, "no key on this host");
     return fallback();
   }
-  const user = `Era ${era}. ${watchers} people are watching right now. Buildings already standing: ${have || "none"}. Propose two new ones. The more watchers, the more sophisticated the next building should be.`;
-  const estimate = tokens(DEVELOP_SYSTEM + user) * VOICE_INPUT_USD + 140 * VOICE_OUTPUT_USD;
+  const census = have.length ? have.join(", ") : "none yet";
+  const user = `Era ${era}. ${watchers} watching. Category counts: ${census}. For each category, say the next real-world thing it should progress in. Then propose two buildings for the category that is furthest behind.`;
+  const estimate = tokens(DEVELOP_SYSTEM + user) * VOICE_INPUT_USD + 220 * VOICE_OUTPUT_USD;
   return serialized(async () => {
     const ledger = readLedger();
     const liveKey = activeKey(ledger);
@@ -560,7 +590,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
     const res = await veniceFetch(CHAT_URL, liveKey, {
         model: WORLD_MODEL,
         temperature: 0.4,
-        max_tokens: 140,
+        max_tokens: 220,
         reasoning_effort: "none",
         venice_parameters: { include_venice_system_prompt: false },
         messages: [
@@ -578,64 +608,80 @@ export async function developCity(input: { era: string; watchers: number; have: 
       usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
     };
     const text = json.choices?.[0]?.message?.content?.trim() || "";
-    const parsed = parseDevelopments(text);
-    const developments = parsed.length ? parsed : localDevelopments(era, watchers);
+    const parsed = parsePlan(text);
+    const developments = parsed.developments.length ? parsed.developments : localDevelopments(era, watchers);
+    const focus = parsed.focus ?? localFocus(have);
     const prompt = json.usage?.prompt_tokens ?? tokens(DEVELOP_SYSTEM + user);
     const cachedTokens = json.usage?.prompt_tokens_details?.cached_tokens ?? 0;
     const completion = json.usage?.completion_tokens ?? tokens(text);
     const spent =
       Math.max(0, prompt - cachedTokens) * VOICE_INPUT_USD + cachedTokens * VOICE_CACHE_USD + completion * VOICE_OUTPUT_USD;
-    if (parsed.length) developCache.set(cacheKey, developments);
-    noteInference(parsed.length > 0, parsed.length > 0 ? WORLD_MODEL : "plan unreadable");
-    return { developments, model: WORLD_MODEL, live: parsed.length > 0, cached: false, budget: charge(spent) };
+    if (parsed.developments.length) developCache.set(cacheKey, { developments, focus });
+    noteInference(parsed.developments.length > 0, parsed.developments.length > 0 ? WORLD_MODEL : "plan unreadable");
+    return { developments, focus, model: WORLD_MODEL, live: parsed.developments.length > 0, cached: false, budget: charge(spent) };
   });
 }
 
-function parseDevelopments(text: string): Development[] {
+function parsePlan(text: string): { developments: Development[]; focus?: CityFocus } {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) return [];
+  if (start < 0 || end <= start) return { developments: [] };
   try {
     const json = JSON.parse(text.slice(start, end + 1)) as unknown;
-    const rows = Array.isArray(json)
+    const row = json && typeof json === "object" ? (json as { developments?: unknown; focus?: unknown; notes?: unknown }) : {};
+    const list = Array.isArray(json)
       ? json
-      : json && typeof json === "object" && Array.isArray((json as { developments?: unknown }).developments)
-        ? (json as { developments: unknown[] }).developments
-        : json && typeof json === "object" && "name" in json
+      : Array.isArray(row.developments)
+        ? row.developments
+        : json && typeof json === "object" && "name" in (json as object)
           ? [json]
           : [];
-    return rows.slice(0, 2).flatMap((item) => {
-      if (!item || typeof item !== "object") return [];
-      const row = item as { name?: unknown; kind?: unknown; emoji?: unknown; note?: unknown };
-      const rawKind = String(row.kind || "").toLowerCase();
-      const kind = KINDS.includes(rawKind as DevKind)
-        ? (rawKind as DevKind)
-        : rawKind.includes("gas") || rawKind.includes("fuel")
-          ? "gas"
-          : rawKind.includes("school") || rawKind.includes("library")
-            ? "school"
-            : rawKind.includes("hospital") || rawKind.includes("clinic")
-              ? "hospital"
-              : rawKind.includes("store") || rawKind.includes("shop") || rawKind.includes("market")
-                ? "store"
-                : rawKind.includes("sky") || rawKind.includes("spire")
-                  ? "skyscraper"
-                  : rawKind.includes("tower")
-                    ? "tower"
-                    : rawKind.includes("farm") || rawKind.includes("barn")
-                      ? "farmhouse"
-                      : rawKind.includes("block")
-                        ? "block"
-                        : rawKind.includes("house")
-                          ? "house"
-                          : "hut";
-      const name = String(row.name || "").replace(/\s+/g, " ").trim().slice(0, 32);
-      const note = String(row.note || "").replace(/\s+/g, " ").trim().slice(0, 160);
-      const emoji = Array.from(String(row.emoji || "🏗️")).slice(0, 2).join("") || "🏗️";
-      if (!name) return [];
-      return [{ name, kind, emoji, note: note || `${name} goes up while people are watching.` }];
-    });
+    const developments = list.slice(0, 2).flatMap((item) => oneDevelopment(item));
+    const notes: Partial<Record<DevKind, string>> = {};
+    if (row.notes && typeof row.notes === "object") {
+      for (const [key, value] of Object.entries(row.notes as Record<string, unknown>)) {
+        const kind = asKind(key);
+        const note = String(value || "").replace(/\s+/g, " ").trim().slice(0, 140);
+        if (kind && note) notes[kind] = note;
+      }
+    }
+    const focusKind = asKind(String(row.focus || "")) || developments[0]?.kind;
+    const focus = focusKind
+      ? { kind: focusKind, note: notes[focusKind] || developments[0]?.note || CATEGORY_NEXT[focusKind], notes }
+      : undefined;
+    return { developments, focus };
   } catch {
-    return [];
+    return { developments: [] };
   }
+}
+
+function asKind(raw: string): DevKind | null {
+  const value = raw.toLowerCase();
+  if (KINDS.includes(value as DevKind)) return value as DevKind;
+  if (value.includes("gas") || value.includes("fuel")) return "gas";
+  if (value.includes("school") || value.includes("library")) return "school";
+  if (value.includes("hospital") || value.includes("clinic")) return "hospital";
+  if (value.includes("store") || value.includes("shop") || value.includes("market")) return "store";
+  if (value.includes("sky") || value.includes("spire")) return "skyscraper";
+  if (value.includes("tower")) return "tower";
+  if (value.includes("farm") || value.includes("barn")) return "farmhouse";
+  if (value.includes("block")) return "block";
+  if (value.includes("house")) return "house";
+  if (value.includes("hut") || value.includes("camp")) return "hut";
+  return null;
+}
+
+function oneDevelopment(item: unknown): Development[] {
+  if (!item || typeof item !== "object") return [];
+  const row = item as { name?: unknown; kind?: unknown; emoji?: unknown; note?: unknown };
+  const kind = asKind(String(row.kind || "")) ?? "house";
+  const name = String(row.name || "").replace(/\s+/g, " ").trim().slice(0, 32);
+  const note = String(row.note || "").replace(/\s+/g, " ").trim().slice(0, 160);
+  const emoji = Array.from(String(row.emoji || "🏗️")).slice(0, 2).join("") || "🏗️";
+  if (!name) return [];
+  return [{ name, kind, emoji, note: note || `${name} goes up while people are watching.` }];
+}
+
+function parseDevelopments(text: string): Development[] {
+  return parsePlan(text).developments;
 }

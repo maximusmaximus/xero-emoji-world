@@ -654,6 +654,38 @@ export function drawCity(
         }),
     });
   }
+  const walkers = ["🚶", "👩", "👨", "🧒", "🧳", "🐕", "🧑‍💼", "👵"];
+  let walked = 0;
+  for (const building of city.buildings) {
+    if (!building.apartments.length || walked > 18) continue;
+    const lanes = building.kind === "store" || building.kind === "school" || building.kind === "hospital" ? 2 : 1;
+    for (let lane = 0; lane < lanes; lane++) {
+      walked += 1;
+      const shift = (cellHash(building.col + lane, building.row) % 1000) / 1000;
+      const t = (phase * 0.012 + shift + lane * 0.47) % 1;
+      const entering = lane === 0 && t > 0.78;
+      const col = entering ? building.col + 0.15 + (t - 0.78) / 0.22 * 0.35 : building.col + t * 0.9;
+      const row = entering ? building.row + 1.16 - ((t - 0.78) / 0.22) * 0.7 : building.row + 1.16 + lane * 0.08;
+      const emoji = walkers[(building.col + lane + building.row) % walkers.length]!;
+      props.push({
+        depth: depthOf(col, row),
+        draw: () =>
+          glyph(emoji, col, row, 0, entering ? 24 - (t - 0.78) * 30 : 26, {
+            cover: true,
+            dc: entering ? 0 : 1,
+            hit: {
+              id: `walk-${building.id}-${lane}`,
+              name: "On the sidewalk",
+              role: "crew",
+              place: building.name,
+              detail: entering
+                ? `Someone on the sidewalk is walking into ${building.name}.`
+                : `Foot traffic along the sidewalk in front of ${building.name}.`,
+            },
+          }),
+      });
+    }
+  }
   for (const crew of city.crews ?? []) {
     const col = crew.col + (crew.destCol - crew.col) * crew.progress;
     const row = crew.row + (crew.destRow - crew.row) * crew.progress;
@@ -755,7 +787,21 @@ export function drawCity(
   props.sort((a, b) => a.depth - b.depth);
   for (const prop of props) prop.draw();
 
-  function paintBuilding(building: Building) {
+  function windowScene(facade: string, floor: number, index: number, tick: number) {
+  const scenes: Record<string, string[]> = {
+    shop: ["🛒", "🍞", "🧋", "💳", "🧁"],
+    gas: ["⛽", "🧃", "🚗", "🔧"],
+    school: ["📚", "✏️", "🎒", "🍎"],
+    hospital: ["🩺", "💊", "🛏️", "💉"],
+    barn: ["🐄", "🌾", "🥚", "🥛"],
+    tower: ["💼", "💻", "📞", "☕"],
+    home: ["📺", "☕", "🪴", "🛏️"],
+  };
+  const list = scenes[facade] ?? scenes.home!;
+  return list[(floor + index + Math.floor(tick / 80)) % list.length]!;
+}
+
+function paintBuilding(building: Building) {
     const floors = building.apartments.length;
     const { col, row } = building;
     if (floors === 0) {
@@ -849,6 +895,10 @@ export function drawCity(
         ctx.clip();
         ctx.globalAlpha = apt.lit ? 1 : 0.55;
         drawXero(ctx, resident.emoji, foot.x, foot.y - paneH * 0.04, size, { anchor: "feet" });
+        const scene = windowScene(facade, apt.floor, index, city.tick || 0);
+        if (scene && resident.role === "person") {
+          drawXero(ctx, scene, foot.x + paneH * 0.28, foot.y - paneH * 0.02, paneH * 0.72, { anchor: "feet" });
+        }
         ctx.restore();
         if (resident.id === focusId) {
           quad(ctx, pane);
@@ -893,6 +943,12 @@ export function drawCity(
     if (facade === "hospital") glyph("🏥", col + 0.5, row + 0.35, roofZ + slab, 42);
     if (facade === "tower" && soph > 0) glyph(soph > 3 ? "🏙️" : "📡", col + 0.72, row + 0.28, roofZ + slab, 28);
     if (building.rising) glyph("🏗️", col + 0.28, row + 0.62, roofZ + slab, 34);
+    const face = front[front.length - 1];
+    if (face) {
+      const doorCol = face.side === 0 ? col + 1.05 : face.side === 2 ? col - 0.05 : col + 0.5;
+      const doorRow = face.side === 1 ? row + 1.05 : face.side === 3 ? row - 0.05 : row + 0.62;
+      glyph("🚪", doorCol, doorRow, 0, 30);
+    }
 
     const crown = to(iso(col + 0.5, row + 0.5, roofZ + slab + 6));
     if (building.rising || facade === "hospital" || facade === "school" || facade === "shop" || building.kind === "skyscraper") {
