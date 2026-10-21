@@ -27,6 +27,13 @@ The city you can open now is the Grok build in [prototype/](prototype/). That is
 
 Venice keys stay off the repo. Put one in `.secrets/` on the host, or paste it from the Venice badge. When a key is spent or rejected, that badge asks for another. `.secrets/` is gitignored.
 
+## Xero Worlds cover posters
+
+No-glow posters of the *Xero Worlds* book cover, built from Xero Emoji. Click a preview for the print PDF pinned on IPFS. More posters and promo files: [xeroemoji README](https://github.com/maximusmaximus/xeroemoji#xero-worlds-cover-posters-no-glow).
+
+<a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Horizontal 24x18 cover poster" width="420"></a>
+<a href="https://gateway.pinata.cloud/ipfs/Qmas1B3ZE7StRBbMiPLeZKoRyjkHBdpoUwvqoDoMCu2DPw"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-18x24-noglow-thumb.jpg" alt="Vertical 18x24 cover poster" width="316"></a>
+
 ## 🔮 How the world grows: emoji-alchemy + the Oracle
 The city is built **out of emojis**, not just decorated with them.
 
