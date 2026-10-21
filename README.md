@@ -1,6 +1,7 @@
-# Xero Emoji World
+<a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Xero Worlds cover poster, horizontal 24x18" width="100%"></a>
+<p align="center"><sub><a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4">Horizontal 24×18 cover poster</a> (PDF, 9.9 MB — large download)</sub></p>
 
-![Xero, a future city still being built. Moon and farms on the left, a packed skyline in the middle, sun and a construction yard on the right.](public/x-banner.jpg)
+# Xero Emoji World
 
 Xero is a future city that builds itself out of emoji, and you are standing in one neighborhood of it. The map does not shrink to fit the screen. It is already dozens of tiles across, and it keeps spreading past every edge. Drag toward the dark and there is more ground.
 
@@ -8,7 +9,7 @@ What you are watching is a construction site that learned to be a city. Towers, 
 
 Venice looks at the categories that already exist and says which one is furthest behind, and what that category should do next. The next lots follow that. Stories, search, and those plans run on private Venice inference, capped at about a dollar a day. The clock itself does not spend the dollar. Keys are not in this repo.
 
-The glyphs are [XeroEmoji](https://github.com/maximusmaximus/xeroemoji), drawn as pictures rather than as a system font. The preview card is [public/og.jpg](public/og.jpg). The banner above is [public/x-banner.jpg](public/x-banner.jpg).
+The glyphs are [XeroEmoji](https://github.com/maximusmaximus/xeroemoji), drawn as pictures rather than as a system font. The preview card is [public/og.jpg](public/og.jpg). The banner above is the horizontal *Xero Worlds* cover poster; see [Xero Worlds cover posters](#xero-worlds-cover-posters).
 
 ## What is on the canvas
 
