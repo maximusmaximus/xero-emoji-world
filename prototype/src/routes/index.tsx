@@ -440,8 +440,10 @@ function Home() {
         <div className="pointer-events-auto relative">
           <button
             type="button"
+            data-testid="venice-keys"
             className="max-w-[16rem] rounded-full border border-line bg-panel px-3 py-2 text-left text-xs text-mute sm:max-w-none"
             aria-expanded={keysOpen}
+            aria-label="Venice keys"
             onClick={() => setKeysOpen((open) => !open)}
           >
             {status.needsKey ? "Venice needs a key" : status.live ? "Venice live" : "Venice offline"}
@@ -488,16 +490,22 @@ function Home() {
                 value={keyDraft}
                 onChange={(event) => setKeyDraft(event.target.value)}
                 rows={4}
+                data-testid="venice-key-input"
+                aria-label="Venice key"
                 className="mt-2 w-full rounded-lg border border-line bg-ink p-2 text-xs text-cream outline-none"
                 placeholder="VENICE_INFERENCE_KEY_…"
                 autoComplete="off"
                 spellCheck={false}
               />
-              <button type="submit" className="mt-2 rounded-full border border-line px-3 py-2 text-xs text-amber">
+              <button type="submit" data-testid="venice-key-submit" className="mt-2 rounded-full border border-line px-3 py-2 text-xs text-amber">
                 Add keys
               </button>
-              {keyNote && <p className="mt-2 text-xs text-mute">{keyNote}</p>}
             </form>
+          )}
+          {keyNote && (
+            <p data-testid="venice-key-note" className="mt-1 text-right text-[11px] text-mute">
+              {keyNote}
+            </p>
           )}
         </div>
       </header>
