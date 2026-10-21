@@ -1,3 +1,5 @@
+import { isBody } from "./catalog.ts";
+
 /**
  * Motion language. Nothing travels unless this file says it may.
  *
@@ -23,7 +25,7 @@ function bare(emoji: string) {
 
 export function motionOf(emoji: string): Motion {
   const key = bare(emoji);
-  if (SELF.has(emoji) || SELF.has(key) || /[🚶🧍🧑👩👨🧒👶👵👴👷👮🧙🐶🐕🐈🐄🐖🐓🐑🐎]/u.test(emoji)) return "self";
+  if (isBody(emoji) || isBody(key) || SELF.has(emoji) || SELF.has(key)) return "self";
   if (CARRIED.has(emoji) || CARRIED.has(key)) return "carried";
   if (DRAGGED.has(emoji) || DRAGGED.has(key)) return "dragged";
   return "still";
@@ -67,38 +69,38 @@ export type Room = {
 
 const ROOMS: Record<string, Room[]> = {
   home: [
-    { still: [{ emoji: "🍽️", u: 0.22 }, { emoji: "🪴", u: 0.84 }], actor: "🧑‍🍳", carried: "🍞" },
-    { still: [{ emoji: "📺", u: 0.2 }, { emoji: "🛋️", u: 0.78 }], actor: "👩" },
-    { still: [{ emoji: "🛏️", u: 0.24 }, { emoji: "🪞", u: 0.8 }], actor: "🧒" },
-    { still: [{ emoji: "📚", u: 0.18 }, { emoji: "🪴", u: 0.82 }], actor: "🧑", carried: "☕" },
+    { still: [{ emoji: "🍽️", u: 0.22 }, { emoji: "🪴", u: 0.84 }], actor: "🚶", carried: "🍞" },
+    { still: [{ emoji: "📺", u: 0.2 }, { emoji: "🛋️", u: 0.78 }], actor: "💃" },
+    { still: [{ emoji: "🛏️", u: 0.24 }, { emoji: "🪞", u: 0.8 }], actor: "🧘" },
+    { still: [{ emoji: "📚", u: 0.18 }, { emoji: "🪴", u: 0.82 }], actor: "🧍", carried: "☕" },
   ],
   shop: [
-    { still: [{ emoji: "🧁", u: 0.22 }, { emoji: "🧋", u: 0.78 }], actor: "🧑", carried: "🛍️" },
-    { still: [{ emoji: "💳", u: 0.2 }, { emoji: "🧺", u: 0.76 }], actor: "👩", carried: "🍞" },
-    { still: [{ emoji: "🪞", u: 0.24 }, { emoji: "🪴", u: 0.8 }], actor: "🧒" },
+    { still: [{ emoji: "🧁", u: 0.22 }, { emoji: "🧋", u: 0.78 }], actor: "🕺", carried: "🛍️" },
+    { still: [{ emoji: "💳", u: 0.2 }, { emoji: "🧺", u: 0.76 }], actor: "🏃", carried: "🍞" },
+    { still: [{ emoji: "🪞", u: 0.24 }, { emoji: "🪴", u: 0.8 }], actor: "🤸" },
   ],
   gas: [
-    { still: [{ emoji: "🧃", u: 0.22 }, { emoji: "🔧", u: 0.78 }], actor: "👷" },
-    { still: [{ emoji: "☕", u: 0.24 }, { emoji: "🗺️", u: 0.76 }], actor: "🧑", carried: "🔑" },
+    { still: [{ emoji: "🧃", u: 0.22 }, { emoji: "🔧", u: 0.78 }], actor: "🚴" },
+    { still: [{ emoji: "☕", u: 0.24 }, { emoji: "🗺️", u: 0.76 }], actor: "🚶", carried: "🔑" },
   ],
   school: [
-    { still: [{ emoji: "📚", u: 0.2 }, { emoji: "🪑", u: 0.78 }], actor: "🧒", carried: "✏️" },
-    { still: [{ emoji: "🍎", u: 0.22 }, { emoji: "🪑", u: 0.8 }], actor: "👩" },
-    { still: [{ emoji: "🧪", u: 0.2 }, { emoji: "📚", u: 0.76 }], actor: "🧑‍🏫" },
+    { still: [{ emoji: "📚", u: 0.2 }, { emoji: "🪑", u: 0.78 }], actor: "🤾", carried: "✏️" },
+    { still: [{ emoji: "🍎", u: 0.22 }, { emoji: "🪑", u: 0.8 }], actor: "⛹️" },
+    { still: [{ emoji: "🧪", u: 0.2 }, { emoji: "📚", u: 0.76 }], actor: "🤹" },
   ],
   hospital: [
-    { still: [{ emoji: "🛏️", u: 0.24 }, { emoji: "💊", u: 0.78 }], actor: "👩‍⚕️", carried: "🩺" },
-    { still: [{ emoji: "💉", u: 0.2 }, { emoji: "🛏️", u: 0.8 }], actor: "🧑" },
+    { still: [{ emoji: "🛏️", u: 0.24 }, { emoji: "💊", u: 0.78 }], actor: "🚶", carried: "🩺" },
+    { still: [{ emoji: "💉", u: 0.2 }, { emoji: "🛏️", u: 0.8 }], actor: "🧍" },
   ],
   barn: [
     { still: [{ emoji: "🌾", u: 0.22 }, { emoji: "🪣", u: 0.8 }], actor: "🐄" },
-    { still: [{ emoji: "🥚", u: 0.2 }, { emoji: "🥛", u: 0.72 }], actor: "🧑‍🌾", carried: "🧺" },
+    { still: [{ emoji: "🥚", u: 0.2 }, { emoji: "🥛", u: 0.72 }], actor: "🚶", carried: "🧺" },
   ],
   tower: [
-    { still: [{ emoji: "💻", u: 0.22 }, { emoji: "🪴", u: 0.82 }], actor: "🧑‍💼", carried: "💼" },
-    { still: [{ emoji: "📞", u: 0.2 }, { emoji: "☕", u: 0.74 }], actor: "👩" },
-    { still: [{ emoji: "📊", u: 0.18 }, { emoji: "🪴", u: 0.8 }], actor: "🧑", carried: "📱" },
-    { still: [{ emoji: "💡", u: 0.24 }, { emoji: "📚", u: 0.78 }], actor: "🧙" },
+    { still: [{ emoji: "💻", u: 0.22 }, { emoji: "🪴", u: 0.82 }], actor: "🧗", carried: "💼" },
+    { still: [{ emoji: "📞", u: 0.2 }, { emoji: "☕", u: 0.74 }], actor: "🏄" },
+    { still: [{ emoji: "📊", u: 0.18 }, { emoji: "🪴", u: 0.8 }], actor: "🏊", carried: "📱" },
+    { still: [{ emoji: "💡", u: 0.24 }, { emoji: "📚", u: 0.78 }], actor: "🏇" },
   ],
 };
 

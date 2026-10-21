@@ -1,6 +1,7 @@
 import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./signs";
 import { floorBands, mayMove, motionOf, roomFor, storyCount } from "./motion";
+import { DISTINCT_BODIES, isBody, showcaseSpots } from "./catalog.ts";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -775,7 +776,7 @@ export function drawCity(
         }),
     });
   }
-  const walkers = ["🚶", "👩", "👨", "🧒", "🐕", "🧑‍💼", "👵"].filter((emoji) => mayMove(emoji, "self"));
+  const walkers = DISTINCT_BODIES.filter((emoji) => mayMove(emoji, "self"));
   let walked = 0;
   for (const building of city.buildings) {
     if (!building.apartments.length || walked > 18) continue;
@@ -1079,8 +1080,11 @@ export function drawCity(
         const bands = floorBands(stories, doorTop);
         const roomTints = ["#fff1d4", "#f3e2c4", "#efe6f4", "#e7f0ea"];
         bands.forEach((band, bandIndex) => {
-          const resident = building.apartments[band.story]?.residents.find((person) => motionOf(person.emoji) === "self");
+          const resident = building.apartments[band.story]?.residents.find((person) => isBody(person.emoji));
           const room = roomFor(facade, band.story, resident?.emoji);
+          if (!isBody(room.actor) && motionOf(room.actor) !== "self") {
+            room.actor = DISTINCT_BODIES[(band.story + side.side) % DISTINCT_BODIES.length]!;
+          }
           const pane = faceQuad(band.t0, band.t1, 0.12, 0.88);
           ctx.save();
           quad(ctx, pane);
@@ -1093,7 +1097,7 @@ export function drawCity(
           ctx.fillStyle = "#c9844a";
           ctx.fill();
           const paneH = Math.hypot(at(band.t0, 0.5).x - at(band.t1, 0.5).x, at(band.t0, 0.5).y - at(band.t1, 0.5).y);
-          const fig = Math.max(9, Math.min(26, paneH * 0.62));
+          const fig = Math.max(12, Math.min(34, paneH * 0.92));
           const feetT = band.t0 + (band.t1 - band.t0) * 0.18;
           for (const item of room.still) {
             if (mayMove(item.emoji, "self")) continue;
@@ -1187,6 +1191,15 @@ export function drawCity(
     ctx.fillStyle = palette.cream;
     ctx.fillText(building.name, crown.x, crown.y);
     ctx.restore();
+  }
+
+  for (const spot of showcaseSpots(width, height)) {
+    if (spot.hero) {
+      const step = Math.sin(phase * 0.015 + spot.x * 0.02) * 6;
+      drawXero(ctx, spot.emoji, spot.x + step, spot.y, spot.size, { anchor: "feet", flip: step < 0 });
+    } else {
+      drawXero(ctx, spot.emoji, spot.x, spot.y, spot.size, { anchor: "center" });
+    }
   }
 
   ctx.fillStyle = palette.mute;

@@ -1,3 +1,5 @@
+import { DISTINCT_BODIES } from "./catalog.ts";
+
 export const CITY_VERSION = 2;
 
 export type Role = "person" | "pet" | "item";
@@ -158,7 +160,7 @@ const NAMES = [
   "Ada", "Noor", "Leo", "Ves", "Quin", "Hana", "Otis", "Pia",
   "Bram", "Lux", "Cora", "Ned", "Yuki", "Sable", "Wren", "Ida",
 ];
-const PEOPLE = ["👩", "👨", "👧", "👦", "👵", "👴", "🧔", "🧕", "🧙", "🧚", "🧑‍🌾", "👷"];
+const PEOPLE = DISTINCT_BODIES;
 const PETS = ["🐈", "🐕", "🐇", "🐦", "🐹", "🐢", "🐄", "🐑", "🐖"];
 const ITEMS = ["🍕", "🥖", "📚", "🪴", "🎸", "🚲", "🧸", "📺", "🪞", "🧺", "🪓", "🌾"];
 const STEMS = [
