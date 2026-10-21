@@ -91,6 +91,23 @@ function depthOf(col: number, row: number) {
   return -placed(col, row, 0).camZ;
 }
 
+function fogAt(col: number, row: number) {
+  const z = placed(col, row, 0).camZ;
+  return Math.min(0.75, Math.max(0, (z - 42) / 26));
+}
+
+function tone(hex: string, fog: number, light: number) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  let r = ((n >> 16) & 255) * light;
+  let g = ((n >> 8) & 255) * light;
+  let b = (n & 255) * light;
+  const k = fog * 0.8;
+  r += (186 - r) * k;
+  g += (198 - g) * k;
+  b += (210 - b) * k;
+  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
 function bounds(city: City) {
   let minX = Infinity;
   let minY = Infinity;
@@ -424,22 +441,16 @@ export function drawCity(
     const insideDistrict = tile.col >= 0 && tile.row >= 0 && tile.col < spanC && tile.row < spanR;
     const drop = road || !insideDistrict ? 4 : 0;
     const pts = top(tile.col, tile.row, -drop).map(to);
+    const fog = fogAt(tile.col + 0.5, tile.row + 0.5);
     quad(ctx, pts);
-    if (!insideDistrict) {
-      ctx.fillStyle = tile.row > spanR + 1 || tile.col < -2 ? "#1d4c56" : "#3b4e34";
-    } else if (occupied.has(key)) ctx.fillStyle = "#241c16";
-    else if (road) ctx.fillStyle = "#463f36";
-    else if (farm) ctx.fillStyle = "#74602c";
-    else ctx.fillStyle = (cellHash(tile.col, tile.row) % 3 === 0) ? "#4e673c" : "#466038";
+    let fill = "#466038";
+    if (!insideDistrict) fill = tile.row > spanR + 1 || tile.col < -2 ? "#1d4c56" : "#3b4e34";
+    else if (occupied.has(key)) fill = "#241c16";
+    else if (road) fill = "#463f36";
+    else if (farm) fill = "#74602c";
+    else if (cellHash(tile.col, tile.row) % 3 === 0) fill = "#4e673c";
+    ctx.fillStyle = tone(fill, fog, 0.8 + fog * 0.28);
     ctx.fill();
-    ctx.strokeStyle = ctx.fillStyle;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    if (insideDistrict && (road || farm)) {
-      ctx.strokeStyle = "rgba(0,0,0,0.16)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
   }
 
   const props: { depth: number; draw: () => void }[] = [];
@@ -929,7 +940,36 @@ export function drawCity(
   }
 
   props.sort((a, b) => a.depth - b.depth);
-  for (const prop of props) prop.draw();
+  for (const prop of props) {
+    const fog = Math.min(0.72, Math.max(0, (-prop.depth - 42) / 26));
+    ctx.save();
+    ctx.globalAlpha = 1 - fog * 0.72;
+    prop.draw();
+    ctx.restore();
+  }
+
+  const veil = ctx.createLinearGradient(0, 0, 0, horizon);
+  veil.addColorStop(0, "rgba(150, 176, 198, 0.22)");
+  veil.addColorStop(0.7, "rgba(186, 196, 204, 0.06)");
+  veil.addColorStop(1, "rgba(186, 196, 204, 0)");
+  ctx.fillStyle = veil;
+  ctx.fillRect(0, 0, width, horizon);
+  const warmth = ctx.createRadialGradient(sunX, sunY, sunR * 0.3, sunX, sunY, Math.max(width, height) * 0.85);
+  warmth.addColorStop(0, "rgba(255, 210, 150, 0.12)");
+  warmth.addColorStop(1, "rgba(255, 210, 150, 0)");
+  ctx.fillStyle = warmth;
+  ctx.fillRect(0, 0, width, height);
+  const mist = ctx.createLinearGradient(0, horizon - 18, 0, horizon + 70);
+  mist.addColorStop(0, "rgba(220, 214, 200, 0)");
+  mist.addColorStop(0.5, "rgba(220, 214, 200, 0.14)");
+  mist.addColorStop(1, "rgba(220, 214, 200, 0)");
+  ctx.fillStyle = mist;
+  ctx.fillRect(0, horizon - 18, width, 96);
+  const vignette = ctx.createRadialGradient(width * 0.5, height * 0.62, height * 0.28, width * 0.5, height * 0.6, height * 0.92);
+  vignette.addColorStop(0, "rgba(0,0,0,0)");
+  vignette.addColorStop(1, "rgba(6, 8, 12, 0.18)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, width, height);
 
   function windowScene(facade: string, floor: number, index: number, tick: number) {
   const scenes: Record<string, string[]> = {
