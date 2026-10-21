@@ -21,7 +21,8 @@ const mock = createServer((req, res) => {
     mockCalls++; const ok = JSON.parse(body).messages?.length === 2;
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ eraName: 'Age of Smoke Tests', essence: '🫧', prophecy: ok ? 'The mock oracle has spoken.' : 'bad request',
-      recipes: [{ a: '🪙', b: '🍞', out: '🍯', name: 'golden honey' }], wonder: { emoji: '🏰', name: 'Smoke Keep', cost: { '🪙': 100 } }, boosts: { build: 1.5 } }) } }] }));
+      recipes: [{ a: '🪙', b: '🍞', out: '🍯', name: 'golden honey' }], wonder: { emoji: '🏰', name: 'Smoke Keep', cost: { '🪙': 100 } }, boosts: { build: 1.5 } }) } }],
+      usage: { prompt_tokens: 1000, completion_tokens: 1000 } }));
   });
 }).listen(MOCK);
 procs.push({ kill: () => mock.close() });
@@ -30,7 +31,9 @@ try {
   const legacy = process.env.SMOKE_LEGACY === '1';
   const oracleEnv = legacy ? {} : process.env.SMOKE_ORACLE_URL
     ? { ORACLE: 'llm', ORACLE_API_URL: process.env.SMOKE_ORACLE_URL }
-    : { ORACLE: 'llm', ORACLE_API_URL: `http://localhost:${MOCK}/v1/chat/completions`, ORACLE_API_KEY: 'smoke-test-not-a-key', ORACLE_MODEL: 'mock' };
+    : { ORACLE: 'llm', ORACLE_API_URL: `http://localhost:${MOCK}/v1/chat/completions`, ORACLE_API_KEY: 'smoke-test-not-a-key', ORACLE_MODEL: 'mock',
+        // each mock call ≈ $0.018 at default prices, so the cap is hit after 2 calls
+        ORACLE_DAILY_BUDGET_USD: '0.03', ORACLE_BUDGET_PATH: `/tmp/xew-smoke-budget-${process.pid}.json` };
   run('node', ['apps/sim-server/dist/index.js'], { STORE: 'memory', PORT: String(PORT), TICK_MS: '200', BACKUP_DIR: '/tmp/xew-smoke-backups', ORACLE_EVERY_TICKS: '5', ...oracleEnv });
   const h1 = await (await waitFor(`http://localhost:${PORT}/healthz`)).json();
   await sleep(1500);
@@ -48,7 +51,13 @@ try {
     const world = await (await fetch(`http://localhost:${PORT}/api/world`)).json();
     if (!world?.materials || !world.recipes?.length) fail('no world state');
     if (!world.chronicle.some((l) => l.startsWith('🔮'))) fail('no oracle decree applied');
-    if (!process.env.SMOKE_ORACLE_URL && !(mockCalls > 0 && world.oracle === 'llm:mock' && world.chronicle.some((l) => l.includes('The mock oracle has spoken.')))) fail(`LLM oracle decree not applied (calls=${mockCalls}, oracle=${world.oracle})`);
+    if (!process.env.SMOKE_ORACLE_URL) {
+      if (!(mockCalls > 0 && world.chronicle.some((l) => l.includes('The mock oracle has spoken.')))) fail(`LLM oracle decree not applied (calls=${mockCalls}, oracle=${world.oracle})`);
+      await sleep(2500);
+      const w2 = await (await fetch(`http://localhost:${PORT}/api/world`)).json();
+      if (!w2.oracleBudget?.capped || mockCalls > 2 || !w2.oracle.includes('budget')) fail(`budget cap not enforced (calls=${mockCalls}, oracle=${w2.oracle}, budget=${JSON.stringify(w2.oracleBudget)})`);
+      console.log('ok budget cap: calls=%d oracle=%s budget=%o', mockCalls, w2.oracle, w2.oracleBudget);
+    }
     const hits = await (await fetch(`http://localhost:${PORT}/api/search?q=oracle`)).json();
     console.log('ok world era=%d %s knowledge=%d oracle=%s wonders=%d decreeSearchHits=%d', world.era, world.eraName, world.knowledge, world.oracle, world.wonders.length, hits.length);
   }
@@ -69,6 +78,7 @@ try {
   const statsText = await page.evaluate(() => document.querySelector('#story .stats')?.textContent ?? '');
   console.log('stats panel: %s', statsText);
   if (process.env.SMOKE_LEGACY !== '1' && !statsText.includes('🔮')) fail('world stats not shown in ⓘ panel');
+  if (!process.env.SMOKE_ORACLE_URL && process.env.SMOKE_LEGACY !== '1' && !statsText.includes('cap reached')) fail('budget cap not shown in ⓘ panel');
   await page.screenshot({ path: '/tmp/xew-smoke.png' });
   await browser.close();
   console.log('ok browser canvas=%o wsActions=%d storyChars=%d errors=%o', painted, wsActions, storyLines, errors);

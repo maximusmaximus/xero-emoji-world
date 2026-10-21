@@ -8,7 +8,7 @@ import { act, clone, type Behaviour, type SimContext } from './sim-util.js';
 import type { Person } from './types.js';
 import {
   applyDecree, builtWonders, chronicle, ensureWorld, gain, growthMultiplier, harvest, pendingWonder, refreshEra,
-  sanitizeDecree, type BehaviourKey, type Decree,
+  sanitizeDecree, type BehaviourKey, type Decree, type OracleBudget,
 } from './world.js';
 
 const fmt = (m: Record<string, number>) => Object.entries(m).map(([e, n]) => `${e}×${n}`).join(' ');
@@ -45,8 +45,9 @@ export function harvestAction(c: SimContext) {
 }
 
 /** Turn an oracle decree into an ordinary action so clients replay it in lockstep. */
-export function decreeAction(c: SimContext, raw: Decree, source: 'oracle' | 'local', oracle: string) {
+export function decreeAction(c: SimContext, raw: Decree, source: 'oracle' | 'local', oracle: string, budget?: OracleBudget) {
   const nw = clone(ensureWorld(c.state));
+  if (budget) nw.oracleBudget = { ...budget };
   const d = sanitizeDecree(raw, nw);
   const text = applyDecree(nw, d, c.gen.tick, source, oracle, () => c.rng.id('wonder'));
   return act('world.decree', '🔮', text, { op: 'setWorld', world: nw });
