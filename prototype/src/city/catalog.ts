@@ -13,46 +13,24 @@ export function isBody(emoji: string) {
 
 export type Spot = { emoji: string; x: number; y: number; size: number; hero: boolean };
 
-/** Places the whole showcase inside the canvas. Heroes are large whole bodies along the front. */
-export function showcaseSpots(width: number, height: number): Spot[] {
+/** How many extra glyphs a frame may draw. Enough to show bodies, not enough to stall. */
+export const FRAME_CAST = 18;
+
+/** One row of large whole bodies. The rest of the collection stays unloaded until it rotates in. */
+export function frameCast(width: number, height: number, phase: number): Spot[] {
+  const size = width < 720 ? 26 : 34;
+  const step = size + 8;
+  const count = Math.max(4, Math.min(FRAME_CAST, Math.floor((width - 16) / step)));
+  const shift = Math.floor(Math.max(0, phase) / 120) % DISTINCT_BODIES.length;
   const spots: Spot[] = [];
-  const margin = 8;
-  const large = width < 720 ? 22 : 32;
-  const step = large + 3;
-  const cols = Math.max(4, Math.floor((width - margin * 2) / step));
-  const heroRows = Math.ceil(DISTINCT_BODIES.length / cols);
-  DISTINCT_BODIES.forEach((emoji, index) => {
-    const col = index % cols;
-    const row = Math.floor(index / cols);
+  for (let index = 0; index < count; index++) {
     spots.push({
-      emoji,
-      x: margin + col * step + large / 2,
-      y: height - 26 - large / 2 - (heroRows - 1 - row) * step,
-      size: large,
+      emoji: DISTINCT_BODIES[(shift + index) % DISTINCT_BODIES.length]!,
+      x: 10 + index * step + size / 2,
+      y: height - 20 - size / 2,
+      size,
       hero: true,
     });
-  });
-  const rest = [...BODY_VARIANTS, ...SHOWCASE_OBJECTS];
-  const skyTop = 128;
-  const skyBottom = Math.max(skyTop + 20, height - 26 - heroRows * step - 10);
-  let size = width < 720 ? 12 : 15;
-  let gap = size + 2;
-  let skyCols = Math.max(4, Math.floor((width - margin * 2) / gap));
-  while (size > 9 && Math.ceil(rest.length / skyCols) * gap > skyBottom - skyTop) {
-    size -= 1;
-    gap = size + 1;
-    skyCols = Math.max(4, Math.floor((width - margin * 2) / gap));
   }
-  rest.forEach((emoji, index) => {
-    const col = index % skyCols;
-    const row = Math.floor(index / skyCols);
-    spots.push({
-      emoji,
-      x: margin + (col % skyCols) * gap + size / 2,
-      y: skyTop + (row % Math.max(1, Math.floor((skyBottom - skyTop) / gap))) * gap + size / 2,
-      size,
-      hero: false,
-    });
-  });
   return spots;
 }

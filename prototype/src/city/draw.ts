@@ -1,7 +1,7 @@
 import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./signs";
 import { floorBands, mayMove, motionOf, roomFor, storyCount } from "./motion";
-import { DISTINCT_BODIES, isBody, showcaseSpots } from "./catalog.ts";
+import { DISTINCT_BODIES, frameCast, isBody } from "./catalog.ts";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -998,42 +998,7 @@ export function drawCity(
                 : facade === "tower"
                   ? { mass: "🪟", bay: "🪟", pier: "⬛", roof: "⬛", crown: "📡", sill: "💡" }
                   : { mass: "🟥", bay: "🪟", pier: "🧱", roof: "🏠", crown: "🏡", sill: "🪴" };
-    const cols = 10;
-    const rowsEach = 5;
     const lerp = (p: Point, q: Point, t: number) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
-    const cell = (pts: Point[], c: number, r: number, cSpan: number, rSpan: number) => {
-      const topA = lerp(pts[3]!, pts[2]!, c / cols);
-      const topB = lerp(pts[3]!, pts[2]!, (c + cSpan) / cols);
-      const botA = lerp(pts[0]!, pts[1]!, c / cols);
-      const botB = lerp(pts[0]!, pts[1]!, (c + cSpan) / cols);
-      const p0 = lerp(topA, botA, r / (floors * rowsEach));
-      const p1 = lerp(topB, botB, r / (floors * rowsEach));
-      const p3 = lerp(topA, botA, (r + rSpan) / (floors * rowsEach));
-      const p2 = { x: p1.x + (p3.x - p0.x), y: p1.y + (p3.y - p0.y) };
-      return [p0, p1, p2, p3];
-    };
-    const stamp = (pts: Point[], c: number, r: number, emoji: string, cSpan = 1, rSpan = 1) => {
-      const quadPts = cell(pts, c, r, cSpan, rSpan);
-      const cx = (quadPts[0]!.x + quadPts[1]!.x + quadPts[2]!.x + quadPts[3]!.x) / 4;
-      const cy = (quadPts[0]!.y + quadPts[1]!.y + quadPts[2]!.y + quadPts[3]!.y) / 4;
-      const w = Math.hypot(quadPts[1]!.x - quadPts[0]!.x, quadPts[1]!.y - quadPts[0]!.y);
-      const h = Math.hypot(quadPts[3]!.x - quadPts[0]!.x, quadPts[3]!.y - quadPts[0]!.y);
-      const size = Math.min(w, h);
-      if (size < 3) return;
-      drawXero(ctx, emoji, cx, cy, size, { anchor: "center" });
-    };
-    const placeOnFace = (quadPts: Point[], emoji: string) => {
-      let tl = quadPts[0]!;
-      let tr = quadPts[1]!;
-      let bl = quadPts[3]!;
-      let br = quadPts[2]!;
-      if (tr.x < tl.x) {
-        [tl, tr] = [tr, tl];
-        [bl, br] = [br, bl];
-      }
-      if (Math.hypot(tr.x - tl.x, tr.y - tl.y) < 3) return;
-      drawXeroOnto(ctx, emoji, tl, tr, bl);
-    };
 
     const base = top(col + 0.08, row + 0.12, 0, 1.05, 1.08).map(to);
     quad(ctx, base);
@@ -1056,14 +1021,7 @@ export function drawCity(
       const facingStreet = front.some((item) => item.side === side.side);
       ctx.fillStyle = facingStreet ? "#6e4c40" : "#2a211c";
       ctx.fill();
-      const total = floors * rowsEach;
       const frontDoor = facingStreet;
-      for (let rr = 0; rr < total; rr++) {
-        for (let cc = 0; cc < cols; cc++) {
-          const pier = cc === 0 || cc === cols - 1 || rr === 0 || rr === total - 1;
-          stamp(pts, cc, rr, building.rising && rr < rowsEach ? "🏗️" : pier ? skin.pier : skin.mass);
-        }
-      }
       // t = 0 is whichever wall edge is lower on screen (the street). t = 1 is the roof.
       const z0y = (pts[0]!.y + pts[1]!.y) / 2;
       const z1y = (pts[2]!.y + pts[3]!.y) / 2;
@@ -1076,6 +1034,15 @@ export function drawCity(
       const faceQuad = (t0: number, t1: number, u0: number, u1: number) => [at(t1, u0), at(t1, u1), at(t0, u1), at(t0, u0)];
       const doorTop = frontDoor ? Math.min(0.28, 0.7 / storyCount(building.kind, floors)) : 0;
       if (facingStreet) {
+        const wallH = Math.hypot(at(0, 0.5).x - at(1, 0.5).x, at(0, 0.5).y - at(1, 0.5).y);
+        const panel = Math.max(22, Math.min(40, wallH * 0.22));
+        const pierAt = (u: number, t: number, emoji: string) => {
+          const p = at(t, u);
+          drawXero(ctx, emoji, p.x, p.y, panel, { anchor: "center" });
+        };
+        pierAt(0.1, 0.55, skin.pier);
+        pierAt(0.9, 0.55, skin.pier);
+        if (building.rising) pierAt(0.5, 0.84, "🏗️");
         const stories = storyCount(building.kind, floors);
         const bands = floorBands(stories, doorTop);
         const roomTints = ["#fff1d4", "#f3e2c4", "#efe6f4", "#e7f0ea"];
@@ -1099,10 +1066,10 @@ export function drawCity(
           const paneH = Math.hypot(at(band.t0, 0.5).x - at(band.t1, 0.5).x, at(band.t0, 0.5).y - at(band.t1, 0.5).y);
           const fig = Math.max(12, Math.min(34, paneH * 0.92));
           const feetT = band.t0 + (band.t1 - band.t0) * 0.18;
-          for (const item of room.still) {
-            if (mayMove(item.emoji, "self")) continue;
-            const pos = at(feetT, item.u);
-            drawXero(ctx, item.emoji, pos.x, pos.y, fig * 0.55, { anchor: "feet" });
+          const prop = room.still[0];
+          if (prop && !mayMove(prop.emoji, "self")) {
+            const pos = at(feetT, prop.u);
+            drawXero(ctx, prop.emoji, pos.x, pos.y, fig * 0.7, { anchor: "feet" });
           }
           if (mayMove(room.actor, "self")) {
             const travel = (phase * 0.005 + band.story * 0.23) % 1;
@@ -1157,24 +1124,14 @@ export function drawCity(
     const roofZ = floors * FH;
     const roof = top(col, row, roofZ + 4, 1, 1).map(to);
     quad(ctx, roof);
-    ctx.fillStyle = "rgba(20,16,12,0.25)";
+    ctx.fillStyle = facade === "tower" ? "#2a211c" : "#6e4c40";
     ctx.fill();
-    for (let rr = 0; rr < 4; rr++) {
-      for (let cc = 0; cc < 4; cc++) {
-        const topA = lerp(roof[0]!, roof[1]!, cc / 4);
-        const topB = lerp(roof[0]!, roof[1]!, (cc + 1) / 4);
-        const botA = lerp(roof[3]!, roof[2]!, cc / 4);
-        const botB = lerp(roof[3]!, roof[2]!, (cc + 1) / 4);
-        const p0 = lerp(topA, botA, rr / 4);
-        const p1 = lerp(topB, botB, rr / 4);
-        const p3 = lerp(topA, botA, (rr + 1) / 4);
-        const cx = (p0.x + p1.x + p3.x + (p1.x + p3.x - p0.x)) / 4;
-        const cy = (p0.y + p1.y + p3.y + (p1.y + p3.y - p0.y)) / 4;
-        const size = Math.min(Math.hypot(p1.x - p0.x, p1.y - p0.y), Math.hypot(p3.x - p0.x, p3.y - p0.y));
-        if (size < 3) continue;
-        drawXero(ctx, rr === 0 || cc === 0 ? skin.pier : skin.roof, cx, cy, size, { anchor: "center" });
-      }
-    }
+    const roofMid = {
+      x: (roof[0]!.x + roof[1]!.x + roof[2]!.x + roof[3]!.x) / 4,
+      y: (roof[0]!.y + roof[1]!.y + roof[2]!.y + roof[3]!.y) / 4,
+    };
+    const roofSpan = Math.hypot(roof[1]!.x - roof[0]!.x, roof[1]!.y - roof[0]!.y);
+    drawXero(ctx, skin.roof, roofMid.x, roofMid.y, Math.max(28, Math.min(64, roofSpan * 0.55)), { anchor: "center" });
     glyph(skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
     if (building.rising) glyph("🏗️", col + 0.28, row + 0.35, roofZ + 10, 20);
     if (city.alchemy?.wonder && building.rising && building.targetFloors >= floors) {
@@ -1193,13 +1150,9 @@ export function drawCity(
     ctx.restore();
   }
 
-  for (const spot of showcaseSpots(width, height)) {
-    if (spot.hero) {
-      const step = Math.sin(phase * 0.015 + spot.x * 0.02) * 6;
-      drawXero(ctx, spot.emoji, spot.x + step, spot.y, spot.size, { anchor: "feet", flip: step < 0 });
-    } else {
-      drawXero(ctx, spot.emoji, spot.x, spot.y, spot.size, { anchor: "center" });
-    }
+  for (const spot of frameCast(width, height, phase)) {
+    const step = Math.sin(phase * 0.015 + spot.x * 0.02) * 6;
+    drawXero(ctx, spot.emoji, spot.x + step, spot.y, spot.size, { anchor: "feet", flip: step < 0 });
   }
 
   ctx.fillStyle = palette.mute;
