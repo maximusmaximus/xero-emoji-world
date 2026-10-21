@@ -579,7 +579,7 @@ export function drawCity(
     let north = roadSet.has(`${col},${row - 1}`);
     const links = Number(east) + Number(west) + Number(south) + Number(north);
     const junction = links >= 3 && (east || west) && (north || south);
-    const emoji = junction ? "🚦" : "🛣️";
+    const emoji = junction && (col + row) % 6 === 0 ? "🚦" : "🛣️";
     props.push({
       depth: depthOf(col + 0.5, row + 0.5) - 0.08,
       draw: () => {
@@ -775,96 +775,25 @@ export function drawCity(
     });
   }
 
-  const yard = ["🪵", "🧱", "🪟", "⚙️", "🛠️", "🌾"];
-  const centerC = (city.cols || 11) / 2;
-  const centerR = (city.rows || 9) / 2;
-  const active = city.buildings.filter((building) => building.rising);
-  const sites = active.filter((building) => Math.abs(building.col - centerC) < 9 && Math.abs(building.row - centerR) < 9).slice(0, 3);
-  if (sites.length === 0) {
-    sites.push({
-      id: "city-yard",
-      name: "City yard",
-      col: centerC - 1,
-      row: centerR + 1,
-      material: 0,
-      kind: "block",
-      targetFloors: 4,
-      rising: true,
-      apartments: [],
-    });
-  }
-  sites.forEach((building, site) => {
-      const left = Math.max(1, building.targetFloors - building.apartments.length);
-      yard.slice(0, Math.min(yard.length, 2 + left)).forEach((emoji, index) => {
-        const col = building.col - 0.55 + (index % 3) * 0.62;
-        const row = building.row + 1.35 + Math.floor(index / 3) * 0.45;
-        props.push({
-          depth: depthOf(col, row) + 0.2,
-          draw: () =>
-            glyph(emoji, col, row, 6 + index * 4, 86, {
-              huge: true,
-              hit: {
-                id: `yard-${building.id}-${emoji}`,
-                name: "Construction",
-                role: "item",
-                place: building.name,
-                detail: `${building.name} is an open site. ${left} floors still need this ${emoji}. The pile stays huge so you can watch it being built.`,
-              },
-            }),
-        });
-      });
+  const active = city.buildings.filter((building) => building.rising).slice(0, 4);
+  for (const building of active) {
+    const queue = ["🪵", "🧱", "🪟", "🛠️"];
+    queue.forEach((emoji, index) => {
+      const col = building.col + 0.12 + index * 0.22;
+      const row = building.row + 1.18;
       props.push({
-        depth: depthOf(building.col + 0.2, building.row + 0.2) + 0.3,
-        draw: () => glyph("🏗️", building.col + 0.25, building.row + 0.2, building.apartments.length * FH + 8, 96, { huge: true, feet: false }),
+        depth: depthOf(col, row) + 0.05,
+        draw: () =>
+          glyph(emoji, col, row, 0, 14, {
+            hit: {
+              id: `yard-${building.id}-${emoji}`,
+              name: "Materials",
+              role: "item",
+              place: building.name,
+              detail: `${emoji} is staged on the sidewalk in front of ${building.name}. The next floor cannot rise until this load is carried in.`,
+            },
+          }),
       });
-      if (site === 0) {
-        Object.entries(city.stock ?? {}).forEach(([good, count], index) => {
-          if (!count) return;
-          const emoji = good === "timber" ? "🪵" : good === "brick" ? "🧱" : good === "steel" ? "⚙️" : good === "glass" ? "🪟" : good === "tools" ? "🛠️" : "🌾";
-          props.push({
-            depth: depthOf(building.col - 1.1, building.row + index * 0.4) + 0.15,
-            draw: () =>
-              glyph(emoji, building.col - 1.15, building.row + 0.2 + index * 0.38, 8, 60 + Math.min(40, count * 6), {
-                huge: true,
-                hit: {
-                  id: `stock-${good}`,
-                  name: good,
-                  role: "item",
-                  place: "the yard",
-                  detail: `${count} ${good} in the city yard. Haulers carry it, huge, to whatever is still rising.`,
-                },
-              }),
-          });
-        });
-      }
-    });
-
-  if (city.alchemy?.wonder) {
-    const wonder = city.alchemy.wonder;
-    const paid = Object.values(wonder.paid).reduce((sum, n) => sum + n, 0);
-    const cost = Object.values(wonder.cost).reduce((sum, n) => sum + n, 0) || 1;
-    props.push({
-      depth: depthOf(centerC + 1.2, centerR - 0.4) + 0.4,
-      draw: () =>
-        glyph(wonder.emoji, centerC + 1.4, centerR - 0.2, wonder.built ? 80 : 30, wonder.built ? 120 : 70 + (paid / cost) * 40, {
-          huge: true,
-          feet: false,
-          hit: {
-            id: "wonder",
-            name: wonder.name,
-            role: "building",
-            place: "the wonder",
-            detail: wonder.built
-              ? `${wonder.emoji} ${wonder.name} is finished. Harvests compound faster because it stands.`
-              : `${wonder.emoji} ${wonder.name} is ${Math.round((paid / cost) * 100)}% paid for in emoji.`,
-          },
-        }),
-    });
-  }
-  if (city.alchemy?.last) {
-    props.push({
-      depth: depthOf(centerC - 1.4, centerR + 0.8) + 0.35,
-      draw: () => glyph(city.alchemy!.last!, centerC - 1.6, centerR + 1.1, 12, 90, { huge: true, feet: false }),
     });
   }
 
@@ -896,8 +825,9 @@ function paintBuilding(building: Building) {
     const floors = building.apartments.length;
     const { col, row } = building;
     if (floors === 0) {
-      glyph("🪵", col + 0.35, row + 0.55, 6, 34);
-      glyph("🚩", col + 0.7, row + 0.35, 16, 34);
+      glyph("🪵", col + 0.28, row + 0.62, 0, 18);
+      glyph("🧱", col + 0.55, row + 0.62, 0, 16);
+      glyph("🚩", col + 0.72, row + 0.4, 10, 18);
       return;
     }
     const name = building.name.toLowerCase();
@@ -915,19 +845,41 @@ function paintBuilding(building: Building) {
                 : building.kind === "tower" || building.kind === "skyscraper"
                   ? "tower"
                   : "home";
-    const mat = MATERIALS[building.material % MATERIALS.length] ?? MATERIALS[0];
-    const wallColor =
+    const skin =
       facade === "hospital"
-        ? ["#d9ddd8", "#e8e6e1", "#c5cdc8", "#f4f1ea"]
+        ? { mass: "⬜", bay: "🪟", pier: "⬜", roof: "⬜", crown: "🏥", sill: "💊" }
         : facade === "school"
-          ? ["#b4533a", "#c46a45", "#8d3d2c", "#d7a48a"]
+          ? { mass: "🟥", bay: "🪟", pier: "🟥", roof: "🟥", crown: "🕐", sill: "📚" }
           : facade === "shop"
-            ? ["#8a6232", "#a87840", "#6b4c28", "#c9a36a"]
+            ? { mass: "🟫", bay: "🪟", pier: "🏪", roof: "🟫", crown: "🛍️", sill: "🍞" }
             : facade === "gas"
-              ? ["#3e4650", "#4c5662", "#2c333b", "#6a7380"]
+              ? { mass: "⬜", bay: "🪟", pier: "🟥", roof: "🟥", crown: "⛽", sill: "🔧" }
               : facade === "barn"
-                ? ["#8a4b32", "#a35b3c", "#6e3b28", "#c4845a"]
-                : ["#5c534c", "#6a6158", "#3e3934", "#7d756c"];
+                ? { mass: "🟫", bay: "🪟", pier: "🟫", roof: "🟫", crown: "🐄", sill: "🌾" }
+                : facade === "tower"
+                  ? { mass: "🪟", bay: "🪟", pier: "⬛", roof: "⬛", crown: "📡", sill: "💡" }
+                  : { mass: "🟥", bay: "🪟", pier: "🧱", roof: "🏠", crown: "🏡", sill: "🪴" };
+    const cols = 10;
+    const rowsEach = 5;
+    const lerp = (p: Point, q: Point, t: number) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    const cell = (pts: Point[], c: number, r: number, cSpan: number, rSpan: number) => {
+      const topA = lerp(pts[3]!, pts[2]!, c / cols);
+      const topB = lerp(pts[3]!, pts[2]!, (c + cSpan) / cols);
+      const botA = lerp(pts[0]!, pts[1]!, c / cols);
+      const botB = lerp(pts[0]!, pts[1]!, (c + cSpan) / cols);
+      const p0 = lerp(topA, botA, r / (floors * rowsEach));
+      const p1 = lerp(topB, botB, r / (floors * rowsEach));
+      const p3 = lerp(topA, botA, (r + rSpan) / (floors * rowsEach));
+      const p2 = { x: p1.x + (p3.x - p0.x), y: p1.y + (p3.y - p0.y) };
+      return [p0, p1, p2, p3];
+    };
+    const stamp = (pts: Point[], c: number, r: number, emoji: string, cSpan = 1, rSpan = 1) => {
+      const quadPts = cell(pts, c, r, cSpan, rSpan);
+      const w = Math.hypot(quadPts[1]!.x - quadPts[0]!.x, quadPts[1]!.y - quadPts[0]!.y);
+      if (w < 2.5) return;
+      drawXeroOnto(ctx, emoji, quadPts[0]!, quadPts[1]!, quadPts[3]!);
+    };
+
     const base = top(col + 0.08, row + 0.12, 0, 1.05, 1.08).map(to);
     quad(ctx, base);
     ctx.fillStyle = "rgba(0,0,0,0.28)";
@@ -941,67 +893,60 @@ function paintBuilding(building: Building) {
         return { side, depth: depthOf(midC, midR) };
       })
       .sort((a, b) => a.depth - b.depth);
+    const front = sides.slice(-2);
+    const frontMost = front[front.length - 1]?.side;
+
     for (const side of sides) {
       const pts = wall(col, row, 0, height, side.side).map(to);
       quad(ctx, pts);
-      ctx.fillStyle = wallColor[side.side] ?? mat.left;
+      ctx.fillStyle = "rgba(28, 24, 20, 0.35)";
       ctx.fill();
-    }
-
-    const soph = Math.min(6, city.sophistication ?? Math.floor((city.research || 0) / 500));
-    const front = sides.slice(-2);
-    for (const apt of building.apartments) {
-      const z0 = (apt.floor - 1) * FH;
-      const z1 = apt.floor * FH;
-      const floorOpenings: Point[][] = [];
-      for (const side of front) {
-        const storefront = apt.floor === 1 && (facade === "shop" || facade === "gas" || facade === "hospital");
-        const panes = storefront ? 1 : facade === "tower" ? 2 + Math.min(2, Math.floor(soph / 2)) : facade === "school" ? 3 : 2;
-        const paneWall = wall(col, row, z0 + FH * 0.22, z1 - FH * 0.16, side.side).map(to);
-        for (let pane = 0; pane < panes; pane++) {
-          const cell = split(paneWall[0]!, paneWall[1]!, paneWall[2]!, paneWall[3]!, pane, panes);
-          const shrunk = inset(cell, storefront ? 0.08 : 0.16);
-          quad(ctx, shrunk);
-          ctx.fillStyle = apt.lit ? "rgba(255, 214, 150, 0.55)" : "#16130f";
-          ctx.fill();
-          if (storefront && side.side === front[front.length - 1]?.side) {
-            const awning = wall(col, row, z1 - FH * 0.08, z1 + FH * 0.02, side.side).map(to);
-            quad(ctx, inset(awning, 0.02));
-            ctx.fillStyle = facade === "gas" ? "#d64545" : facade === "hospital" ? "#d64545" : "#c45c2a";
-            ctx.fill();
+      const facingStreet = front.some((item) => item.side === side.side);
+      for (let floor = 0; floor < floors; floor++) {
+        const y0 = floor * rowsEach;
+        const open = building.rising && floor === floors - 1;
+        for (let rr = 0; rr < rowsEach; rr++) {
+          for (let cc = 0; cc < cols; cc++) {
+            const windowBay = facingStreet && rr >= 1 && rr <= 3 && ((cc >= 1 && cc <= 3) || (cc >= 6 && cc <= 8));
+            const door = facingStreet && side.side === frontMost && floor === 0 && cc >= 4 && cc <= 5 && rr >= 1;
+            if (windowBay || door) continue;
+            const pier = cc === 0 || cc === cols - 1 || rr === 0 || rr === rowsEach - 1;
+            stamp(pts, cc, y0 + rr, open ? "🏗️" : pier ? skin.pier : skin.mass);
           }
-          floorOpenings.push(shrunk);
+        }
+        if (facingStreet) {
+          stamp(pts, 1, y0 + 1, open ? "🏗️" : skin.bay, 3, 3);
+          stamp(pts, 6, y0 + 1, open ? "🏗️" : skin.bay, 3, 3);
+          if (floor === 1 && !open) stamp(pts, 4, y0 + 4, skin.sill);
         }
       }
+      if (facingStreet && side.side === frontMost) {
+        stamp(pts, 4, 1, "🚪", 2, 4);
+      }
+    }
+
+    for (const apt of building.apartments) {
       const people = [...apt.residents].sort((a, b) => (a.role === "person" ? 0 : 1) - (b.role === "person" ? 0 : 1));
-      people.forEach((resident, index) => {
-        const pane = floorOpenings[index];
-        if (!pane) return;
-        const foot = { x: (pane[0]!.x + pane[1]!.x) / 2, y: (pane[0]!.y + pane[1]!.y) / 2 };
-        const head = { x: (pane[2]!.x + pane[3]!.x) / 2, y: (pane[2]!.y + pane[3]!.y) / 2 };
+      const host = front[front.length - 1];
+      if (!host || people.length === 0) continue;
+      const pts = wall(col, row, 0, height, host.side).map(to);
+      const y0 = (apt.floor - 1) * rowsEach;
+      people.slice(0, 2).forEach((resident, index) => {
+        const pane = cell(pts, index === 0 ? 1 : 6, y0 + 1, 3, 3);
+        const foot = { x: (pane[3]!.x + pane[2]!.x) / 2, y: (pane[3]!.y + pane[2]!.y) / 2 };
+        const head = { x: (pane[0]!.x + pane[1]!.x) / 2, y: (pane[0]!.y + pane[1]!.y) / 2 };
         const paneH = Math.max(8, Math.hypot(head.x - foot.x, head.y - foot.y));
-        const size = paneH * (resident.role === "person" ? 1.45 : 1.05);
         ctx.save();
         quad(ctx, pane);
         ctx.clip();
         ctx.globalAlpha = apt.lit ? 1 : 0.55;
-        drawXero(ctx, resident.emoji, foot.x, foot.y - paneH * 0.04, size, { anchor: "feet" });
-        const scene = windowScene(facade, apt.floor, index, city.tick || 0);
-        const sceneGrow = 0.75 + Math.min(1.05, (city.tick || 0) / 1400);
-        if (scene && resident.role === "person") {
-          drawXero(ctx, scene, foot.x + paneH * 0.28, foot.y - paneH * 0.02, paneH * sceneGrow, { anchor: "feet" });
+        drawXero(ctx, resident.emoji, foot.x, foot.y, paneH * 1.35, { anchor: "feet" });
+        if (resident.role === "person") {
+          drawXero(ctx, windowScene(facade, apt.floor, index, city.tick || 0), foot.x + paneH * 0.35, foot.y, paneH * 0.7, { anchor: "feet" });
         }
         ctx.restore();
-        if (resident.id === focusId) {
-          quad(ctx, pane);
-          ctx.strokeStyle = palette.teal;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
         const xs = pane.map((p) => p.x);
         const ys = pane.map((p) => p.y);
-        const minX = Math.min(...xs);
-        const minY = Math.min(...ys);
         hits.push({
           id: resident.id,
           name: resident.name,
@@ -1009,50 +954,48 @@ function paintBuilding(building: Building) {
           role: resident.role,
           place: building.name,
           floor: apt.floor,
-          detail: `${resident.name} stands inside a window at ${building.name}, floor ${apt.floor}. The glass cuts the glyph so nothing from the room shows on the wall.`,
-          x: minX,
-          y: minY,
-          w: Math.max(...xs) - minX,
-          h: Math.max(...ys) - minY,
+          detail: `${resident.name} is inside ${building.name}, floor ${apt.floor}. The window is one pane in a wall of emoji.`,
+          x: Math.min(...xs),
+          y: Math.min(...ys),
+          w: Math.max(...xs) - Math.min(...xs),
+          h: Math.max(...ys) - Math.min(...ys),
         });
       });
     }
 
     const roofZ = floors * FH;
-    const slab = facade === "gas" ? 4 : 7;
-    for (const side of sides) {
-      const fascia = wall(col, row, roofZ, roofZ + slab, side.side).map(to);
-      quad(ctx, fascia);
-      ctx.fillStyle = facade === "hospital" ? "#f4f1ea" : facade === "gas" ? "#2a3138" : mat.edge;
-      ctx.fill();
-    }
-    quad(ctx, top(col - 0.02, row - 0.02, roofZ + slab, 1.04, 1.04).map(to));
-    ctx.fillStyle = facade === "gas" ? "#e23b3b" : facade === "school" ? "#8d3d2c" : mat.top;
+    const roof = top(col, row, roofZ + 4, 1, 1).map(to);
+    quad(ctx, roof);
+    ctx.fillStyle = "rgba(20,16,12,0.25)";
     ctx.fill();
-    if (facade === "gas") glyph("⛽", col + 0.5, row + 0.72, 2, 40);
-    if (facade === "shop") glyph("🏪", col + 0.5, row + 0.2, roofZ + slab, 36);
-    if (facade === "school") glyph("🏫", col + 0.5, row + 0.35, roofZ + slab, 40);
-    if (facade === "hospital") glyph("🏥", col + 0.5, row + 0.35, roofZ + slab, 42);
-    if (facade === "tower" && soph > 0) glyph(soph > 3 ? "🏙️" : "📡", col + 0.72, row + 0.28, roofZ + slab, 28);
-    if (building.rising) glyph("🏗️", col + 0.28, row + 0.62, roofZ + slab, 34);
-    const face = front[front.length - 1];
-    if (face) {
-      const doorCol = face.side === 0 ? col + 1.05 : face.side === 2 ? col - 0.05 : col + 0.5;
-      const doorRow = face.side === 1 ? row + 1.05 : face.side === 3 ? row - 0.05 : row + 0.62;
-      glyph("🚪", doorCol, doorRow, 0, 30);
+    for (let rr = 0; rr < 4; rr++) {
+      for (let cc = 0; cc < 4; cc++) {
+        const topA = lerp(roof[0]!, roof[1]!, cc / 4);
+        const topB = lerp(roof[0]!, roof[1]!, (cc + 1) / 4);
+        const botA = lerp(roof[3]!, roof[2]!, cc / 4);
+        const botB = lerp(roof[3]!, roof[2]!, (cc + 1) / 4);
+        const p0 = lerp(topA, botA, rr / 4);
+        const p1 = lerp(topB, botB, rr / 4);
+        const p3 = lerp(topA, botA, (rr + 1) / 4);
+        if (Math.hypot(p1.x - p0.x, p1.y - p0.y) < 3) continue;
+        drawXeroOnto(ctx, rr === 0 || cc === 0 ? skin.pier : skin.roof, p0, p1, p3);
+      }
+    }
+    glyph(skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
+    if (building.rising) glyph("🏗️", col + 0.28, row + 0.35, roofZ + 10, 20);
+    if (city.alchemy?.wonder && building.rising && building.targetFloors >= floors) {
+      glyph(city.alchemy.wonder.emoji, col + 0.55, row + 0.55, roofZ + 16, 18);
     }
 
-    const crown = to(iso(col + 0.5, row + 0.5, roofZ + slab + 6));
-    if (building.rising || facade === "hospital" || facade === "school" || facade === "shop" || building.kind === "skyscraper") {
-      ctx.font = "600 14px Outfit, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const plate = ctx.measureText(building.name).width + 10;
-      ctx.fillStyle = "rgba(18,16,12,0.78)";
-      ctx.fillRect(crown.x - plate / 2, crown.y - 8, plate, 16);
-      ctx.fillStyle = palette.cream;
-      ctx.fillText(building.name, crown.x, crown.y);
-    }
+    const crown = to(iso(col + 0.5, row + 0.5, roofZ + 18));
+    ctx.font = "600 13px Outfit, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const plate = ctx.measureText(building.name).width + 10;
+    ctx.fillStyle = "rgba(18,16,12,0.72)";
+    ctx.fillRect(crown.x - plate / 2, crown.y - 8, plate, 16);
+    ctx.fillStyle = palette.cream;
+    ctx.fillText(building.name, crown.x, crown.y);
   }
 
   ctx.fillStyle = palette.mute;
