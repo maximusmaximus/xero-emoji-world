@@ -3,6 +3,7 @@ import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./si
 import { floorBands, mayMove, motionOf, roomFor, storyCount } from "./motion";
 import { DISTINCT_BODIES, frameCast, isBody } from "./catalog.ts";
 import { COATS } from "./coats.ts";
+import { doorOpening, fitted } from "./fit.ts";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -481,12 +482,12 @@ export function drawCity(
     const east = to(iso(col + 1, row, 0));
     const south = to(iso(col, row + 1, 0));
     const origin = to(iso(col, row, 0));
-    const span = Math.max(18, Math.hypot(east.x - origin.x, east.y - origin.y), Math.hypot(south.x - origin.x, south.y - origin.y));
+    const span = Math.max(1, Math.hypot(east.x - origin.x, east.y - origin.y), Math.hypot(south.x - origin.x, south.y - origin.y));
     const age = 1 + Math.min(0.7, (city.tick || 0) / 2400 + grownEra(city.era) * 0.04);
     const fraction = place?.huge
       ? Math.min(2.8, (world / 40) * (1 + age * 0.35))
       : Math.min(0.9, (world / 78) * (1 + (age - 1) * 0.85));
-    const size = place?.sky ? Math.min(78, Math.max(22, span * fraction)) : span * fraction;
+    const size = span * fraction;
     const feet = place?.feet !== false;
     if (feet) {
       ctx.save();
@@ -1041,7 +1042,12 @@ export function drawCity(
       const high1 = streetLow ? pts[2]! : pts[1]!;
       const at = (t: number, u: number) => lerp(lerp(low0, high0, t), lerp(low1, high1, t), u);
       const faceQuad = (t0: number, t1: number, u0: number, u1: number) => [at(t1, u0), at(t1, u1), at(t0, u1), at(t0, u0)];
-      const doorTop = frontDoor ? Math.min(0.28, 0.7 / storyCount(building.kind, floors)) : 0;
+      const doorTop = frontDoor
+        ? doorOpening(
+            Math.hypot(at(0, 0).x - at(0, 1).x, at(0, 0).y - at(0, 1).y),
+            Math.hypot(at(0, 0.5).x - at(1, 0.5).x, at(0, 0.5).y - at(1, 0.5).y),
+          ).t
+        : 0;
       if (facingStreet) {
         const wallH = Math.hypot(at(0, 0.5).x - at(1, 0.5).x, at(0, 0.5).y - at(1, 0.5).y);
         const stories = storyCount(building.kind, floors);
@@ -1065,7 +1071,7 @@ export function drawCity(
         lay(doorTop, pierTop, 1 - jamb, 1, brick);
         if (building.rising) {
           const crane = at(0.84, 0.5);
-          drawXero(ctx, "🏗️", crane.x, crane.y, Math.max(16, Math.min(28, wallH * 0.16)), { anchor: "center" });
+          drawXero(ctx, "🏗️", crane.x, crane.y, fitted(wallH, 0.14), { anchor: "center" });
         }
         const roomTints = ["#fff1d4", "#f3e2c4", "#efe6f4", "#e7f0ea"];
         const u0 = jamb + 0.03;
@@ -1088,7 +1094,7 @@ export function drawCity(
           ctx.fillStyle = coat ? coat.shade : "#c9844a";
           ctx.fill();
           const paneH = Math.hypot(at(band.t0, 0.5).x - at(band.t1, 0.5).x, at(band.t0, 0.5).y - at(band.t1, 0.5).y);
-          const fig = Math.max(12, Math.min(34, paneH * 0.92));
+          const fig = fitted(paneH, 0.82);
           const feetT = band.t0 + (band.t1 - band.t0) * 0.18;
           const prop = room.still[0];
           if (prop && !mayMove(prop.emoji, "self")) {
@@ -1130,24 +1136,22 @@ export function drawCity(
         });
       }
       if (frontDoor) {
-        const u0 = 0.36;
-        const u1 = 0.64;
-        const opening = faceQuad(0, doorTop, u0, u1);
+        const openingT = doorOpening(
+          Math.hypot(at(0, 0).x - at(0, 1).x, at(0, 0).y - at(0, 1).y),
+          Math.hypot(at(0, 0.5).x - at(1, 0.5).x, at(0, 0.5).y - at(1, 0.5).y),
+        );
+        const opening = faceQuad(0, openingT.t, openingT.u0, openingT.u1);
         quad(ctx, opening);
         ctx.fillStyle = "#1a120e";
         ctx.fill();
-        const topA = at(doorTop, u0);
-        const botA = at(0, u0);
-        const botB = at(0, u1);
-        const widthPx = Math.hypot(botB.x - botA.x, botB.y - botA.y);
-        const heightPx = Math.hypot(topA.x - botA.x, topA.y - botA.y);
-        const doorPx = Math.max(12, Math.min(widthPx, heightPx));
-        const foot = at(0, 0.5);
-        ctx.save();
-        quad(ctx, pts);
-        ctx.clip();
-        drawXero(ctx, "🚪", foot.x, foot.y, doorPx, { anchor: "feet" });
-        ctx.restore();
+        const [topLeft, topRight, , bottomLeft] = opening;
+        if (topLeft && topRight && bottomLeft) {
+          ctx.save();
+          quad(ctx, opening);
+          ctx.clip();
+          drawXeroOnto(ctx, "🚪", topLeft, topRight, bottomLeft);
+          ctx.restore();
+        }
       }
     }
 
@@ -1169,7 +1173,7 @@ export function drawCity(
       y: (roof[0]!.y + roof[1]!.y + roof[2]!.y + roof[3]!.y) / 4,
     };
     const roofSpan = Math.hypot(roof[1]!.x - roof[0]!.x, roof[1]!.y - roof[0]!.y);
-    drawXero(ctx, skin.roof, roofMid.x, roofMid.y, Math.max(28, Math.min(64, roofSpan * 0.55)), { anchor: "center" });
+    drawXero(ctx, skin.roof, roofMid.x, roofMid.y, fitted(roofSpan, 0.55), { anchor: "center" });
     glyph(building.mark || skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
     if (building.rising) glyph("🏗️", col + 0.28, row + 0.35, roofZ + 10, 20);
     if (city.alchemy?.wonder && building.rising && building.targetFloors >= floors) {
