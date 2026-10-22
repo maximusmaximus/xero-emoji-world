@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { countdown, pickPool, type KeySource } from "../city/pool.ts";
+import { isCoat } from "../city/coats.ts";
 
 /** Selected 2026-10-19 against the live Venice catalog. Private only. */
 export const WORLD_MODEL = "grok-4-20";
@@ -25,7 +26,7 @@ const STORY_SYSTEM =
   "Voice of Xero, a living emoji city that people are watching right now. One or two short sentences. No markdown. Match the era you are given: a camp is small and physical, a skyline talks about towers, emoji roads, fields, and the sky. The higher the research and the longer the city has been watched, the more sophisticated the detail.";
 
 const DEVELOP_SYSTEM =
-  "You assess an emoji city and say what each category should do next. Reply with JSON only, no markdown: {\"focus\":\"hut|farmhouse|house|store|gas|school|hospital|block|tower|skyscraper\",\"notes\":{\"store\":\"one short next step\"},\"developments\":[{\"name\":\"Two Words\",\"kind\":\"same kinds as focus\",\"emoji\":\"one emoji\",\"note\":\"one sentence\"}]}. notes must include every category you were given. focus is the category that is furthest behind. developments build that category. Each call is more specific than the last.";
+  "You plan NEW buildings for an emoji city. Reply with JSON only, no markdown: {\"focus\":\"hut|farmhouse|house|store|gas|school|hospital|block|tower|skyscraper\",\"notes\":{\"store\":\"one short next step\"},\"developments\":[{\"name\":\"Two Words\",\"kind\":\"same kinds as focus\",\"emoji\":\"one emoji\",\"note\":\"one sentence\",\"floors\":4,\"coat\":\"clay|sage|slate|sand|plum|cream|teal|brick\"}]}. Do not rename, recolor, or rebuild anything already standing. notes cover every category you were given. developments are new structures only, more stacked and specific as more people watch: a lobby, working floors, and a crown. coat is the gradient for that new building. floors is 2 to 8.";
 
 type Ledger = { day: string; spentUsd: number; byKey?: Record<string, number> };
 type Budget = { spentUsd: number; capUsd: number; remainingUsd: number; day: string };
@@ -37,7 +38,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 const KINDS = ["hut", "farmhouse", "house", "store", "gas", "school", "hospital", "block", "tower", "skyscraper"] as const;
 type DevKind = (typeof KINDS)[number];
-export type Development = { name: string; kind: DevKind; emoji: string; note: string };
+export type Development = { name: string; kind: DevKind; emoji: string; note: string; coat?: string; floors?: number };
 export type CityFocus = { kind: DevKind; note: string; notes: Partial<Record<DevKind, string>> };
 
 const CATEGORY_NEXT: Record<DevKind, string> = {
@@ -553,28 +554,28 @@ function localDevelopments(era: string, watchers: number): Development[] {
   const rich = watchers >= 3;
   const table: Record<string, Development[]> = {
     camp: [
-      { name: "Fire Ring Camp", kind: "hut", emoji: "🔥", note: "Seats around the first fire, close enough to talk." },
-      { name: "Kindling Shelter", kind: "hut", emoji: "🪵", note: "A second hut so the night watch can sleep in turns." },
+      { name: "Fire Ring Camp", kind: "hut", emoji: "🔥", note: "A low lobby around the first fire, with a sleeping loft above.", coat: "sand", floors: 2 },
+      { name: "Kindling Shelter", kind: "hut", emoji: "🪵", note: "A second hut: work below, a bunk under the roof.", coat: "clay", floors: 2 },
     ],
     farm: [
-      { name: "Orchard Barn", kind: "farmhouse", emoji: "🍎", note: "A barn for the first real harvest." },
-      { name: "Bee Yard Farm", kind: "farmhouse", emoji: "🐝", note: "Hives at the edge of the tilled ground." },
+      { name: "Orchard Barn", kind: "farmhouse", emoji: "🍎", note: "A press on the ground floor and apple lofts above.", coat: "brick", floors: 3 },
+      { name: "Bee Yard Farm", kind: "farmhouse", emoji: "🐝", note: "Hives at the yard, a honey room, and a roof walk.", coat: "cream", floors: 2 },
     ],
     roads: [
-      { name: "Signal House", kind: "house", emoji: "🚦", note: "A house at the crossing that watches the carts." },
-      { name: "North Fuel", kind: "gas", emoji: "⛽", note: "A two-pump station where the road leaves the fields." },
+      { name: "Signal House", kind: "house", emoji: "🚦", note: "A crossing office over a lit lobby that watches the carts.", coat: "slate", floors: 3 },
+      { name: "North Fuel", kind: "gas", emoji: "⛽", note: "Pumps at the street, a shop behind glass, a room upstairs.", coat: "teal", floors: 2 },
     ],
     town: [
-      { name: "Corner Market", kind: "store", emoji: "🏪", note: "A shop with a full glass front and an awning over the walk." },
-      { name: "River School", kind: "school", emoji: "🏫", note: "Classrooms above a yard where the children already stand in the windows." },
+      { name: "Corner Market", kind: "store", emoji: "🏪", note: "A full glass shop, a stock floor, and an awning crown.", coat: "plum", floors: 3 },
+      { name: "River School", kind: "school", emoji: "🏫", note: "A yard lobby, classrooms stacked, a clock at the roof.", coat: "sage", floors: 4 },
     ],
     city: [
-      { name: "Mercy Hospital", kind: "hospital", emoji: "🏥", note: "Wards stacked over an emergency door, lit all night." },
-      { name: "Harbor Market", kind: "store", emoji: "🛒", note: "A market block that took the place of an empty lot." },
+      { name: "Mercy Hospital", kind: "hospital", emoji: "🏥", note: "An emergency lobby, wards above, a lit crown all night.", coat: "cream", floors: 5 },
+      { name: "Harbor Market", kind: "store", emoji: "🛒", note: "Market hall, offices over it, a sign on the crown.", coat: "brick", floors: 4 },
     ],
     skyline: [
-      { name: "Observatory Spire", kind: "skyscraper", emoji: "🔭", note: "A spire tall enough to see the moon they have been watching." },
-      { name: "Civic Hospital", kind: rich ? "hospital" : "school", emoji: "🏥", note: "The next civic building, larger because more people are looking." },
+      { name: "Observatory Spire", kind: "skyscraper", emoji: "🔭", note: "Lobby, stacked offices, and a spire tall enough for the moon.", coat: "slate", floors: rich ? 8 : 6 },
+      { name: "Civic Hospital", kind: rich ? "hospital" : "school", emoji: "🏥", note: "A civic stack, larger because more people are watching.", coat: "teal", floors: rich ? 7 : 4 },
     ],
   };
   return table[era] ?? table.camp!;
@@ -624,8 +625,8 @@ export async function developCity(input: { era: string; watchers: number; have: 
     return fallback();
   }
   const census = have.length ? have.join(", ") : "none yet";
-  const user = `Era ${era}. ${watchers} watching. Category counts: ${census}. For each category, say the next real-world thing it should progress in. Then propose two buildings for the category that is furthest behind.`;
-  const estimate = tokens(DEVELOP_SYSTEM + user) * VOICE_INPUT_USD + 220 * VOICE_OUTPUT_USD;
+  const user = `Era ${era}. ${watchers} people are watching. The city grows only while they watch, and more watchers means taller, more complex new buildings. Category counts: ${census}. Leave every existing building as it is. Propose two new buildings for the category furthest behind. Give each a lobby, stacked floors, and a crown.`;
+  const estimate = tokens(DEVELOP_SYSTEM + user) * VOICE_INPUT_USD + 320 * VOICE_OUTPUT_USD;
   return serialized(async () => {
     const ledger = readLedger();
     const liveKey = activeKey(ledger);
@@ -636,7 +637,7 @@ export async function developCity(input: { era: string; watchers: number; have: 
     const res = await veniceFetch(CHAT_URL, liveKey, {
         model: WORLD_MODEL,
         temperature: 0.4,
-        max_tokens: 220,
+        max_tokens: 320,
         reasoning_effort: "none",
         venice_parameters: { include_venice_system_prompt: false },
         messages: [
@@ -719,13 +720,23 @@ function asKind(raw: string): DevKind | null {
 
 function oneDevelopment(item: unknown): Development[] {
   if (!item || typeof item !== "object") return [];
-  const row = item as { name?: unknown; kind?: unknown; emoji?: unknown; note?: unknown };
+  const row = item as { name?: unknown; kind?: unknown; emoji?: unknown; note?: unknown; coat?: unknown; floors?: unknown };
   const kind = asKind(String(row.kind || "")) ?? "house";
   const name = String(row.name || "").replace(/\s+/g, " ").trim().slice(0, 32);
   const note = String(row.note || "").replace(/\s+/g, " ").trim().slice(0, 160);
   const emoji = Array.from(String(row.emoji || "🏗️")).slice(0, 2).join("") || "🏗️";
+  const floors = Number(row.floors);
   if (!name) return [];
-  return [{ name, kind, emoji, note: note || `${name} goes up while people are watching.` }];
+  return [
+    {
+      name,
+      kind,
+      emoji,
+      note: note || `${name} goes up while people are watching.`,
+      coat: isCoat(row.coat) ? row.coat : undefined,
+      floors: Number.isFinite(floors) ? Math.max(2, Math.min(8, Math.floor(floors))) : undefined,
+    },
+  ];
 }
 
 function parseDevelopments(text: string): Development[] {

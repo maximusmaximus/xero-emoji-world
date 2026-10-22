@@ -2,6 +2,7 @@ import { drawXero, drawXeroOnto } from "./xero-emoji";
 import { laneSignCorners, pitchAfterPull, placedPoint, projectPoint } from "./signs";
 import { floorBands, mayMove, motionOf, roomFor, storyCount } from "./motion";
 import { DISTINCT_BODIES, frameCast, isBody } from "./catalog.ts";
+import { COATS } from "./coats.ts";
 import { palette } from "./palette";
 import type { Building, City, Era } from "./sim";
 
@@ -1019,7 +1020,15 @@ export function drawCity(
       const pts = wall(col, row, 0, height, side.side).map(to);
       quad(ctx, pts);
       const facingStreet = front.some((item) => item.side === side.side);
-      ctx.fillStyle = facingStreet ? "#6e4c40" : "#2a211c";
+      const coat = building.coat ? COATS[building.coat] : null;
+      if (coat) {
+        const wash = ctx.createLinearGradient(pts[0]!.x, pts[0]!.y, pts[2]!.x, pts[2]!.y);
+        wash.addColorStop(0, facingStreet ? coat.wall : coat.shade);
+        wash.addColorStop(1, coat.shade);
+        ctx.fillStyle = wash;
+      } else {
+        ctx.fillStyle = facingStreet ? "#6e4c40" : "#2a211c";
+      }
       ctx.fill();
       const frontDoor = facingStreet;
       // t = 0 is whichever wall edge is lower on screen (the street). t = 1 is the roof.
@@ -1061,7 +1070,7 @@ export function drawCity(
           ctx.fill();
           const sill = faceQuad(band.t0, band.t0 + (band.t1 - band.t0) * 0.16, 0.12, 0.88);
           quad(ctx, sill);
-          ctx.fillStyle = "#c9844a";
+          ctx.fillStyle = coat ? coat.shade : "#c9844a";
           ctx.fill();
           const paneH = Math.hypot(at(band.t0, 0.5).x - at(band.t1, 0.5).x, at(band.t0, 0.5).y - at(band.t1, 0.5).y);
           const fig = Math.max(12, Math.min(34, paneH * 0.92));
@@ -1130,7 +1139,15 @@ export function drawCity(
     const roofZ = floors * FH;
     const roof = top(col, row, roofZ + 4, 1, 1).map(to);
     quad(ctx, roof);
-    ctx.fillStyle = facade === "tower" ? "#2a211c" : "#6e4c40";
+    const coat = building.coat ? COATS[building.coat] : null;
+    if (coat) {
+      const wash = ctx.createLinearGradient(roof[0]!.x, roof[0]!.y, roof[2]!.x, roof[2]!.y);
+      wash.addColorStop(0, coat.roof);
+      wash.addColorStop(1, coat.shade);
+      ctx.fillStyle = wash;
+    } else {
+      ctx.fillStyle = facade === "tower" ? "#2a211c" : "#6e4c40";
+    }
     ctx.fill();
     const roofMid = {
       x: (roof[0]!.x + roof[1]!.x + roof[2]!.x + roof[3]!.x) / 4,
@@ -1138,7 +1155,7 @@ export function drawCity(
     };
     const roofSpan = Math.hypot(roof[1]!.x - roof[0]!.x, roof[1]!.y - roof[0]!.y);
     drawXero(ctx, skin.roof, roofMid.x, roofMid.y, Math.max(28, Math.min(64, roofSpan * 0.55)), { anchor: "center" });
-    glyph(skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
+    glyph(building.mark || skin.crown, col + 0.72, row + 0.28, roofZ + 8, facade === "tower" ? 22 : 26);
     if (building.rising) glyph("🏗️", col + 0.28, row + 0.35, roofZ + 10, 20);
     if (city.alchemy?.wonder && building.rising && building.targetFloors >= floors) {
       glyph(city.alchemy.wonder.emoji, col + 0.55, row + 0.55, roofZ + 16, 18);

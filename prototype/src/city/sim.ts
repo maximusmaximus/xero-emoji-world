@@ -1,4 +1,5 @@
 import { DISTINCT_BODIES } from "./catalog.ts";
+import { isCoat, pickCoat, type CoatName } from "./coats.ts";
 
 export const CITY_VERSION = 2;
 
@@ -52,6 +53,9 @@ export type Building = {
   targetFloors: number;
   rising: boolean;
   apartments: Apartment[];
+  /** Set only when the building is staked. Older buildings stay unpainted. */
+  coat?: CoatName;
+  mark?: string;
 };
 
 export type Farm = { col: number; row: number; growth: number };
@@ -98,6 +102,8 @@ export type Plan = {
   emoji: string;
   note: string;
   used: boolean;
+  coat?: CoatName;
+  floors?: number;
 };
 
 export type Beat = {
@@ -477,9 +483,11 @@ function stake(city: City, rng: () => number, kind: Kind): City | null {
     row,
     material: materialFor(kind, index),
     kind,
-    targetFloors: floorsFor(kind, rng) + extra,
+    targetFloors: Math.max(floorsFor(kind, rng) + extra, plan?.floors ?? 0),
     rising: true,
     apartments: [],
+    coat: pickCoat(rng, plan?.coat),
+    mark: plan?.emoji,
   };
   const nextPlans = plan ? plans.map((item, i) => (i === planAt ? { ...item, used: true } : item)) : plans;
   return pushBeat(
@@ -554,7 +562,7 @@ function kindFor(era: Era, rng: () => number, city: City): Kind | null {
 
 export function queuePlans(
   city: City,
-  incoming: { name: string; kind: Kind; emoji: string; note: string }[],
+  incoming: { name: string; kind: Kind; emoji: string; note: string; coat?: string; floors?: number }[],
   focus?: { kind?: string; note?: string; notes?: Partial<Record<string, string>> },
 ): City {
   const plans = [...(city.plans ?? [])];
@@ -569,6 +577,8 @@ export function queuePlans(
       emoji: item.emoji,
       note: item.note,
       used: false,
+      coat: isCoat(item.coat) ? item.coat : undefined,
+      floors: Number.isFinite(item.floors) ? Math.max(2, Math.min(8, Math.floor(item.floors as number))) : undefined,
     });
   }
   const kind = allowed.includes(focus?.kind as Kind) ? (focus?.kind as Kind) : city.focus?.kind;

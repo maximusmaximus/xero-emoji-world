@@ -729,14 +729,18 @@ function Home() {
               else travelTo(stop.tick);
             }}
           />
-          <span data-testid="time-label" className="w-28 shrink-0 text-right text-[11px] text-mute">
-            {scrub == null ? "Now" : stops[index]?.title ?? "Now"}
+          <span data-testid="time-label" className="w-28 shrink-0 truncate text-right text-[11px] text-mute">
+            {scrub == null ? "" : stops[index]?.title ?? ""}
           </span>
-          {scrub != null && (
-            <button type="button" className="shrink-0 text-[11px] text-amber" onClick={() => travelTo(null)}>
-              Now
-            </button>
-          )}
+          <button
+            type="button"
+            data-testid="time-now"
+            aria-pressed={scrub == null}
+            className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold tracking-wide ${scrub == null ? "bg-amber text-ink" : "border border-line text-mute"}`}
+            onClick={() => travelTo(null)}
+          >
+            NOW
+          </button>
         </div>
       </div>
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 p-4">
@@ -755,8 +759,11 @@ function Home() {
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-amber">
               {city.alchemy?.eraName ?? eraLabel(city.era ?? "camp")} · knowledge {city.alchemy?.knowledge ?? 0} · ×{growthOf(city.alchemy).toFixed(2)}
             </p>
+            <p data-testid="watch-note" className="mt-1 max-w-xs text-sm text-cream">
+              {watchers} watching. It only grows while someone is watching. More people, faster.
+            </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-mute">
-              {watchers} watching · {city.cols}×{city.rows} and past the frame
+              {city.cols}×{city.rows} and past the frame
             </p>
             {city.alchemy?.prophecy ? <p className="mt-1 max-w-xs text-sm text-cream">{city.alchemy.prophecy}</p> : null}
             {city.focus?.note ? (
@@ -880,9 +887,11 @@ function Home() {
         target="_blank"
         rel="noreferrer"
         data-testid="world-repo"
-        className="absolute bottom-3 right-3 z-40 text-xs text-cream underline decoration-line underline-offset-2"
+        aria-label="Xero Emoji World on GitHub"
+        title="github.com/maximusmaximus/xero-emoji-world"
+        className="absolute bottom-3 right-3 z-50 grid size-12 place-items-center rounded-full border border-line bg-panel"
       >
-        github.com/maximusmaximus/xero-emoji-world
+        <img src={xeroUrl("🤓")} alt="" className="size-8" />
       </a>
       {open && (
         <aside className="panel-in absolute inset-x-3 bottom-3 top-20 z-20 flex max-w-md flex-col gap-4 overflow-hidden rounded-card border border-line bg-panel p-4 sm:inset-y-4 sm:right-auto sm:w-[22rem]">
