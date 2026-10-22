@@ -79,6 +79,24 @@ export function recordMilestone(history: Milestone[], city: City, at?: string): 
   return thinMilestones([...history, makeMilestone(city, title, at)]);
 }
 
+export function stopsFor(milestones: Milestone[], liveTick: number): { id: string; tick: number | null; title: string }[] {
+  const marks = [...milestones].sort((a, b) => a.tick - b.tick || a.id.localeCompare(b.id));
+  const stops: { id: string; tick: number | null; title: string }[] = marks.map((mark) => ({ id: mark.id, tick: mark.tick, title: mark.title }));
+  const last = stops[stops.length - 1];
+  if (!last || (last.tick ?? 0) < liveTick) stops.push({ id: "now", tick: null, title: "Now" });
+  return stops;
+}
+
+export function stopIndex(stops: { tick: number | null }[], scrub: number | null): number {
+  if (scrub == null || stops.length === 0) return Math.max(0, stops.length - 1);
+  let index = 0;
+  for (let i = 0; i < stops.length; i += 1) {
+    const tick = stops[i]!.tick;
+    if (tick != null && tick <= scrub) index = i;
+  }
+  return index;
+}
+
 export function cityAt(history: Milestone[], tick: number): City | null {
   let found: Milestone | null = null;
   for (const item of history) {

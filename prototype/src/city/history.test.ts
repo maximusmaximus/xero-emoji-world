@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { cityAt, makeMilestone, milestoneReason, recordMilestone, thinMilestones } from "./history.ts";
-import type { City } from "./sim.ts";
+import { cityAt, makeMilestone, milestoneReason, recordMilestone, stopIndex, stopsFor, thinMilestones } from "./history.ts";
+import { createCity, stepCity, type City } from "./sim.ts";
+import { replayMilestones } from "./replay.ts";
 
 function city(patch: Partial<City> = {}): City {
   return {
@@ -53,5 +54,32 @@ describe("time travel", () => {
     assert.ok(thin.some((item) => item.title === "Became town"));
     assert.equal(thin[0]?.tick, 0);
     assert.equal(thin[thin.length - 1]?.tick, 390);
+  });
+
+  it("maps the slider onto snapshots so the left end is not the present", () => {
+    const early = makeMilestone(city({ tick: 0, era: "camp" }), "Founding");
+    const later = makeMilestone(city({ tick: 80, era: "roads", cols: 14, rows: 10 }), "Became roads");
+    const stops = stopsFor([later, early], 240);
+    assert.deepEqual(stops.map((stop) => stop.title), ["Founding", "Became roads", "Now"]);
+    assert.equal(stopIndex(stops, null), 2);
+    assert.equal(stopIndex(stops, 10), 0);
+    assert.equal(cityAt([early, later], stops[0]!.tick ?? 0)?.era, "camp");
+    assert.notEqual(cityAt([early, later], stops[0]!.tick ?? 0)?.tick, 240);
+    assert.equal(stopIndex(stops, 80), 1);
+  });
+
+  it("replaying the seed gives the slider an earlier city than the present", () => {
+    const marks = replayMilestones("slider-test", 240, 120);
+    assert.equal(marks[0]?.title, "Founding");
+    assert.equal(marks[0]?.city.tick, 0);
+    const present = marks[marks.length - 1]!;
+    assert.ok(present.tick > 0);
+    const stops = stopsFor(marks, present.tick);
+    const shown = cityAt(marks, stops[0]!.tick ?? 0);
+    assert.equal(shown?.tick, 0);
+    assert.notEqual(shown?.tick, present.tick);
+    let walked = createCity("slider-test");
+    for (let i = 0; i < 240; i += 1) walked = stepCity(walked);
+    assert.ok(walked.buildings.length >= shown!.buildings.length);
   });
 });

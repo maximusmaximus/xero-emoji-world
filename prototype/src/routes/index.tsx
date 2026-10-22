@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { Info, History, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { drawCity, defaultCamera, panBy, pullBy, zoomAt, type Camera, type Hit } from "@/city/draw";
-import { cityAt, loadLocalMilestones, mergeMilestones, recordMilestone, saveLocalMilestones, type Milestone } from "@/city/history";
+import { cityAt, loadLocalMilestones, makeMilestone, mergeMilestones, recordMilestone, saveLocalMilestones, stopIndex, stopsFor, type Milestone } from "@/city/history";
+import { needsReplay } from "@/city/replay";
 import { loadCity, saveCity } from "@/city/save";
 import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
@@ -166,6 +167,32 @@ function Home() {
       })
       .finally(() => {
         keepRef.current = true;
+        const live = liveRef.current;
+        if (needsReplay(historyRef.current, live)) {
+          const seed = live.seed || "xero-emoji-world";
+          let replay = createCity(seed);
+          historyRef.current = mergeMilestones([historyRef.current, [makeMilestone(replay, "Founding")]]);
+          setMilestones([...historyRef.current]);
+          let left = Math.min(2400, Math.max(0, live.tick));
+          const pump = () => {
+            const batch: Milestone[] = [];
+            const start = performance.now();
+            while (left > 0 && performance.now() - start < 12) {
+              const era = replay.era;
+              replay = stepCity(replay);
+              left -= 1;
+              if (replay.era !== era) batch.push(makeMilestone(replay, `Became ${replay.era}`));
+              else if (replay.tick % 120 === 0) batch.push(makeMilestone(replay, `Tick ${replay.tick}`));
+            }
+            if (batch.length) {
+              historyRef.current = mergeMilestones([historyRef.current, batch]);
+              setMilestones([...historyRef.current]);
+            }
+            if (left > 0) window.setTimeout(pump, 32);
+            else saveLocalMilestones(historyRef.current);
+          };
+          window.setTimeout(pump, 40);
+        }
       });
     const flush = () => saveCity(cityRef.current);
     window.addEventListener("pagehide", flush);
@@ -554,9 +581,8 @@ function Home() {
   }
 
   const latest = city.beats[0];
-  const firstTick = milestones[0]?.tick ?? 0;
-  const sliderMax = Math.max(firstTick + 1, liveTick);
-  const sliderValue = Math.min(sliderMax, Math.max(firstTick, scrub ?? liveTick));
+  const stops = stopsFor(milestones, liveTick);
+  const index = stopIndex(stops, scrub);
   const viewing = scrub == null ? null : milestones.filter((item) => item.tick <= scrub).at(-1);
 
   return (
@@ -612,17 +638,21 @@ function Home() {
             data-testid="time-scrub"
             className="min-w-0 flex-1 accent-amber"
             type="range"
-            min={firstTick}
-            max={sliderMax}
-            value={sliderValue}
+            min={0}
+            max={Math.max(0, stops.length - 1)}
+            step={1}
+            value={index}
             aria-label="City time"
+            aria-valuetext={stops[index]?.title ?? "Now"}
             onChange={(event) => {
-              const tick = Number(event.target.value);
-              travelTo(tick >= liveTick ? null : tick);
+              const at = Number(event.target.value);
+              const stop = stops[at];
+              if (!stop || at >= stops.length - 1) travelTo(null);
+              else travelTo(stop.tick);
             }}
           />
-          <span className="w-28 shrink-0 text-right text-[11px] text-mute">
-            {viewing ? `${viewing.title}` : "Now"}
+          <span data-testid="time-label" className="w-28 shrink-0 text-right text-[11px] text-mute">
+            {scrub == null ? "Now" : stops[index]?.title ?? "Now"}
           </span>
           {scrub != null && (
             <button type="button" className="shrink-0 text-[11px] text-amber" onClick={() => travelTo(null)}>
@@ -768,12 +798,13 @@ function Home() {
         </a>
       )}
       <a
-        href={XERO_REPO}
+        href="https://github.com/maximusmaximus/xero-emoji-world"
         target="_blank"
         rel="noreferrer"
-        className="absolute bottom-4 right-4 z-10 text-xs text-mute"
+        data-testid="world-repo"
+        className="absolute bottom-3 right-3 z-40 text-xs text-cream underline decoration-line underline-offset-2"
       >
-        Xero Emoji by Max Infeld
+        github.com/maximusmaximus/xero-emoji-world
       </a>
       {open && (
         <aside className="panel-in absolute inset-x-3 bottom-3 top-20 z-20 flex max-w-md flex-col gap-4 overflow-hidden rounded-card border border-line bg-panel p-4 sm:inset-y-4 sm:right-auto sm:w-[22rem]">
