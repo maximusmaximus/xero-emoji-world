@@ -1,7 +1,9 @@
-<a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Xero Worlds cover poster, horizontal 24x18" width="100%"></a>
-<p align="center"><sub><a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4">Horizontal 24×18 cover poster</a> (PDF, 9.9 MB — large download)</sub></p>
-
 # Xero Emoji World
+
+### 🌐 Live demo: **[https://xeroemoji.grok.me/](https://xeroemoji.grok.me/)**
+
+[![Xero Emoji World running live at xeroemoji.grok.me](docs/screenshot.png)](https://xeroemoji.grok.me/)
+<p align="center"><sub>The live city at <a href="https://xeroemoji.grok.me/">xeroemoji.grok.me</a> (screenshot taken 2026-10-22).</sub></p>
 
 Xero is a future city that builds itself out of emoji, and you are standing in one neighborhood of it. The map does not shrink to fit the screen. It is already dozens of tiles across, and it keeps spreading past every edge. Drag toward the dark and there is more ground.
 
@@ -9,7 +11,7 @@ What you are watching is a construction site that learned to be a city. Towers, 
 
 Venice looks at the categories that already exist and says which one is furthest behind, and what that category should do next. The next lots follow that. Stories, search, and those plans run on private Venice inference, capped at about a dollar a day. The clock itself does not spend the dollar. Keys are not in this repo.
 
-The glyphs are [XeroEmoji](https://github.com/maximusmaximus/xeroemoji), drawn as pictures rather than as a system font. The preview card is [public/og.jpg](public/og.jpg). The banner above is the horizontal *Xero Worlds* cover poster; see [Xero Worlds cover posters](#xero-worlds-cover-posters).
+The glyphs are [XeroEmoji](https://github.com/maximusmaximus/xeroemoji), drawn as pictures rather than as a system font. The preview card is [public/og.jpg](public/og.jpg). The *Xero Worlds* cover posters are [below](#xero-worlds-cover-posters).
 
 ## What is on the canvas
 
@@ -24,7 +26,7 @@ One finger, or the mouse, turns the view. Drag down to look across the city. Two
 
 ## Live prototype
 
-The city you can open now is the Grok build in [prototype/](prototype/). That is the isometric world, the yards, the sidewalks, and the Venice plans. See [docs/CIVILIZATION.md](docs/CIVILIZATION.md). The Docker apps below are the earlier server layout.
+The city running at [xeroemoji.grok.me](https://xeroemoji.grok.me/) is the Grok build in [prototype/](prototype/). That is the isometric world, the yards, the sidewalks, and the Venice plans. See [docs/CIVILIZATION.md](docs/CIVILIZATION.md). The Docker apps below are the earlier server layout.
 
 Venice keys stay off the repo. Put one in `.secrets/` on the host, or paste it from the Venice badge. When a key is spent or rejected, that badge asks for another. `.secrets/` is gitignored.
 
@@ -82,27 +84,31 @@ npm run build && npm run smoke                  # e2e: sim-server + vite preview
 ```
 The smoke test needs Chrome (`CHROME_PATH`, default `/usr/bin/google-chrome`). By default it runs a local mock inference endpoint. To smoke against a real model, set `SMOKE_ORACLE_URL` and `ORACLE_API_KEY`.
 
-## Quick start
+## Quick start (server + web workspaces)
 ```bash
 cp .env.example .env
-docker compose up -d qdrant         # vector DB
-npm install
+npm ci
+npm run build -w @xew/shared         # the server and web import the built shared package
+docker compose up -d qdrant          # vector DB (or skip it and use STORE=memory below)
 npm run dev:server                   # sim starts ticking; first run = genesis "now"
 npm run dev:web                      # http://localhost:5173
 ```
-To run without Docker, use `STORE=memory npm run dev:server` (not durable).
+To run without Qdrant, use `STORE=memory npm run dev:server` (not durable).
 To run everything in Docker: `docker compose up --build` → http://localhost:8080
 
-The canvas prototype in `prototype/` is a TanStack app. From that directory: `npm install` and `npm run dev`.
+The live canvas in `prototype/` runs inside the Grok app shell (TanStack Start), not these workspaces. See [prototype/README.md](prototype/README.md).
 
 ## Layout
 ```
 packages/shared   emoji catalog, PRNG, generator, reducer, simulation rules, protocol (pure, tested)
 apps/sim-server   tick loop, Qdrant store, embedder, HTTP/WS/SSE API, backups, restore script
 apps/web          Vite + Canvas2D isometric renderer, story panel, close-up popup
-prototype/        the living city: yards, sidewalks, Venice plans, share cards
+prototype/        the living city (live demo): yards, sidewalks, Venice plans, share cards
+world/            record of inference-driven world changes
+docs/             design notes, models, secrets, workflow, screenshot, emoji finder (GitHub Pages)
+scripts/          e2e smoke, world-pool e2e, migration bookkeeping
 ```
-See [ARCHITECTURE.md](ARCHITECTURE.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), and [HANDOFF.md](HANDOFF.md). License: MIT.
+See [ARCHITECTURE.md](ARCHITECTURE.md) (design, invariants, open TODOs) and [docs/WORKFLOW.md](docs/WORKFLOW.md). License: MIT.
 
 ## Embeddings & Venice.ai
 By default the sim uses a local hash embedder (offline, deterministic). Production inference is private Venice:
@@ -119,4 +125,4 @@ Prototype and product are built with Grok agents. Preferred flow:
 1. Read [docs/WORKFLOW.md](docs/WORKFLOW.md) before adding a pass. Make and project stay free. Remember and speak are the only paid passes, and they are cached.
 2. Agents open PRs (or push to `main` when asked) with that pipeline intact.
 3. Review on GitHub (enable Watch + notifications to see acceptance/merges).
-See [HANDOFF.md](HANDOFF.md) for bring-up and [docs/SECRETS.md](docs/SECRETS.md) for keys.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for invariants and [docs/SECRETS.md](docs/SECRETS.md) for keys.
