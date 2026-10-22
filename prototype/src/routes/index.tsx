@@ -10,6 +10,33 @@ import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, 
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
 import { addVeniceKeys, developCity, loadMilestones, loadWorld, narrateLife, pulseWatch, saveMilestone, saveWorld, searchLife, veniceStatus } from "@/lib/world-api";
 
+const PARADE = ["🏃", "🚶", "💃", "🐄", "🚌", "🌻", "🏗️", "🚗", "🐈", "🌙", "🐢", "🛵", "🐓", "🛸", "🐐", "🧱"];
+
+function CityLoading({ title }: { title: string }) {
+  return (
+    <div data-testid="city-loading" className="absolute inset-0 z-40 flex flex-col items-center justify-center overflow-hidden bg-ink">
+      <div className="pointer-events-none absolute inset-x-0 top-[34%] h-36">
+        {PARADE.map((emoji, index) => (
+          <img
+            key={emoji}
+            src={xeroUrl(emoji)}
+            alt=""
+            className={`parade-emoji absolute ${index % 2 ? "back" : ""}`}
+            style={{
+              top: `${(index % 4) * 28}px`,
+              width: index % 3 === 0 ? 64 : 44,
+              animationDelay: `${index * -0.35}s`,
+              animationDuration: `${5.2 + (index % 4) * 0.7}s`,
+            }}
+          />
+        ))}
+      </div>
+      <p className="relative z-10 mt-44 font-display text-3xl text-cream">{title}</p>
+      <p className="relative mt-2 text-sm text-mute">The street is clearing for the city you asked to see.</p>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/")({
   loader: () => veniceStatus({ data: { keys: "" } }),
   component: Home,
@@ -115,6 +142,7 @@ function Home() {
   const [scrub, setScrub] = useState<number | null>(null);
   const [liveTick, setLiveTick] = useState(city.tick);
   const [travelOpen, setTravelOpen] = useState(false);
+  const [cover, setCover] = useState({ on: true, title: "The city is waking up" });
   const [credit, setCredit] = useState(true);
   const [budget, setBudget] = useState(initialStatus.budget);
   const [clock, setClock] = useState(Date.now());
@@ -126,6 +154,12 @@ function Home() {
   const liveRef = useRef(city);
   const historyRef = useRef<Milestone[]>([]);
   const scrubRef = useRef<number | null>(null);
+  const coverRef = useRef(true);
+  const coverGen = useRef(0);
+  const revealRef = useRef(0);
+  const openedAt = useRef(Date.now());
+  const dockRef = useRef<HTMLDivElement>(null);
+  const travelRef = useRef<(tick: number | null) => void>(() => undefined);
   const keepRef = useRef(false);
   const pointers = useRef(new Map<number, { x: number; y: number; type: string }>());
   const gesture = useRef({
@@ -193,6 +227,12 @@ function Home() {
           };
           window.setTimeout(pump, 40);
         }
+        const wait = Math.max(700, 1200 - (Date.now() - openedAt.current));
+        window.setTimeout(() => {
+          if (coverGen.current !== 0) return;
+          coverRef.current = false;
+          setCover((prev) => ({ ...prev, on: false }));
+        }, wait);
       });
     const flush = () => saveCity(cityRef.current);
     window.addEventListener("pagehide", flush);
@@ -280,6 +320,12 @@ function Home() {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (coverRef.current) {
+        ctx.fillStyle = "#12100c";
+        ctx.fillRect(0, 0, width, height);
+        hitsRef.current = [];
+        return;
+      }
       hitsRef.current = drawCity(ctx, cityRef.current, width, height, camRef.current, phase, focusRef.current);
     };
     const loop = () => {
@@ -563,6 +609,24 @@ function Home() {
   }
 
   useEffect(() => {
+    const dock = dockRef.current;
+    if (!dock) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const dir = event.deltaY > 0 ? -1 : 1;
+      const marks = stopsFor(historyRef.current, liveRef.current.tick);
+      const at = stopIndex(marks, scrubRef.current);
+      const next = Math.min(marks.length - 1, Math.max(0, at + dir));
+      if (next === at) return;
+      const stop = marks[next];
+      if (!stop || next >= marks.length - 1) travelRef.current(null);
+      else travelRef.current(stop.tick);
+    };
+    dock.addEventListener("wheel", onWheel, { passive: false });
+    return () => dock.removeEventListener("wheel", onWheel);
+  }, []);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => setCredit(false), 3000);
     return () => window.clearTimeout(timer);
   }, []);
@@ -573,12 +637,25 @@ function Home() {
 
   function travelTo(tick: number | null) {
     const live = liveRef.current;
-    const shown = tick == null ? live : cityAt(historyRef.current, tick) ?? live;
-    scrubRef.current = tick;
-    setScrub(tick);
+    const past = tick == null ? null : cityAt(historyRef.current, tick) ?? historyRef.current[0]?.city ?? null;
+    const shown = past ?? live;
+    const mark = past ? historyRef.current.filter((item) => item.tick <= (tick ?? 0)).at(-1) : null;
+    scrubRef.current = past ? tick : null;
+    setScrub(past ? tick : null);
+    camRef.current = defaultCamera();
     cityRef.current = shown;
     setCity(shown);
+    const gen = ++coverGen.current;
+    coverRef.current = true;
+    setCover({ on: true, title: past ? `Opening ${mark?.title ?? "an earlier city"}` : "Returning to now" });
+    window.clearTimeout(revealRef.current);
+    revealRef.current = window.setTimeout(() => {
+      if (coverGen.current !== gen) return;
+      coverRef.current = false;
+      setCover((prev) => ({ ...prev, on: false }));
+    }, 800);
   }
+  travelRef.current = travelTo;
 
   const latest = city.beats[0];
   const stops = stopsFor(milestones, liveTick);
@@ -596,7 +673,8 @@ function Home() {
         onPointerCancel={onPointerUp}
         onContextMenu={(event) => event.preventDefault()}
       />
-      <div className="pointer-events-auto absolute inset-x-3 bottom-3 z-30 flex flex-col gap-2 sm:right-56">
+      {cover.on && <CityLoading title={cover.title} />}
+      <div ref={dockRef} className="pointer-events-auto absolute inset-x-3 bottom-3 z-50 flex flex-col gap-2 sm:right-56">
         {travelOpen && (
           <div data-testid="milestones" className="flex gap-2 overflow-x-auto rounded-card border border-line bg-panel/95 p-2">
             {milestones.length === 0 ? (
