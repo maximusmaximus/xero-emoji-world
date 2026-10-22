@@ -1,22 +1,22 @@
 emoji,name,codepoints,file,group,subgroup,home_page,pages
 😀,grinning face,1F600,1f600.svg,Smileys & Emotion,face-smiling,14,1 2 3 4 5 6 8 13 14 45 486 494 495 499 500 528
 😃,grinning face with big eyes,1F603,1f603.svg,Smileys & Emotion,face-smiling,14,5 14 45
-😄,grinning face with smiling eyes,1F604,1f604.svg,Smileys & Emotion,face-smiling,14,5 8 12 14 45
-😁,beaming face with smiling eyes,1F601,1f601.svg,Smileys & Emotion,face-smiling,15,5 15 45
-😆,grinning squinting face,1F606,1f606.svg,Smileys & Emotion,face-smiling,15,5 15 45
-😅,grinning face with sweat,1F605,1f605.svg,Smileys & Emotion,face-smiling,15,5 15 45
-🤣,rolling on the floor laughing,1F923,1f923.svg,Smileys & Emotion,face-smiling,16,5 13 16 45
-😂,face with tears of joy,1F602,1f602.svg,Smileys & Emotion,face-smiling,16,2 5 13 16 45
-🙂,slightly smiling face,1F642,1f642.svg,Smileys & Emotion,face-smiling,16,16 45
+😄,grinning face with smiling eyes,1F604,1f604.svg,Smileys & Emotion,face-smiling,14,5 8 12 14 45 530
+😁,beaming face with smiling eyes,1F601,1f601.svg,Smileys & Emotion,face-smiling,15,5 15 45 530
+😆,grinning squinting face,1F606,1f606.svg,Smileys & Emotion,face-smiling,15,5 15 45 530
+😅,grinning face with sweat,1F605,1f605.svg,Smileys & Emotion,face-smiling,15,5 15 45 530
+🤣,rolling on the floor laughing,1F923,1f923.svg,Smileys & Emotion,face-smiling,16,5 13 16 45 530
+😂,face with tears of joy,1F602,1f602.svg,Smileys & Emotion,face-smiling,16,2 5 13 16 45 530
+🙂,slightly smiling face,1F642,1f642.svg,Smileys & Emotion,face-smiling,16,16 45 530
 🙃,upside-down face,1F643,1f643.svg,Smileys & Emotion,face-smiling,17,17 45
 🫠,melting face,1FAE0,1fae0.svg,Smileys & Emotion,face-smiling,17,17 45
 🫫,cracking face,1FAEB,1faeb.svg,Smileys & Emotion,face-smiling,17,17 45
 😉,winking face,1F609,1f609.svg,Smileys & Emotion,face-smiling,18,18 45
 😊,smiling face with smiling eyes,1F60A,1f60a.svg,Smileys & Emotion,face-smiling,18,5 18 45
 😇,smiling face with halo,1F607,1f607.svg,Smileys & Emotion,face-smiling,18,5 18 45
-🥰,smiling face with hearts,1F970,1f970.svg,Smileys & Emotion,face-affection,19,13 19 45
-😍,smiling face with heart-eyes,1F60D,1f60d.svg,Smileys & Emotion,face-affection,19,2 8 13 19 45 492
-🤩,star-struck,1F929,1f929.svg,Smileys & Emotion,face-affection,19,2 13 19 45
+🥰,smiling face with hearts,1F970,1f970.svg,Smileys & Emotion,face-affection,19,13 19 45 530
+😍,smiling face with heart-eyes,1F60D,1f60d.svg,Smileys & Emotion,face-affection,19,2 8 13 19 45 492 530
+🤩,star-struck,1F929,1f929.svg,Smileys & Emotion,face-affection,19,2 13 19 45 530
 😘,face blowing a kiss,1F618,1f618.svg,Smileys & Emotion,face-affection,20,13 20 45
 😗,kissing face,1F617,1f617.svg,Smileys & Emotion,face-affection,20,20 45
 ☺️,smiling face,263A FE0F,263a.svg,Smileys & Emotion,face-affection,20,20 45
@@ -25,8 +25,8 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥲,smiling face with tear,1F972,1f972.svg,Smileys & Emotion,face-affection,20,20 45
 😋,face savoring food,1F60B,1f60b.svg,Smileys & Emotion,face-tongue,21,21 45
 😛,face with tongue,1F61B,1f61b.svg,Smileys & Emotion,face-tongue,21,21 45
-😜,winking face with tongue,1F61C,1f61c.svg,Smileys & Emotion,face-tongue,21,13 21 45
-🤪,zany face,1F92A,1f92a.svg,Smileys & Emotion,face-tongue,21,13 21 45
+😜,winking face with tongue,1F61C,1f61c.svg,Smileys & Emotion,face-tongue,21,13 21 45 530
+🤪,zany face,1F92A,1f92a.svg,Smileys & Emotion,face-tongue,21,13 21 45 530
 😝,squinting face with tongue,1F61D,1f61d.svg,Smileys & Emotion,face-tongue,21,21 45
 🤑,money-mouth face,1F911,1f911.svg,Smileys & Emotion,face-tongue,21,21 45
 🤗,smiling face with open hands,1F917,1f917.svg,Smileys & Emotion,face-hand,22,22 45
@@ -56,7 +56,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 😔,pensive face,1F614,1f614.svg,Smileys & Emotion,face-sleepy,26,26 45 488
 😪,sleepy face,1F62A,1f62a.svg,Smileys & Emotion,face-sleepy,26,26 45 228 236 249 266
 🤤,drooling face,1F924,1f924.svg,Smileys & Emotion,face-sleepy,26,13 26 45
-😴,sleeping face,1F634,1f634.svg,Smileys & Emotion,face-sleepy,26,13 26 44 45 235 530
+😴,sleeping face,1F634,1f634.svg,Smileys & Emotion,face-sleepy,26,13 26 44 45 235
 🫩,face with bags under eyes,1FAE9,1fae9.svg,Smileys & Emotion,face-sleepy,26,26 45
 😷,face with medical mask,1F637,1f637.svg,Smileys & Emotion,face-unwell,26,26 45
 🤒,face with thermometer,1F912,1f912.svg,Smileys & Emotion,face-unwell,27,27 45 486
@@ -71,9 +71,9 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 😵‍💫,face with spiral eyes,1F635 200D 1F4AB,1f635-200d-1f4ab.svg,Smileys & Emotion,face-unwell,28,28 45
 🤯,exploding head,1F92F,1f92f.svg,Smileys & Emotion,face-unwell,28,28 45
 🤠,cowboy hat face,1F920,1f920.svg,Smileys & Emotion,face-hat,28,28 45 471
-🥳,partying face,1F973,1f973.svg,Smileys & Emotion,face-hat,29,2 13 29 45 228 361 373
+🥳,partying face,1F973,1f973.svg,Smileys & Emotion,face-hat,29,2 13 29 45 228 361 373 515 530
 🥸,disguised face,1F978,1f978.svg,Smileys & Emotion,face-hat,29,29 45
-😎,smiling face with sunglasses,1F60E,1f60e.svg,Smileys & Emotion,face-glasses,29,2 13 29 45
+😎,smiling face with sunglasses,1F60E,1f60e.svg,Smileys & Emotion,face-glasses,29,2 13 29 45 530
 🤓,nerd face,1F913,1f913.svg,Smileys & Emotion,face-glasses,29,13 29 45 492
 🧐,face with monocle,1F9D0,1f9d0.svg,Smileys & Emotion,face-glasses,29,13 29 45 492
 😕,confused face,1F615,1f615.svg,Smileys & Emotion,face-concerned,29,29 45
@@ -112,13 +112,13 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 💀,skull,1F480,1f480.svg,Smileys & Emotion,face-negative,35,31 34 35 36 46 71 246 252 253 258 374 485
 ☠️,skull and crossbones,2620 FE0F,2620.svg,Smileys & Emotion,face-negative,35,35 46 492
 💩,pile of poo,1F4A9,1f4a9.svg,Smileys & Emotion,face-costume,35,35 46 260 263 492
-🤡,clown face,1F921,1f921.svg,Smileys & Emotion,face-costume,35,35 46
+🤡,clown face,1F921,1f921.svg,Smileys & Emotion,face-costume,35,35 46 530
 👹,ogre,1F479,1f479.svg,Smileys & Emotion,face-costume,36,36 46
 👺,goblin,1F47A,1f47a.svg,Smileys & Emotion,face-costume,36,36 46
-👻,ghost,1F47B,1f47b.svg,Smileys & Emotion,face-costume,36,2 13 31 33 36 46 248 253 258 337 374
-👽,alien,1F47D,1f47d.svg,Smileys & Emotion,face-costume,36,36 46 315 356
+👻,ghost,1F47B,1f47b.svg,Smileys & Emotion,face-costume,36,2 13 31 33 36 46 248 253 258 337 374 530
+👽,alien,1F47D,1f47d.svg,Smileys & Emotion,face-costume,36,36 46 315 356 530
 👾,alien monster,1F47E,1f47e.svg,Smileys & Emotion,face-costume,36,36 46 356 388
-🤖,robot,1F916,1f916.svg,Smileys & Emotion,face-costume,36,36 46 113 315 356
+🤖,robot,1F916,1f916.svg,Smileys & Emotion,face-costume,36,36 46 113 315 356 530
 😺,grinning cat,1F63A,1f63a.svg,Smileys & Emotion,cat-face,37,46
 😸,grinning cat with smiling eyes,1F638,1f638.svg,Smileys & Emotion,cat-face,37,37 46
 😹,cat with tears of joy,1F639,1f639.svg,Smileys & Emotion,cat-face,37,37 46
@@ -151,26 +151,26 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 💚,green heart,1F49A,1f49a.svg,Smileys & Emotion,heart,41,41 46 487 500
 💙,blue heart,1F499,1f499.svg,Smileys & Emotion,heart,42,42 46 500
 🩵,light blue heart,1FA75,1fa75.svg,Smileys & Emotion,heart,42,42 46
-💜,purple heart,1F49C,1f49c.svg,Smileys & Emotion,heart,42,42 46
+💜,purple heart,1F49C,1f49c.svg,Smileys & Emotion,heart,42,42 46 530
 🤎,brown heart,1F90E,1f90e.svg,Smileys & Emotion,heart,42,42 46
 🖤,black heart,1F5A4,1f5a4.svg,Smileys & Emotion,heart,42,42 46
 🩶,grey heart,1FA76,1fa76.svg,Smileys & Emotion,heart,42,42 46
-🤍,white heart,1F90D,1f90d.svg,Smileys & Emotion,heart,43,43 46
+🤍,white heart,1F90D,1f90d.svg,Smileys & Emotion,heart,43,43 46 530
 💋,kiss mark,1F48B,1f48b.svg,Smileys & Emotion,emotion,43,19 20 29 42 43 46 68 224
 💯,hundred points,1F4AF,1f4af.svg,Smileys & Emotion,emotion,43,42 43 46 58 443 494
 💢,anger symbol,1F4A2,1f4a2.svg,Smileys & Emotion,emotion,43,43 44 46
 🫯,fight cloud,1FAEF,1faef.svg,Smileys & Emotion,emotion,43,43 46
-💥,collision,1F4A5,1f4a5.svg,Smileys & Emotion,emotion,43,40 43 44 46 54 200 201 202 204 205
-💫,dizzy,1F4AB,1f4ab.svg,Smileys & Emotion,emotion,44,15 19 42 43 44 46 54 68 219 228 234 235 241 341 356 361 362 363 365 373 375 376 378 386 404 410 424 431 437 438 449 454 466 488
+💥,collision,1F4A5,1f4a5.svg,Smileys & Emotion,emotion,43,40 43 44 46 54 200 201 202 204 205 530
+💫,dizzy,1F4AB,1f4ab.svg,Smileys & Emotion,emotion,44,15 19 42 43 44 46 54 68 219 228 234 235 241 341 356 361 362 363 365 373 375 376 378 386 404 410 424 431 437 438 449 454 466 488 530
 💦,sweat droplets,1F4A6,1f4a6.svg,Smileys & Emotion,emotion,44,17 27 43 44 46 85 88 128 176 194 206
 💨,dashing away,1F4A8,1f4a8.svg,Smileys & Emotion,emotion,44,17 34 40 44 46 117 128 187 276 366
 🕳️,hole,1F573 FE0F,1f573.svg,Smileys & Emotion,emotion,44,44 46
 💬,speech balloon,1F4AC,1f4ac.svg,Smileys & Emotion,emotion,44,44 46 60 102
 👁️‍🗨️,eye in speech bubble,1F441 FE0F 200D 1F5E8 FE0F,1f441-200d-1f5e8.svg,Smileys & Emotion,emotion,44,44 46
-🗨️,left speech bubble,1F5E8 FE0F,1f5e8.svg,Smileys & Emotion,emotion,45,44 46
+🗨️,left speech bubble,1F5E8 FE0F,1f5e8.svg,Smileys & Emotion,emotion,45,44 46 530
 🗯️,right anger bubble,1F5EF FE0F,1f5ef.svg,Smileys & Emotion,emotion,45,44 46
 💭,thought balloon,1F4AD,1f4ad.svg,Smileys & Emotion,emotion,45,44 46 490
-💤,ZZZ,1F4A4,1f4a4.svg,Smileys & Emotion,emotion,45,13 44 46 210 530
+💤,ZZZ,1F4A4,1f4a4.svg,Smileys & Emotion,emotion,45,13 44 46 210
 👋,waving hand,1F44B,1f44b.svg,People & Body,hand-fingers-open,50,2 3 4 6 12 47 48 490 495 505
 👋🏻,waving hand: light skin tone,1F44B 1F3FB,1f44b-1f3fb.svg,People & Body,hand-fingers-open,50,12 47 48
 👋🏼,waving hand: medium-light skin tone,1F44B 1F3FC,1f44b-1f3fc.svg,People & Body,hand-fingers-open,50,12 47 48 486
@@ -2602,14 +2602,14 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 👣,footprints,1F463,1f463.svg,People & Body,person-symbol,106,102 103 235 490
 🫆,fingerprint,1FAC6,1fac6.svg,People & Body,person-symbol,106,102
 🐵,monkey face,1F435,1f435.svg,Animals & Nature,animal-mammal,276,262
-🐒,monkey,1F412,1f412.svg,Animals & Nature,animal-mammal,276,261 262 293 297 302 476
+🐒,monkey,1F412,1f412.svg,Animals & Nature,animal-mammal,276,261 262 293 297 302 476 530
 🦍,gorilla,1F98D,1f98d.svg,Animals & Nature,animal-mammal,277,261 262 263
 🦧,orangutan,1F9A7,1f9a7.svg,Animals & Nature,animal-mammal,277,262 263
 🐶,dog face,1F436,1f436.svg,Animals & Nature,animal-mammal,277,2 263
 🐕,dog,1F415,1f415.svg,Animals & Nature,animal-mammal,278,17 21 32 44 47 50 56 60 70 73 110 158 160 213 215 216 223 226 231 233 238 239 260 263 264 295 297 309 314 329 334 336 415 451 458 490
 🦮,guide dog,1F9AE,1f9ae.svg,Animals & Nature,animal-mammal,278,263 264 370 487
 🐕‍🦺,service dog,1F415 200D 1F9BA,1f415-200d-1f9ba.svg,Animals & Nature,animal-mammal,279,263 264 265 433
-🐩,poodle,1F429,1f429.svg,Animals & Nature,animal-mammal,279,150 226 263 264 265
+🐩,poodle,1F429,1f429.svg,Animals & Nature,animal-mammal,279,150 226 263 264 265 530
 🐺,wolf,1F43A,1f43a.svg,Animals & Nature,animal-mammal,279,265 362 462
 🦊,fox,1F98A,1f98a.svg,Animals & Nature,animal-mammal,280,219 234 261 266 274 296 298 434
 🦝,raccoon,1F99D,1f99d.svg,Animals & Nature,animal-mammal,280,266 297 298
@@ -2622,12 +2622,12 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🐆,leopard,1F406,1f406.svg,Animals & Nature,animal-mammal,281,267
 🐴,horse face,1F434,1f434.svg,Animals & Nature,animal-mammal,281,267
 🫎,moose,1FACE,1face.svg,Animals & Nature,animal-mammal,282,267 268
-🫏,donkey,1FACF,1facf.svg,Animals & Nature,animal-mammal,282,268
+🫏,donkey,1FACF,1facf.svg,Animals & Nature,animal-mammal,282,268 530
 🐎,horse,1F40E,1f40e.svg,Animals & Nature,animal-mammal,282,130 190 268 297 464 471
 🦄,unicorn,1F984,1f984.svg,Animals & Nature,animal-mammal,282,2 241 260 268
 🦓,zebra,1F993,1f993.svg,Animals & Nature,animal-mammal,282,261 268 298 479
 🦌,deer,1F98C,1f98c.svg,Animals & Nature,animal-mammal,283,198 225 242 243 250 256 269 293 333 374 434 460 488
-🦬,bison,1F9AC,1f9ac.svg,Animals & Nature,animal-mammal,283,269 332 471
+🦬,bison,1F9AC,1f9ac.svg,Animals & Nature,animal-mammal,283,269 332 471 530
 🐮,cow face,1F42E,1f42e.svg,Animals & Nature,animal-mammal,283,269
 🐂,ox,1F402,1f402.svg,Animals & Nature,animal-mammal,283,269 293
 🐃,water buffalo,1F403,1f403.svg,Animals & Nature,animal-mammal,283,269 297
@@ -2641,13 +2641,13 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🐐,goat,1F410,1f410.svg,Animals & Nature,animal-mammal,285,16 218 271 297 332
 🐪,camel,1F42A,1f42a.svg,Animals & Nature,animal-mammal,285,271 463 477
 🐫,two-hump camel,1F42B,1f42b.svg,Animals & Nature,animal-mammal,285,271 365
-🦙,llama,1F999,1f999.svg,Animals & Nature,animal-mammal,286,272 297 475
+🦙,llama,1F999,1f999.svg,Animals & Nature,animal-mammal,286,272 297 475 530
 🦒,giraffe,1F992,1f992.svg,Animals & Nature,animal-mammal,286,261 272 297 479
 🐘,elephant,1F418,1f418.svg,Animals & Nature,animal-mammal,286,212 261 272 297 298 467 479
 🦣,mammoth,1F9A3,1f9a3.svg,Animals & Nature,animal-mammal,286,272
 🦏,rhinoceros,1F98F,1f98f.svg,Animals & Nature,animal-mammal,286,272 298
 🦛,hippopotamus,1F99B,1f99b.svg,Animals & Nature,animal-mammal,287,273 479 480
-🐭,mouse face,1F42D,1f42d.svg,Animals & Nature,animal-mammal,287,226 272 273 298 308
+🐭,mouse face,1F42D,1f42d.svg,Animals & Nature,animal-mammal,287,226 272 273 298 308 530
 🐁,mouse,1F401,1f401.svg,Animals & Nature,animal-mammal,287,272 273 485
 🐀,rat,1F400,1f400.svg,Animals & Nature,animal-mammal,287,33 268 272 273 489
 🐹,hamster,1F439,1f439.svg,Animals & Nature,animal-mammal,287,273 427
@@ -2671,17 +2671,17 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🐔,chicken,1F414,1f414.svg,Animals & Nature,animal-bird,291,110 265 270 277 337
 🐓,rooster,1F413,1f413.svg,Animals & Nature,animal-bird,291,14 212 268 270 277 337
 🐣,hatching chick,1F423,1f423.svg,Animals & Nature,animal-bird,291,277
-🐤,baby chick,1F424,1f424.svg,Animals & Nature,animal-bird,292,278
+🐤,baby chick,1F424,1f424.svg,Animals & Nature,animal-bird,292,278 530
 🐥,front-facing baby chick,1F425,1f425.svg,Animals & Nature,animal-bird,292,278 298
 🐦,bird,1F426,1f426.svg,Animals & Nature,animal-bird,292,14 16 17 18 20 24 28 38 41 47 50 53 55 57 60 61 64 69 70 73 78 79 82 83 85 86 90 91 105 107 115 121 123 124 125 130 131 134 136 137 145 155 158 159 160 161 163 164 166 168 169 173 175 176 183 184 185 188 191 192 193 195 197 198 199 203 208 209 214 215 216 218 220 221 222 224 226 227 229 231 232 236 238 239 244 251 256 257 260 261 263 264 265 267 269 270 271 272 273 274 275 276 277 278 280 283 284 286 287 288 290 291 294 295 296 297 298 299 301 302 303 304 305 306 309 310 313 322 324 329 332 333 335 336 337 338 339 340 342 343 344 345 346 347 348 349 350 351 352 353 354 355 357 358 359 360 364 366 367 368 369 377 379 380 381 382 383 384 385 388 392 396 398 399 400 403 406 407 413 415 420 421 423 428 429 433 434 435 436 442 444 445 446 447 450 451 453 455 456 457 458 459 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 482 483 484 485 486 487 490
-🐧,penguin,1F427,1f427.svg,Animals & Nature,animal-bird,292,222 278 293 482 483
+🐧,penguin,1F427,1f427.svg,Animals & Nature,animal-bird,292,222 278 293 482 483 530
 🕊️,dove,1F54A FE0F,1f54a.svg,Animals & Nature,animal-bird,292,17 18 20 39 41 47 57 61 63 66 115 141 215 216 227 229 230 231 232 236 278 284 297 298 304 309 329 336 341 345 359 455 458 459
 🦅,eagle,1F985,1f985.svg,Animals & Nature,animal-bird,293,78 79 209 232 248 260 261 265 267 269 271 272 275 278 279 282 283 332 333 457 464 475 481
 🦆,duck,1F986,1f986.svg,Animals & Nature,animal-bird,293,85 88 91 150 160 221 222 231 251 273 278 279 370 426 446
 🦢,swan,1F9A2,1f9a2.svg,Animals & Nature,animal-bird,293,91 165 193 221 229 251 278 279
 🦉,owl,1F989,1f989.svg,Animals & Nature,animal-bird,293,25 42 49 110 135 217 219 228 234 241 248 253 257 261 266 268 279 297 341 356 361 362 363 365 373 375 376 378 386 404 410 424 431 434 437 438 449 454 460 466 488
 🦤,dodo,1F9A4,1f9a4.svg,Animals & Nature,animal-bird,293,279 297
-🪶,feather,1FAB6,1fab6.svg,Animals & Nature,animal-bird,294,67 241 249 279 280 473
+🪶,feather,1FAB6,1fab6.svg,Animals & Nature,animal-bird,294,67 241 249 279 280 473 530
 🦩,flamingo,1F9A9,1f9a9.svg,Animals & Nature,animal-bird,294,280 370 371 472 480 488
 🦚,peacock,1F99A,1f99a.svg,Animals & Nature,animal-bird,294,280
 🦜,parrot,1F99C,1f99c.svg,Animals & Nature,animal-bird,294,221 261 262 280 293 302 413 476
@@ -2699,8 +2699,8 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🦕,sauropod,1F995,1f995.svg,Animals & Nature,animal-reptile,297,282 283
 🦖,T-Rex,1F996,1f996.svg,Animals & Nature,animal-reptile,297,283 297 370
 🐳,spouting whale,1F433,1f433.svg,Animals & Nature,animal-marine,297,150 282 283
-🐋,whale,1F40B,1f40b.svg,Animals & Nature,animal-marine,297,229 255 283 459
-🐬,dolphin,1F42C,1f42c.svg,Animals & Nature,animal-marine,297,61 69 150 151 192 194 229 254 256 283 284 297 335
+🐋,whale,1F40B,1f40b.svg,Animals & Nature,animal-marine,297,229 255 283 459 530
+🐬,dolphin,1F42C,1f42c.svg,Animals & Nature,animal-marine,297,61 69 150 151 192 194 229 254 256 283 284 297 335 530
 🫍,orca,1FACD,1facd.svg,Animals & Nature,animal-marine,298,284 298
 🦭,seal,1F9AD,1f9ad.svg,Animals & Nature,animal-marine,298,151 255 284 365 459
 🐟,fish,1F41F,1f41f.svg,Animals & Nature,animal-marine,298,38 61 91 137 150 151 159 193 219 231 251 254 255 256 266 267 273 275 276 281 284 285 353 384 458 478 480
@@ -2719,11 +2719,11 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🐌,snail,1F40C,1f40c.svg,Animals & Nature,animal-bug,301,64 90 219 226 250 273 276 286 287 292 335 367
 🦋,butterfly,1F98B,1f98b.svg,Animals & Nature,animal-bug,301,2 25 28 38 53 57 78 79 90 145 151 160 163 166 199 215 216 218 220 221 229 233 234 236 238 241 250 251 256 257 261 262 263 265 267 269 270 273 274 276 277 280 281 282 286 287 288 290 291 293 294 295 298 301 303 310 322 329 333 335 336 337 338 339 340 343 344 346 347 348 350 351 352 353 354 355 358 359 364 366 367 368 369 377 379 380 381 382 383 384 385 388 392 396 398 399 403 406 407 413 415 420 421 423 428 429 433 434 435 436 442 444 445 446 447 450 451 453 455 457 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 482 483 484 485 486 487 490
 🫌,monarch butterfly,1FACC,1facc.svg,Animals & Nature,animal-bug,301,287
-🐛,bug,1F41B,1f41b.svg,Animals & Nature,animal-bug,301,90 119 261 270 277 278 287 303 305
-🐜,ant,1F41C,1f41c.svg,Animals & Nature,animal-bug,301,233 272 274 287 288 290 297 300 310
+🐛,bug,1F41B,1f41b.svg,Animals & Nature,animal-bug,301,90 119 261 270 277 278 287 303 305 515
+🐜,ant,1F41C,1f41c.svg,Animals & Nature,animal-bug,301,233 272 274 287 288 290 297 300 310 515
 🐝,honeybee,1F41D,1f41d.svg,Animals & Nature,animal-bug,302,78 79 83 90 145 163 166 218 236 251 275 287 288 290 292 295 297 300 301 303 305 324 337
-🪲,beetle,1FAB2,1fab2.svg,Animals & Nature,animal-bug,302,274 288 333
-🐞,lady beetle,1F41E,1f41e.svg,Animals & Nature,animal-bug,302,25 38 53 79 199 215 221 233 238 239 250 251 261 263 276 278 287 288 291 292 294 297 333
+🪲,beetle,1FAB2,1fab2.svg,Animals & Nature,animal-bug,302,274 288 333 515
+🐞,lady beetle,1F41E,1f41e.svg,Animals & Nature,animal-bug,302,25 38 53 79 199 215 221 233 238 239 250 251 261 263 276 278 287 288 291 292 294 297 333 515
 🦗,cricket,1F997,1f997.svg,Animals & Nature,animal-bug,302,269 288
 🪳,cockroach,1FAB3,1fab3.svg,Animals & Nature,animal-bug,302,288 298
 🕷️,spider,1F577 FE0F,1f577.svg,Animals & Nature,animal-bug,303,31 71 132 246 253 289 327
@@ -2736,10 +2736,10 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 💐,bouquet,1F490,1f490.svg,Animals & Nature,plant-flower,304,18 20 26 27 62 74 99 107 120 144 145 218 230 235 236 237 289 290 359 390 488
 🌸,cherry blossom,1F338,1f338.svg,Animals & Nature,plant-flower,304,38 85 144 145 159 164 183 184 185 219 236 250 261 280 287 290 291 341 377 444
 💮,white flower,1F4AE,1f4ae.svg,Animals & Nature,plant-flower,304,290
-🪷,lotus,1FAB7,1fab7.svg,Animals & Nature,plant-flower,305,146 154 155 209 219 251 273 281 291
+🪷,lotus,1FAB7,1fab7.svg,Animals & Nature,plant-flower,305,146 154 155 209 219 251 273 281 291 530
 🏵️,rosette,1F3F5 FE0F,1f3f5.svg,Animals & Nature,plant-flower,305,291
 🌹,rose,1F339,1f339.svg,Animals & Nature,plant-flower,305,13 15 18 19 39 62 87 99 120 142 144 145 165 166 179 181 182 183 185 186 216 217 218 224 226 230 231 235 236 237 240 252 253 279 291 322 358 359 360 370 488
-🥀,wilted flower,1F940,1f940.svg,Animals & Nature,plant-flower,305,144 291 370
+🥀,wilted flower,1F940,1f940.svg,Animals & Nature,plant-flower,305,144 291 370 530
 🌺,hibiscus,1F33A,1f33a.svg,Animals & Nature,plant-flower,305,38 159 236 261 280 282 287 291 293 297 444 458
 🌻,sunflower,1F33B,1f33b.svg,Animals & Nature,plant-flower,306,2 25 48 78 79 90 199 215 227 232 233 251 286 287 292 294 298 337 359
 🌼,blossom,1F33C,1f33c.svg,Animals & Nature,plant-flower,306,25 28 53 64 78 79 123 191 199 212 213 215 218 221 232 233 236 238 250 251 256 263 264 265 267 269 272 273 276 277 278 286 287 288 290 292 293 294 297 299 301 303 305 306 310 322 324 333 337 348 364 436 444 446 455 457
@@ -2787,26 +2787,26 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥔,potato,1F954,1f954.svg,Food & Drink,food-vegetable,321,290 305 308 328 475
 🥕,carrot,1F955,1f955.svg,Food & Drink,food-vegetable,321,90 127 181 182 183 184 185 186 225 268 274 290 305
 🌽,ear of corn,1F33D,1f33d.svg,Food & Drink,food-vegetable,321,110 270 277 305 475
-🌶️,hot pepper,1F336 FE0F,1f336.svg,Food & Drink,food-vegetable,322,111 140 306
+🌶️,hot pepper,1F336 FE0F,1f336.svg,Food & Drink,food-vegetable,322,111 140 306 530
 🫑,bell pepper,1FAD1,1fad1.svg,Food & Drink,food-vegetable,322,306
 🥒,cucumber,1F952,1f952.svg,Food & Drink,food-vegetable,322,154 270 306 307
-🫝,pickle,1FADD,1fadd.svg,Food & Drink,food-vegetable,322,306
+🫝,pickle,1FADD,1fadd.svg,Food & Drink,food-vegetable,322,306 530
 🥬,leafy green,1F96C,1f96c.svg,Food & Drink,food-vegetable,322,90 127 305 306
 🥦,broccoli,1F966,1f966.svg,Food & Drink,food-vegetable,323,305 307
-🧄,garlic,1F9C4,1f9c4.svg,Food & Drink,food-vegetable,323,51 111 140 252 307 328 462
+🧄,garlic,1F9C4,1f9c4.svg,Food & Drink,food-vegetable,323,51 111 140 252 307 328 462 530
 🧅,onion,1F9C5,1f9c5.svg,Food & Drink,food-vegetable,323,140 307 308
 🥜,peanuts,1F95C,1f95c.svg,Food & Drink,food-vegetable,323,124 140 225 307 490
 🫘,beans,1FAD8,1fad8.svg,Food & Drink,food-vegetable,323,307
 🌰,chestnut,1F330,1f330.svg,Food & Drink,food-vegetable,324,217 225 274 295 296 308
-🫚,ginger root,1FADA,1fada.svg,Food & Drink,food-vegetable,324,308
+🫚,ginger root,1FADA,1fada.svg,Food & Drink,food-vegetable,324,308 530
 🫛,pea pod,1FADB,1fadb.svg,Food & Drink,food-vegetable,324,308
 🍄‍🟫,brown mushroom,1F344 200D 1F7EB,1f344-200d-1f7eb.svg,Food & Drink,food-vegetable,324,308 328
 🫜,root vegetable,1FADC,1fadc.svg,Food & Drink,food-vegetable,324,308
 🍞,bread,1F35E,1f35e.svg,Food & Drink,food-prepared,325,14 78 91 129 160 216 221 278 299 304 308 309 338 354 461
 🥐,croissant,1F950,1f950.svg,Food & Drink,food-prepared,325,14 20 37 55 56 98 115 128 226 308 309 345 455 461
 🥖,baguette bread,1F956,1f956.svg,Food & Drink,food-prepared,325,51 226 300 308 309 328 360
-🫓,flatbread,1FAD3,1fad3.svg,Food & Drink,food-prepared,325,309 489
-🥨,pretzel,1F968,1f968.svg,Food & Drink,food-prepared,325,216 308 309 324
+🫓,flatbread,1FAD3,1fad3.svg,Food & Drink,food-prepared,325,309 489 530
+🥨,pretzel,1F968,1f968.svg,Food & Drink,food-prepared,325,216 308 309 324 530
 🥯,bagel,1F96F,1f96f.svg,Food & Drink,food-prepared,326,310
 🥞,pancakes,1F95E,1f95e.svg,Food & Drink,food-prepared,326,14 81 310 348 471
 🧇,waffle,1F9C7,1f9c7.svg,Food & Drink,food-prepared,326,14 310 345 355 455
@@ -2817,7 +2817,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥓,bacon,1F953,1f953.svg,Food & Drink,food-prepared,327,81 311 490
 🍔,hamburger,1F354,1f354.svg,Food & Drink,food-prepared,327,21 238 311 348 370 410
 🍟,french fries,1F35F,1f35f.svg,Food & Drink,food-prepared,327,15 21 311 352 353
-🍕,pizza,1F355,1f355.svg,Food & Drink,food-prepared,328,2 51 89 101 119 177 259 266 312 458 490
+🍕,pizza,1F355,1f355.svg,Food & Drink,food-prepared,328,2 51 89 101 119 177 259 266 312 458 490 530
 🌭,hot dog,1F32D,1f32d.svg,Food & Drink,food-prepared,328,21 73 104 125 213 223 238 263 312 333 380
 🥪,sandwich,1F96A,1f96a.svg,Food & Drink,food-prepared,328,49 215 233 239 312 336 358
 🌮,taco,1F32E,1f32e.svg,Food & Drink,food-prepared,328,212 306 312 455
@@ -2830,8 +2830,8 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥘,shallow pan of food,1F958,1f958.svg,Food & Drink,food-prepared,330,111 299 314 458
 🍲,pot of food,1F372,1f372.svg,Food & Drink,food-prepared,330,314
 🫕,fondue,1FAD5,1fad5.svg,Food & Drink,food-prepared,330,111 314 457 487
-🥣,bowl with spoon,1F963,1f963.svg,Food & Drink,food-prepared,330,243 314
-🥗,green salad,1F957,1f957.svg,Food & Drink,food-prepared,330,129 238 299 314
+🥣,bowl with spoon,1F963,1f963.svg,Food & Drink,food-prepared,330,243 314 530
+🥗,green salad,1F957,1f957.svg,Food & Drink,food-prepared,330,129 238 299 314 530
 🍿,popcorn,1F37F,1f37f.svg,Food & Drink,food-prepared,331,13 15 19 25 62 84 89 161 200 201 202 204 205 213 220 224 259 274 290 315 343 380 387 410 440
 🧈,butter,1F9C8,1f9c8.svg,Food & Drink,food-prepared,331,51 81 111 243 315
 🧂,salt,1F9C2,1f9c2.svg,Food & Drink,food-prepared,331,111 243 307 311 314 315 327 353
@@ -2853,10 +2853,10 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥟,dumpling,1F95F,1f95f.svg,Food & Drink,food-asian,334,170 299 318 342 455 462 466
 🥠,fortune cookie,1F960,1f960.svg,Food & Drink,food-asian,334,318
 🥡,takeout box,1F961,1f961.svg,Food & Drink,food-asian,335,319
-🍦,soft ice cream,1F366,1f366.svg,Food & Drink,food-sweet,335,17 21 28 41 70 73 85 104 131 158 161 169 218 220 319 335 340 352 359 459
+🍦,soft ice cream,1F366,1f366.svg,Food & Drink,food-sweet,335,17 21 28 41 70 73 85 104 131 158 161 169 218 220 319 335 340 352 359 459 530
 🍧,shaved ice,1F367,1f367.svg,Food & Drink,food-sweet,335,17 319
 🍨,ice cream,1F368,1f368.svg,Food & Drink,food-sweet,335,17 21 319
-🍩,doughnut,1F369,1f369.svg,Food & Drink,food-sweet,335,21 24 58 130 212 223 309 319 343 345
+🍩,doughnut,1F369,1f369.svg,Food & Drink,food-sweet,335,21 24 58 130 212 223 309 319 343 345 530
 🍪,cookie,1F36A,1f36a.svg,Food & Drink,food-sweet,336,21 55 75 94 98 222 225 242 243 248 253 266 320 337 358 362 378 460
 🎂,birthday cake,1F382,1f382.svg,Food & Drink,food-sweet,336,21 29 145 226 235 236 237 240 243 299 320
 🍰,shortcake,1F370,1f370.svg,Food & Drink,food-sweet,336,20 21 37 98 141 147 215 223 235 237 238 243 253 320 328 358
@@ -2864,20 +2864,20 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥧,pie,1F967,1f967.svg,Food & Drink,food-sweet,336,21 218 238 243 248 299 309 320 337 348
 🍫,chocolate bar,1F36B,1f36b.svg,Food & Drink,food-sweet,337,20 21 25 50 74 222 243 259 266 319 321 329 332 355 356 457
 🍬,candy,1F36C,1f36c.svg,Food & Drink,food-sweet,337,13 15 21 27 50 220 259 319 321 343 346 374
-🍭,lollipop,1F36D,1f36d.svg,Food & Drink,food-sweet,337,21 27 28 30 50 84 161 213 218 220 224 259 319 321 343 386
+🍭,lollipop,1F36D,1f36d.svg,Food & Drink,food-sweet,337,21 27 28 30 50 84 161 213 218 220 224 259 319 321 343 386 530
 🍮,custard,1F36E,1f36e.svg,Food & Drink,food-sweet,337,321
-🍯,honey pot,1F36F,1f36f.svg,Food & Drink,food-sweet,337,14 81 111 243 274 275 299 321
+🍯,honey pot,1F36F,1f36f.svg,Food & Drink,food-sweet,337,14 81 111 243 274 275 299 321 530
 🍼,baby bottle,1F37C,1f37c.svg,Food & Drink,drink,338,74 147 148 149 322
 🥛,glass of milk,1F95B,1f95b.svg,Food & Drink,drink,338,14 21 37 50 243 322 328 338
 ☕,hot beverage,2615,2615.svg,Food & Drink,drink,338,14 16 17 20 24 32 37 50 55 58 65 73 76 77 81 86 92 94 96 98 101 103 105 106 108 114 115 118 119 130 140 141 149 152 168 209 222 226 244 246 253 257 263 310 311 322 328 330 336 344 345 346 347 348 351 355 358 371 385 396 460 480
 🫖,teapot,1FAD6,1fad6.svg,Food & Drink,drink,338,98 140 164 243 253 322 355 358 461 463 464 477 489
 🍵,teacup without handle,1F375,1f375.svg,Food & Drink,drink,338,164 219 316 317 322 376 377 378 449 463
-🍶,sake,1F376,1f376.svg,Food & Drink,drink,339,15 23 291 317 323 376
+🍶,sake,1F376,1f376.svg,Food & Drink,drink,339,15 23 291 317 323 376 530
 🍾,bottle with popping cork,1F37E,1f37e.svg,Food & Drink,drink,339,15 23 29 142 227 228 232 235 236 237 240 323 329 356 361 373
 🍷,wine glass,1F377,1f377.svg,Food & Drink,drink,339,13 15 23 25 29 51 59 138 217 225 226 227 231 233 234 237 240 248 252 253 299 300 304 323 326 360 389 390 458 482
 🍸,cocktail glass,1F378,1f378.svg,Food & Drink,drink,339,15 21 23 95 143 179 180 323 342
 🍹,tropical drink,1F379,1f379.svg,Food & Drink,drink,339,15 17 21 23 28 34 323 335 373 474
-🍺,beer mug,1F37A,1f37a.svg,Food & Drink,drink,340,15 21 23 25 54 223 324 363 457
+🍺,beer mug,1F37A,1f37a.svg,Food & Drink,drink,340,15 21 23 25 54 223 324 363 457 530
 🍻,clinking beer mugs,1F37B,1f37b.svg,Food & Drink,drink,340,15 223 324 373
 🥂,clinking glasses,1F942,1f942.svg,Food & Drink,drink,340,29 59 62 66 87 142 145 165 228 235 236 237 240 324 361 373
 🥃,tumbler glass,1F943,1f943.svg,Food & Drink,drink,340,15 23 180 324
@@ -2885,8 +2885,8 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🥤,cup with straw,1F964,1f964.svg,Food & Drink,drink,341,15 21 51 52 69 89 119 121 124 162 172 173 176 178 189 196 200 201 202 204 205 207 218 223 238 259 311 315 325 328 337 342 343 346 349 350 359 375 379 380 381 382 383 410 432 456
 🧋,bubble tea,1F9CB,1f9cb.svg,Food & Drink,drink,341,21 68 170 325 328
 🧃,beverage box,1F9C3,1f9c3.svg,Food & Drink,drink,341,17 21 27 36 49 50 55 75 129 146 195 215 218 223 238 248 266 290 299 301 310 325 339 356 370 389
-🧉,mate,1F9C9,1f9c9.svg,Food & Drink,drink,341,225 325 328
-🧊,ice,1F9CA,1f9ca.svg,Food & Drink,drink,341,17 100 178 188 325 332 384 483
+🧉,mate,1F9C9,1f9c9.svg,Food & Drink,drink,341,225 325 328 530
+🧊,ice,1F9CA,1f9ca.svg,Food & Drink,drink,341,17 100 178 188 325 332 384 483 530
 🥢,chopsticks,1F962,1f962.svg,Food & Drink,dishware,342,316 317 326 342
 🍽️,fork and knife with plate,1F37D FE0F,1f37d.svg,Food & Drink,dishware,342,2 3 4 6 237 243 299 326 328
 🍴,fork and knife,1F374,1f374.svg,Food & Drink,dishware,342,81 326
@@ -2970,7 +2970,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🚈,light rail,1F688,1f688.svg,Travel & Places,transport-ground,363,345
 🚉,station,1F689,1f689.svg,Travel & Places,transport-ground,363,345
 🚊,tram,1F68A,1f68a.svg,Travel & Places,transport-ground,363,345
-🚝,monorail,1F69D,1f69d.svg,Travel & Places,transport-ground,363,213 345
+🚝,monorail,1F69D,1f69d.svg,Travel & Places,transport-ground,363,213 345 530
 🚞,mountain railway,1F69E,1f69e.svg,Travel & Places,transport-ground,363,345
 🚋,tram car,1F68B,1f68b.svg,Travel & Places,transport-ground,364,245 346
 🚌,bus,1F68C,1f68c.svg,Travel & Places,transport-ground,364,50 77 103 168 239 245 329 338 339 340 346 370 486
@@ -2992,7 +2992,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🚜,tractor,1F69C,1f69c.svg,Travel & Places,transport-ground,366,78 83 110 269 294 336 348 371 372
 🏎️,racing car,1F3CE FE0F,1f3ce.svg,Travel & Places,transport-ground,367,112 239 349 370 371
 🏍️,motorcycle,1F3CD FE0F,1f3cd.svg,Travel & Places,transport-ground,367,349
-🛵,motor scooter,1F6F5,1f6f5.svg,Travel & Places,transport-ground,367,349 371
+🛵,motor scooter,1F6F5,1f6f5.svg,Travel & Places,transport-ground,367,349 371 530
 🦽,manual wheelchair,1F9BD,1f9bd.svg,Travel & Places,transport-ground,367,349 372
 🦼,motorized wheelchair,1F9BC,1f9bc.svg,Travel & Places,transport-ground,367,349
 🛺,auto rickshaw,1F6FA,1f6fa.svg,Travel & Places,transport-ground,367,349 371
@@ -3013,27 +3013,27 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🚧,construction,1F6A7,1f6a7.svg,Travel & Places,transport-ground,370,131 136 222 244 245 336 347 351 352 354 371 431 435
 🛙,lighthouse,1F6D9,1f6d9.svg,Travel & Places,transport-water,370,352
 ⚓,anchor,2693,2693.svg,Travel & Places,transport-water,370,352 353 372
-🛟,ring buoy,1F6DF,1f6df.svg,Travel & Places,transport-water,370,61 88 169 194 206 352 353 372 458
-⛵,sailboat,26F5,26f5.svg,Travel & Places,transport-water,371,13 41 60 69 123 137 150 151 158 169 216 229 256 284 302 304 329 331 335 352 353 413 456 458 472 482
+🛟,ring buoy,1F6DF,1f6df.svg,Travel & Places,transport-water,370,61 88 169 194 206 352 353 372 458 530
+⛵,sailboat,26F5,26f5.svg,Travel & Places,transport-water,371,13 41 60 69 123 137 150 151 158 169 216 229 256 284 302 304 329 331 335 352 353 413 456 458 472 482 530
 🛶,canoe,1F6F6,1f6f6.svg,Travel & Places,transport-water,371,91 151 159 214 216 217 281 335 353 384 459 467 468 470 478 480
 🚤,speedboat,1F6A4,1f6a4.svg,Travel & Places,transport-water,371,41 60 69 150 216 335 353 458
 🛳️,passenger ship,1F6F3 FE0F,1f6f3.svg,Travel & Places,transport-water,371,150 353 460
 ⛴️,ferry,26F4 FE0F,26f4.svg,Travel & Places,transport-water,371,150 329 353
-🛥️,motor boat,1F6E5 FE0F,1f6e5.svg,Travel & Places,transport-water,371,151 329 353
+🛥️,motor boat,1F6E5 FE0F,1f6e5.svg,Travel & Places,transport-water,371,151 329 353 530
 🚢,ship,1F6A2,1f6a2.svg,Travel & Places,transport-water,372,47 61 137 151 229 284 329 352 354 456 461
 ✈️,airplane,2708 FE0F,2708.svg,Travel & Places,transport-air,372,24 96 115 124 125 216 239 244 245 269 329 335 339 342 354 432
 🛩️,small airplane,1F6E9 FE0F,1f6e9.svg,Travel & Places,transport-air,372,125 151 213 354
 🛫,airplane departure,1F6EB,1f6eb.svg,Travel & Places,transport-air,372,96 124 329 354 372 432
-🛬,airplane arrival,1F6EC,1f6ec.svg,Travel & Places,transport-air,372,329 354 485
-🪂,parachute,1FA82,1fa82.svg,Travel & Places,transport-air,372,69 125 354 457
+🛬,airplane arrival,1F6EC,1f6ec.svg,Travel & Places,transport-air,372,329 354 485 530
+🪂,parachute,1FA82,1fa82.svg,Travel & Places,transport-air,372,69 125 354 457 530
 💺,seat,1F4BA,1f4ba.svg,Travel & Places,transport-air,373,355
 🚁,helicopter,1F681,1f681.svg,Travel & Places,transport-air,373,24 26 105 150 152 191 216 239 244 245 329 332 335 336 354 355 370 371 456
 🚟,suspension railway,1F69F,1f69f.svg,Travel & Places,transport-air,373,355
 🚠,mountain cableway,1F6A0,1f6a0.svg,Travel & Places,transport-air,373,355
-🚡,aerial tramway,1F6A1,1f6a1.svg,Travel & Places,transport-air,373,355 457
-🛰️,satellite,1F6F0 FE0F,1f6f0.svg,Travel & Places,transport-air,373,49 126 330 355 356 372
-🚀,rocket,1F680,1f680.svg,Travel & Places,transport-air,374,2 10 119 126 127 150 315 356
-🛸,flying saucer,1F6F8,1f6f8.svg,Travel & Places,transport-air,374,42 49 126 127 234 245 356 370 424
+🚡,aerial tramway,1F6A1,1f6a1.svg,Travel & Places,transport-air,373,355 457 530
+🛰️,satellite,1F6F0 FE0F,1f6f0.svg,Travel & Places,transport-air,373,49 126 330 355 356 372 530
+🚀,rocket,1F680,1f680.svg,Travel & Places,transport-air,374,2 10 119 126 127 150 315 356 530
+🛸,flying saucer,1F6F8,1f6f8.svg,Travel & Places,transport-air,374,42 49 126 127 234 245 356 370 424 530
 🛎️,bellhop bell,1F6CE FE0F,1f6ce.svg,Travel & Places,hotel,374,356
 🧳,luggage,1F9F3,1f9f3.svg,Travel & Places,hotel,374,20 55 56 96 124 133 271 329 344 345 346 354 356 432 433
 ⌛,hourglass done,231B,231b.svg,Travel & Places,time,374,356 357 487
@@ -3073,11 +3073,11 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🌔,waxing gibbous moon,1F314,1f314.svg,Travel & Places,sky & weather,380,362
 🌕,full moon,1F315,1f315.svg,Travel & Places,sky & weather,380,25 217 252 253 258 259 362 378
 🌖,waning gibbous moon,1F316,1f316.svg,Travel & Places,sky & weather,380,362
-🌗,last quarter moon,1F317,1f317.svg,Travel & Places,sky & weather,380,362
+🌗,last quarter moon,1F317,1f317.svg,Travel & Places,sky & weather,380,362 530
 🌘,waning crescent moon,1F318,1f318.svg,Travel & Places,sky & weather,381,363
 🌙,crescent moon,1F319,1f319.svg,Travel & Places,sky & weather,381,44 74 102 121 133 135 149 152 162 165 170 179 180 210 219 234 235 241 249 250 253 259 266 268 312 318 323 326 331 362 363 437 438 490
 🌚,new moon face,1F31A,1f31a.svg,Travel & Places,sky & weather,381,363
-🌛,first quarter moon face,1F31B,1f31b.svg,Travel & Places,sky & weather,381,363
+🌛,first quarter moon face,1F31B,1f31b.svg,Travel & Places,sky & weather,381,363 530
 🌜,last quarter moon face,1F31C,1f31c.svg,Travel & Places,sky & weather,381,363
 🌡️,thermometer,1F321 FE0F,1f321.svg,Travel & Places,sky & weather,381,26 27 106 117 363
 ☀️,sun,2600 FE0F,2600.svg,Travel & Places,sky & weather,382,12 17 28 34 69 88 364
@@ -3085,7 +3085,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🌞,sun with face,1F31E,1f31e.svg,Travel & Places,sky & weather,382,364 477
 🪐,ringed planet,1FA90,1fa90.svg,Travel & Places,sky & weather,382,42 49 234 356 364
 ⭐,star,2B50,2b50.svg,Travel & Places,sky & weather,382,2 19 20 25 42 44 49 58 74 102 126 127 135 148 149 152 170 210 217 219 222 225 234 235 242 253 266 286 312 318 323 331 341 356 360 361 362 363 364 365 373 374 375 376 378 386 404 410 424 431 437 438 449 454 460 466 488 490
-🌟,glowing star,1F31F,1f31f.svg,Travel & Places,sky & weather,382,19 25 42 49 54 87 95 99 142 213 219 228 234 241 250 341 356 361 362 363 364 365 373 375 376 378 386 404 410 424 431 437 438 449 454 460 466 488
+🌟,glowing star,1F31F,1f31f.svg,Travel & Places,sky & weather,382,19 25 42 49 54 87 95 99 142 213 219 228 234 241 250 341 356 361 362 363 364 365 373 375 376 378 386 404 410 424 431 437 438 449 454 460 466 488 530
 🌠,shooting star,1F320,1f320.svg,Travel & Places,sky & weather,383,42 49 234 365 437
 🌌,milky way,1F30C,1f30c.svg,Travel & Places,sky & weather,383,234 315 365 438
 ☁️,cloud,2601 FE0F,2601.svg,Travel & Places,sky & weather,383,16 17 20 24 38 41 45 46 47 50 52 57 60 61 64 69 70 78 79 83 84 86 88 90 91 92 96 105 117 123 124 125 128 130 131 134 136 137 155 158 159 160 161 163 168 169 173 174 175 177 183 184 185 188 190 192 193 195 197 198 199 203 206 208 209 214 215 216 218 220 221 224 229 231 232 238 244 256 260 263 264 265 267 269 270 271 273 274 275 276 277 278 282 283 284 286 294 296 297 298 299 302 304 306 324 329 332 333 335 336 337 338 339 340 343 344 346 347 348 350 351 352 353 354 355 359 364 365 366 367 368 369 379 380 381 382 383 384 385 388 392 396 398 399 403 406 407 413 415 420 421 423 428 429 433 434 435 442 444 445 446 447 450 451 453 455 457 458 459 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 481 482 483 484 485 486 487 490
@@ -3101,7 +3101,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🌫️,fog,1F32B FE0F,1f32b.svg,Travel & Places,sky & weather,385,367
 🌬️,wind face,1F32C FE0F,1f32c.svg,Travel & Places,sky & weather,385,367
 🌀,cyclone,1F300,1f300.svg,Travel & Places,sky & weather,385,367
-🌈,rainbow,1F308,1f308.svg,Travel & Places,sky & weather,385,2 26 64 297 367 450 456 485
+🌈,rainbow,1F308,1f308.svg,Travel & Places,sky & weather,385,2 26 64 297 367 450 456 485 530
 🌂,closed umbrella,1F302,1f302.svg,Travel & Places,sky & weather,385,76 77 92 345 366 367 368
 ☂️,umbrella,2602 FE0F,2602.svg,Travel & Places,sky & weather,385,32 64 76 77 92 100 103 367 368
 ☔,umbrella with rain drops,2614,2614.svg,Travel & Places,sky & weather,386,64 226 366 368
@@ -3111,7 +3111,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 ☃️,snowman,2603 FE0F,2603.svg,Travel & Places,sky & weather,386,28 222 225 368 396 460
 ⛄,snowman without snow,26C4,26c4.svg,Travel & Places,sky & weather,386,16 188 190 242 293 332 355 368 385 396 460
 ☄️,comet,2604 FE0F,2604.svg,Travel & Places,sky & weather,387,49 369 372
-🪋,meteor,1FA8B,1fa8b.svg,Travel & Places,sky & weather,387,369
+🪋,meteor,1FA8B,1fa8b.svg,Travel & Places,sky & weather,387,369 530
 🔥,fire,1F525,1f525.svg,Travel & Places,sky & weather,387,25 34 35 40 49 111 117 128 129 196 200 201 202 204 205 214 333 347 365 369 375 420
 💧,droplet,1F4A7,1f4a7.svg,Travel & Places,sky & weather,387,17 30 32 52 64 76 77 85 88 92 174 175 176 177 187 197 366 367 368 369
 🌊,water wave,1F30A,1f30a.svg,Travel & Places,sky & weather,387,61 69 88 123 137 158 169 192 193 194 203 206 369 372 384 470 478 482 490
@@ -3120,11 +3120,11 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🎆,fireworks,1F386,1f386.svg,Activities,event,395,28 223 361 373 375 392 466
 🎇,sparkler,1F387,1f387.svg,Activities,event,395,223 361 375 466
 🧨,firecracker,1F9E8,1f9e8.svg,Activities,event,395,375 392
-✨,sparkles,2728,2728.svg,Activities,event,396,15 18 19 25 28 29 34 37 42 44 49 53 54 58 62 63 67 68 70 84 87 89 93 95 99 120 121 126 127 135 138 142 144 146 149 152 153 157 162 165 167 171 172 178 179 180 181 182 183 185 186 189 200 201 202 204 205 207 209 211 212 219 223 225 228 230 234 235 237 240 241 242 243 248 249 250 252 257 259 260 268 279 319 328 331 341 356 361 362 363 364 365 373 375 376 378 386 387 392 404 410 424 431 437 438 444 449 454 456 460 466 485 488 489
-🎈,balloon,1F388,1f388.svg,Activities,event,396,2 13 16 17 20 28 47 50 52 53 57 60 69 70 73 74 75 82 84 90 104 121 125 131 141 147 153 158 161 162 175 183 185 208 211 213 215 216 218 220 221 222 223 224 226 227 228 229 236 237 238 239 260 263 264 299 313 319 320 329 335 336 337 338 339 340 342 343 344 346 347 348 349 350 351 352 353 354 355 359 364 366 367 368 369 370 376 379 380 381 382 383 384 385 388 389 390 391 392 393 394 395 396 397 398 399 400 401 402 403 405 406 407 408 409 411 412 413 414 415 416 417 418 419 420 421 422 423 425 426 427 428 429 430 432 433 434 435 439 440 441 442 443 444 445 446 447 448 449 450 451 452 453 455 456 457 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 482 483 484 485 486 487 489 490
-🎉,party popper,1F389,1f389.svg,Activities,event,396,2 3 4 6 29 52 58 82 104 107 131 153 172 174 177 207 211 228 320 328 361 364 373 375 376 379 392 456 473 484 485 488
-🎊,confetti ball,1F38A,1f38a.svg,Activities,event,396,29 52 58 82 104 107 131 141 153 161 174 177 211 228 240 260 361 364 373 376 389 390 391 392 393 394 395 397 401 402 405 408 409 411 412 414 416 417 418 419 422 425 426 427 430 432 439 440 441 443 448 452 456 473 484 489
-🎋,tanabata tree,1F38B,1f38b.svg,Activities,event,396,164 376
+✨,sparkles,2728,2728.svg,Activities,event,396,15 18 19 25 28 29 34 37 42 44 49 53 54 58 62 63 67 68 70 84 87 89 93 95 99 120 121 126 127 135 138 142 144 146 149 152 153 157 162 165 167 171 172 178 179 180 181 182 183 185 186 189 200 201 202 204 205 207 209 211 212 219 223 225 228 230 234 235 237 240 241 242 243 248 249 250 252 257 259 260 268 279 319 328 331 341 356 361 362 363 364 365 373 375 376 378 386 387 392 404 410 424 431 437 438 444 449 454 456 460 466 485 488 489 515 530
+🎈,balloon,1F388,1f388.svg,Activities,event,396,2 13 16 17 20 28 47 50 52 53 57 60 69 70 73 74 75 82 84 90 104 121 125 131 141 147 153 158 161 162 175 183 185 208 211 213 215 216 218 220 221 222 223 224 226 227 228 229 236 237 238 239 260 263 264 299 313 319 320 329 335 336 337 338 339 340 342 343 344 346 347 348 349 350 351 352 353 354 355 359 364 366 367 368 369 370 376 379 380 381 382 383 384 385 388 389 390 391 392 393 394 395 396 397 398 399 400 401 402 403 405 406 407 408 409 411 412 413 414 415 416 417 418 419 420 421 422 423 425 426 427 428 429 430 432 433 434 435 439 440 441 442 443 444 445 446 447 448 449 450 451 452 453 455 456 457 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 482 483 484 485 486 487 489 490 530
+🎉,party popper,1F389,1f389.svg,Activities,event,396,2 3 4 6 29 52 58 82 104 107 131 153 172 174 177 207 211 228 320 328 361 364 373 375 376 379 392 456 473 484 485 488 515 530
+🎊,confetti ball,1F38A,1f38a.svg,Activities,event,396,29 52 58 82 104 107 131 141 153 161 174 177 211 228 240 260 361 364 373 376 389 390 391 392 393 394 395 397 401 402 405 408 409 411 412 414 416 417 418 419 422 425 426 427 430 432 439 440 441 443 448 452 456 473 484 489 530
+🎋,tanabata tree,1F38B,1f38b.svg,Activities,event,396,164 376 530
 🎍,pine decoration,1F38D,1f38d.svg,Activities,event,397,377 392
 🎎,Japanese dolls,1F38E,1f38e.svg,Activities,event,397,377
 🎏,carp streamer,1F38F,1f38f.svg,Activities,event,397,377 392
@@ -3134,19 +3134,19 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🎀,ribbon,1F380,1f380.svg,Activities,event,398,68 74 147 342 378
 🎁,wrapped gift,1F381,1f381.svg,Activities,event,398,29 74 147 225 237 242 320 374 378 386 388 392
 🎗️,reminder ribbon,1F397 FE0F,1f397.svg,Activities,event,398,378 392
-🎟️,admission tickets,1F39F FE0F,1f39f.svg,Activities,event,398,16 20 35 55 84 96 100 125 133 161 162 167 171 220 224 329 340 344 346 378 386 390
+🎟️,admission tickets,1F39F FE0F,1f39f.svg,Activities,event,398,16 20 35 55 84 96 100 125 133 161 162 167 171 220 224 329 340 344 346 378 386 390 530
 🎫,ticket,1F3AB,1f3ab.svg,Activities,event,399,379 387
 🎖️,military medal,1F396 FE0F,1f396.svg,Activities,award-medal,399,379
-🏆,trophy,1F3C6,1f3c6.svg,Activities,award-medal,399,43 52 58 89 153 169 172 173 174 189 190 195 196 200 201 202 204 205 206 207 211 279 379 382 392 423 452 470 484
+🏆,trophy,1F3C6,1f3c6.svg,Activities,award-medal,399,43 52 58 89 153 169 172 173 174 189 190 195 196 200 201 202 204 205 206 207 211 279 379 382 392 423 452 470 484 515
 🏅,sports medal,1F3C5,1f3c5.svg,Activities,award-medal,399,52 174 177 194 211 264 379 383 443 484
 🥇,1st place medal,1F947,1f947.svg,Activities,award-medal,399,379
 🥈,2nd place medal,1F948,1f948.svg,Activities,award-medal,400,380
 🥉,3rd place medal,1F949,1f949.svg,Activities,award-medal,400,380 392
-⚽,soccer ball,26BD,26bd.svg,Activities,sport,400,2 3 4 6 75 153 339 380 392
+⚽,soccer ball,26BD,26bd.svg,Activities,sport,400,2 3 4 6 75 153 339 380 392 530
 ⚾,baseball,26BE,26be.svg,Activities,sport,400,380 382
 🥎,softball,1F94E,1f94e.svg,Activities,sport,400,153 380 392
 🏀,basketball,1F3C0,1f3c0.svg,Activities,sport,401,50 75 153 172 195 381 382 392
-🏐,volleyball,1F3D0,1f3d0.svg,Activities,sport,401,41 69 203 206 302 335 381 398
+🏐,volleyball,1F3D0,1f3d0.svg,Activities,sport,401,41 69 203 206 302 335 381 398 530
 🏈,american football,1F3C8,1f3c8.svg,Activities,sport,401,153 381
 🏉,rugby football,1F3C9,1f3c9.svg,Activities,sport,401,381
 🎾,tennis,1F3BE,1f3be.svg,Activities,sport,401,153 173 215 238 263 264 381 382 392
@@ -3160,7 +3160,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🏸,badminton,1F3F8,1f3f8.svg,Activities,sport,403,383
 🥊,boxing glove,1F94A,1f94a.svg,Activities,sport,403,43 383 392
 🥋,martial arts uniform,1F94B,1f94b.svg,Activities,sport,403,383
-🥅,goal net,1F945,1f945.svg,Activities,sport,404,153 222 382 383 384
+🥅,goal net,1F945,1f945.svg,Activities,sport,404,153 222 382 383 384 530
 ⛳,flag in hole,26F3,26f3.svg,Activities,sport,404,191 384
 ⛸️,ice skate,26F8 FE0F,26f8.svg,Activities,sport,404,222 384
 🎣,fishing pole,1F3A3,1f3a3.svg,Activities,sport,404,151 214 353 384 458
@@ -3173,16 +3173,16 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🪀,yo-yo,1FA80,1fa80.svg,Activities,game,406,30 44 75 242 259 386 388 392
 🪁,kite,1FA81,1fa81.svg,Activities,game,406,16 17 41 52 57 69 75 191 215 216 218 221 224 229 238 242 263 294 329 335 336 337 338 339 340 343 344 346 347 348 350 351 352 353 355 359 364 366 367 368 369 370 377 379 380 381 382 383 384 385 386 388 392 396 398 399 403 406 407 413 415 420 421 423 428 429 433 434 435 442 444 445 446 447 450 451 453 455 457 458 461 462 463 464 465 467 468 469 470 471 472 473 474 475 476 477 478 479 480 482 483 484 485 486 487 490
 🔫,water pistol,1F52B,1f52b.svg,Activities,game,406,386
-🎱,pool 8 ball,1F3B1,1f3b1.svg,Activities,game,406,386
-🔮,crystal ball,1F52E,1f52e.svg,Activities,game,406,35 224 246 248 249 363 386 392 438
+🎱,pool 8 ball,1F3B1,1f3b1.svg,Activities,game,406,386 530
+🔮,crystal ball,1F52E,1f52e.svg,Activities,game,406,35 224 246 248 249 363 386 392 438 530
 🪄,magic wand,1FA84,1fa84.svg,Activities,game,407,223 241 248 260 387
 🎮,video game,1F3AE,1f3ae.svg,Activities,game,407,242 259 386 387 440 448
 🕹️,joystick,1F579 FE0F,1f579.svg,Activities,game,407,386 387 448
 🎰,slot machine,1F3B0,1f3b0.svg,Activities,game,407,23 143 386 387
 🎲,game die,1F3B2,1f3b2.svg,Activities,game,407,23 25 143 387 388 389 392 452
-🧩,puzzle piece,1F9E9,1f9e9.svg,Activities,game,408,86 259 388 392
+🧩,puzzle piece,1F9E9,1f9e9.svg,Activities,game,408,86 259 388 392 530
 🧸,teddy bear,1F9F8,1f9f8.svg,Activities,game,408,27 30 44 74 147 148 149 210 218 220 224 238 242 259 343 386 388 393
-🪅,piñata,1FA85,1fa85.svg,Activities,game,408,388
+🪅,piñata,1FA85,1fa85.svg,Activities,game,408,388 530
 🪩,mirror ball,1FAA9,1faa9.svg,Activities,game,408,87 95 228 235 240 388 389 390 391 393 394 395 397 401 402 405 408 409 411 412 414 416 417 418 419 422 425 426 427 430 432 439 440 441 443 448 452 489
 🪆,nesting dolls,1FA86,1fa86.svg,Activities,game,408,388
 ♠️,spade suit,2660 FE0F,2660.svg,Activities,game,409,389 392
@@ -3197,27 +3197,27 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🖼️,framed picture,1F5BC FE0F,1f5bc.svg,Activities,arts & crafts,410,6 59 93 100 122 167 171 231 307 311 314 315 316 317 321 325 326 327 334 390 429 430
 🎨,artist palette,1F3A8,1f3a8.svg,Activities,arts & crafts,411,50 59 93 122 123 171 212 216 218 364 371 390 391 450 485 491
 🧵,thread,1F9F5,1f9f5.svg,Activities,arts & crafts,411,139 391 451 491
-🪡,sewing needle,1FAA1,1faa1.svg,Activities,arts & crafts,411,139 391 451 491
+🪡,sewing needle,1FAA1,1faa1.svg,Activities,arts & crafts,411,139 391 451 491 530
 🧶,yarn,1F9F6,1f9f6.svg,Activities,arts & crafts,411,37 91 139 330 391 463
 🪢,knot,1FAA2,1faa2.svg,Activities,arts & crafts,411,189 391 392
-👓,glasses,1F453,1f453.svg,Objects,clothing,416,17 241 394
+👓,glasses,1F453,1f453.svg,Objects,clothing,416,17 241 394 530
 🕶️,sunglasses,1F576 FE0F,1f576.svg,Objects,clothing,416,368 394 398 430
 🥽,goggles,1F97D,1f97d.svg,Objects,clothing,416,335 394
-🥼,lab coat,1F97C,1f97c.svg,Objects,clothing,416,394
+🥼,lab coat,1F97C,1f97c.svg,Objects,clothing,416,394 530
 🦺,safety vest,1F9BA,1f9ba.svg,Objects,clothing,417,395
 👔,necktie,1F454,1f454.svg,Objects,clothing,417,395
 👕,t-shirt,1F455,1f455.svg,Objects,clothing,417,17 216 226 227 231 395 429
 👖,jeans,1F456,1f456.svg,Objects,clothing,417,227 395 429
 🧣,scarf,1F9E3,1f9e3.svg,Objects,clothing,417,16 28 32 188 222 225 242 296 332 355 368 385 395 396 460 475
-🧤,gloves,1F9E4,1f9e4.svg,Objects,clothing,418,16 163 222 225 244 332 368 385 395 396 435 460
-🧥,coat,1F9E5,1f9e5.svg,Objects,clothing,418,244 366 395 396 429
+🧤,gloves,1F9E4,1f9e4.svg,Objects,clothing,418,16 163 222 225 244 332 368 385 395 396 435 460 530
+🧥,coat,1F9E5,1f9e5.svg,Objects,clothing,418,244 366 395 396 429 530
 🧦,socks,1F9E6,1f9e6.svg,Objects,clothing,418,16 17 44 74 146 148 196 225 227 382 395 396 400
 👗,dress,1F457,1f457.svg,Objects,clothing,418,227 396 397 429
 👘,kimono,1F458,1f458.svg,Objects,clothing,419,139 397
-🥻,sari,1F97B,1f97b.svg,Objects,clothing,419,397
+🥻,sari,1F97B,1f97b.svg,Objects,clothing,419,397 530
 🩱,one-piece swimsuit,1FA71,1fa71.svg,Objects,clothing,419,69 397
 🩲,briefs,1FA72,1fa72.svg,Objects,clothing,419,227 397 429
-🩳,shorts,1FA73,1fa73.svg,Objects,clothing,419,17 227 397 398
+🩳,shorts,1FA73,1fa73.svg,Objects,clothing,419,17 227 397 398 530
 👙,bikini,1F459,1f459.svg,Objects,clothing,420,227 398
 👚,woman’s clothes,1F45A,1f45a.svg,Objects,clothing,420,17 139 398
 🪭,folding hand fan,1FAAD,1faad.svg,Objects,clothing,420,17 398 429
@@ -3242,10 +3242,10 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🎓,graduation cap,1F393,1f393.svg,Objects,clothing,424,107 264 402
 🧢,billed cap,1F9E2,1f9e2.svg,Objects,clothing,425,340 381 382 383 401 403
 🪖,military helmet,1FA96,1fa96.svg,Objects,clothing,425,16 403
-⛑️,rescue worker’s helmet,26D1 FE0F,26d1.svg,Objects,clothing,425,401 403
+⛑️,rescue worker’s helmet,26D1 FE0F,26d1.svg,Objects,clothing,425,401 403 530
 📿,prayer beads,1F4FF,1f4ff.svg,Objects,clothing,425,341 403 463
 💄,lipstick,1F484,1f484.svg,Objects,clothing,425,68 157 397 403 430
-💍,ring,1F48D,1f48d.svg,Objects,clothing,426,144 165 230 404
+💍,ring,1F48D,1f48d.svg,Objects,clothing,426,144 165 230 404 530
 💎,gem stone,1F48E,1f48e.svg,Objects,clothing,426,87 138 142 143 213 370 371 404 413 429 430
 🔇,muted speaker,1F507,1f507.svg,Objects,sound,426,404 430
 🔈,speaker low volume,1F508,1f508.svg,Objects,sound,426,404
@@ -3257,7 +3257,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🔔,bell,1F514,1f514.svg,Objects,sound,427,18 38 43 129 224 357 405 439 457
 🔕,bell with slash,1F515,1f515.svg,Objects,sound,427,405
 🎼,musical score,1F3BC,1f3bc.svg,Objects,music,427,13 62 72 99 120 405 429 439
-🎵,musical note,1F3B5,1f3b5.svg,Objects,music,427,15 18 29 36 54 63 70 72 80 95 120 121 162 179 235 405 439
+🎵,musical note,1F3B5,1f3b5.svg,Objects,music,427,15 18 29 36 54 63 70 72 80 95 120 121 162 179 235 405 439 530
 🎶,musical notes,1F3B6,1f3b6.svg,Objects,music,427,15 18 29 36 54 63 70 72 80 87 95 104 120 121 162 178 179 180 181 182 183 185 186 235 342 405 439
 🎙️,studio microphone,1F399 FE0F,1f399.svg,Objects,music,427,15 405
 🎚️,level slider,1F39A FE0F,1f39a.svg,Objects,music,427,405
@@ -3265,18 +3265,18 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🎤,microphone,1F3A4,1f3a4.svg,Objects,music,427,95 101 121 404 405
 🎧,headphone,1F3A7,1f3a7.svg,Objects,music,428,32 36 195 240 370 371 405 406
 📻,radio,1F4FB,1f4fb.svg,Objects,music,428,406 429 430
-🎷,saxophone,1F3B7,1f3b7.svg,Objects,musical-instrument,428,13 70 72 179 180 237 342 360 406 429
-🎺,trumpet,1F3BA,1f3ba.svg,Objects,musical-instrument,428,13 70 72 134 138 228 235 402 406 429 455 473
+🎷,saxophone,1F3B7,1f3b7.svg,Objects,musical-instrument,428,13 70 72 179 180 237 342 360 406 429 530
+🎺,trumpet,1F3BA,1f3ba.svg,Objects,musical-instrument,428,13 70 72 134 138 228 235 402 406 429 455 473 530
 🪊,trombone,1FA8A,1fa8a.svg,Objects,musical-instrument,428,406
-🪗,accordion,1FA97,1fa97.svg,Objects,musical-instrument,428,13 226 406
-🎸,guitar,1F3B8,1f3b8.svg,Objects,musical-instrument,428,54 121 162 217 231 324 342 406 430
+🪗,accordion,1FA97,1fa97.svg,Objects,musical-instrument,428,13 226 406 530
+🎸,guitar,1F3B8,1f3b8.svg,Objects,musical-instrument,428,54 121 162 217 231 324 342 406 430 530
 🎹,musical keyboard,1F3B9,1f3b9.svg,Objects,musical-instrument,428,63 180 235 237 405 406 429 439
-🎻,violin,1F3BB,1f3bb.svg,Objects,musical-instrument,428,13 72 87 120 142 235 237 390 406 439 461
+🎻,violin,1F3BB,1f3bb.svg,Objects,musical-instrument,428,13 72 87 120 142 235 237 390 406 439 461 530
 🪕,banjo,1FA95,1fa95.svg,Objects,musical-instrument,429,72 407
-🥁,drum,1F941,1f941.svg,Objects,musical-instrument,429,13 54 70 72 104 121 134 235 237 406 407 429 430 455 472 473 478
+🥁,drum,1F941,1f941.svg,Objects,musical-instrument,429,13 54 70 72 104 121 134 235 237 406 407 429 430 455 472 473 478 530
 🪘,long drum,1FA98,1fa98.svg,Objects,musical-instrument,429,72 407
 🪇,maracas,1FA87,1fa87.svg,Objects,musical-instrument,429,72 104 179 407
-🪈,flute,1FA88,1fa88.svg,Objects,musical-instrument,429,407
+🪈,flute,1FA88,1fa88.svg,Objects,musical-instrument,429,407 530
 🪉,harp,1FA89,1fa89.svg,Objects,musical-instrument,429,407
 📱,mobile phone,1F4F1,1f4f1.svg,Objects,phone,429,15 20 32 54 55 68 73 74 76 77 92 96 103 105 115 152 162 168 217 228 244 263 325 407 430 445
 📲,mobile phone with arrow,1F4F2,1f4f2.svg,Objects,phone,429,407
@@ -3298,16 +3298,16 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 💿,optical disk,1F4BF,1f4bf.svg,Objects,computer,431,409
 📀,dvd,1F4C0,1f4c0.svg,Objects,computer,431,409
 🧮,abacus,1F9EE,1f9ee.svg,Objects,computer,431,116 118 409 441
-🎥,movie camera,1F3A5,1f3a5.svg,Objects,light & video,431,409 410
+🎥,movie camera,1F3A5,1f3a5.svg,Objects,light & video,431,409 410 530
 🎞️,film frames,1F39E FE0F,1f39e.svg,Objects,light & video,432,410
-📽️,film projector,1F4FD FE0F,1f4fd.svg,Objects,light & video,432,410
+📽️,film projector,1F4FD FE0F,1f4fd.svg,Objects,light & video,432,410 530
 🎬,clapper board,1F3AC,1f3ac.svg,Objects,light & video,432,19 150 410 488
 📺,television,1F4FA,1f4fa.svg,Objects,light & video,432,25 32 50 259 266 274 290 410 440
 📷,camera,1F4F7,1f4f7.svg,Objects,light & video,432,117 238 410 429
 📸,camera with flash,1F4F8,1f4f8.svg,Objects,light & video,432,19 45 46 52 54 57 59 66 68 69 73 74 93 100 107 125 134 159 175 215 216 230 264 279 329 334 340 342 347 349 359 379 410 455 456 484 485
 📹,video camera,1F4F9,1f4f9.svg,Objects,light & video,432,410
 📼,videocassette,1F4FC,1f4fc.svg,Objects,light & video,432,410 430
-🔍,magnifying glass tilted left,1F50D,1f50d.svg,Objects,light & video,432,22 94 102 132 133 294 330 331 357 410 491
+🔍,magnifying glass tilted left,1F50D,1f50d.svg,Objects,light & video,432,22 94 102 132 133 294 330 331 357 410 491 515
 🔎,magnifying glass tilted right,1F50E,1f50e.svg,Objects,light & video,433,6 71 330 411 430 511
 🕯️,candle,1F56F FE0F,1f56f.svg,Objects,light & video,433,18 22 31 33 36 63 67 71 98 100 132 133 135 154 209 217 231 237 241 246 248 249 252 253 257 258 274 308 323 326 327 328 341 360 363 411 430 437
 💡,light bulb,1F4A1,1f4a1.svg,Objects,light & video,433,54 93 100 105 116 118 119 152 389 390 391 393 394 395 397 401 402 405 408 409 411 412 414 416 417 418 419 422 425 426 427 430 432 439 440 441 443 448 452 489 491
@@ -3331,17 +3331,17 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 📑,bookmark tabs,1F4D1,1f4d1.svg,Objects,book-paper,435,413
 🔖,bookmark,1F516,1f516.svg,Objects,book-paper,435,413
 🏷️,label,1F3F7 FE0F,1f3f7.svg,Objects,book-paper,435,6 48 65 413
-🪙,coin,1FA99,1fa99.svg,Objects,money,435,21 23 53 85 208 341 389 413
-💰,money bag,1F4B0,1f4b0.svg,Objects,money,435,23 53 65 143 246 258 389 413 414
+🪙,coin,1FA99,1fa99.svg,Objects,money,435,21 23 53 85 208 341 389 413 515
+💰,money bag,1F4B0,1f4b0.svg,Objects,money,435,23 53 65 143 246 258 389 413 414 515
 🪎,treasure chest,1FA8E,1fa8e.svg,Objects,money,435,413
-💴,yen banknote,1F4B4,1f4b4.svg,Objects,money,435,413 429
+💴,yen banknote,1F4B4,1f4b4.svg,Objects,money,435,413 429 530
 💵,dollar banknote,1F4B5,1f4b5.svg,Objects,money,436,21 23 338 414 429
 💶,euro banknote,1F4B6,1f4b6.svg,Objects,money,436,329 346 414
-💷,pound banknote,1F4B7,1f4b7.svg,Objects,money,436,414
+💷,pound banknote,1F4B7,1f4b7.svg,Objects,money,436,414 530
 💸,money with wings,1F4B8,1f4b8.svg,Objects,money,436,15 23 43 48 59 414
 💳,credit card,1F4B3,1f4b3.svg,Objects,money,436,65 68 346 399 414 432
 🧾,receipt,1F9FE,1f9fe.svg,Objects,money,436,21 338 399 414
-💹,chart increasing with yen,1F4B9,1f4b9.svg,Objects,money,436,414
+💹,chart increasing with yen,1F4B9,1f4b9.svg,Objects,money,436,414 530
 ✉️,envelope,2709 FE0F,2709.svg,Objects,mail,436,334 372 414
 📧,e-mail,1F4E7,1f4e7.svg,Objects,mail,436,414 429
 📨,incoming envelope,1F4E8,1f4e8.svg,Objects,mail,437,39 334 372 415
@@ -3363,7 +3363,7 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🖍️,crayon,1F58D FE0F,1f58d.svg,Objects,writing,438,97 108 122 391 416 429
 📝,memo,1F4DD,1f4dd.svg,Objects,writing,438,24 416 489
 🪌,eraser,1FA8C,1fa8c.svg,Objects,writing,439,417
-💼,briefcase,1F4BC,1f4bc.svg,Objects,office,439,24 58 65 76 77 103 105 115 345 417
+💼,briefcase,1F4BC,1f4bc.svg,Objects,office,439,24 58 65 76 77 103 105 115 345 417 530
 📁,file folder,1F4C1,1f4c1.svg,Objects,office,439,417
 📂,open file folder,1F4C2,1f4c2.svg,Objects,office,439,417 430
 🗂️,card index dividers,1F5C2 FE0F,1f5c2.svg,Objects,office,439,24 417
@@ -3377,10 +3377,10 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 📊,bar chart,1F4CA,1f4ca.svg,Objects,office,440,24 65 418
 📋,clipboard,1F4CB,1f4cb.svg,Objects,office,440,24 58 94 106 117 167 171 418
 📌,pushpin,1F4CC,1f4cc.svg,Objects,office,440,330 331 334 372 418
-📍,round pushpin,1F4CD,1f4cd.svg,Objects,office,440,331 418
+📍,round pushpin,1F4CD,1f4cd.svg,Objects,office,440,331 418 530
 📎,paperclip,1F4CE,1f4ce.svg,Objects,office,440,24 58 114 115 393 418 419
 🖇️,linked paperclips,1F587 FE0F,1f587.svg,Objects,office,440,418
-📏,straight ruler,1F4CF,1f4cf.svg,Objects,office,441,97 108 330 419 441 491
+📏,straight ruler,1F4CF,1f4cf.svg,Objects,office,441,97 108 330 419 441 491 530
 📐,triangular ruler,1F4D0,1f4d0.svg,Objects,office,441,10 97 108 330 339 393 419 441 491
 ✂️,scissors,2702 FE0F,2702.svg,Objects,office,441,80 139 156 157 391 419 429 491
 🗃️,card file box,1F5C3 FE0F,1f5c3.svg,Objects,office,441,330 393 419 430
@@ -3436,8 +3436,8 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🩻,x-ray,1FA7B,1fa7b.svg,Objects,medical,446,424
 🚪,door,1F6AA,1f6aa.svg,Objects,household,447,425
 🛗,elevator,1F6D7,1f6d7.svg,Objects,household,447,425 430
-🪞,mirror,1FA9E,1fa9e.svg,Objects,household,447,68 122 157 178 425 430
-🪟,window,1FA9F,1fa9f.svg,Objects,household,447,425 430
+🪞,mirror,1FA9E,1fa9e.svg,Objects,household,447,68 122 157 178 425 430 530
+🪟,window,1FA9F,1fa9f.svg,Objects,household,447,425 430 530
 🛏️,bed,1F6CF FE0F,1f6cf.svg,Objects,household,447,106 274 425
 🛋️,couch and lamp,1F6CB FE0F,1f6cb.svg,Objects,household,447,227 290 411 425
 🪑,chair,1FA91,1fa91.svg,Objects,household,447,100 425
@@ -3445,10 +3445,10 @@ emoji,name,codepoints,file,group,subgroup,home_page,pages
 🪠,plunger,1FAA0,1faa0.svg,Objects,household,447,425 486
 🚿,shower,1F6BF,1f6bf.svg,Objects,household,448,426
 🛁,bathtub,1F6C1,1f6c1.svg,Objects,household,448,210 274 426
-🪤,mouse trap,1FAA4,1faa4.svg,Objects,household,448,426 430
+🪤,mouse trap,1FAA4,1faa4.svg,Objects,household,448,426 430 530
 🪒,razor,1FA92,1fa92.svg,Objects,household,448,27 80 156 157 426
 🧴,lotion bottle,1F9F4,1f9f4.svg,Objects,household,448,27 41 67 80 82 88 122 154 155 156 187 302 329 398 426 429
-🧷,safety pin,1F9F7,1f9f7.svg,Objects,household,448,74 148 149 426
+🧷,safety pin,1F9F7,1f9f7.svg,Objects,household,448,74 148 149 426 530
 🧹,broom,1F9F9,1f9f9.svg,Objects,household,448,33 248 426 427
 🧺,basket,1F9FA,1f9fa.svg,Objects,household,448,41 78 83 110 123 158 184 215 216 226 227 231 232 233 234 239 257 274 275 291 300 301 303 305 307 308 309 327 337 362 364 393 395 426
 🧻,roll of paper,1F9FB,1f9fb.svg,Objects,household,448,26 27 106 312 313 426
