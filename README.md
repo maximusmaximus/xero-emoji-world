@@ -5,6 +5,20 @@
 [![Xero Emoji World running live at xeroemoji.grok.me](docs/screenshot.png)](https://xeroemoji.grok.me/)
 <p align="center"><sub>The live city at <a href="https://xeroemoji.grok.me/">xeroemoji.grok.me</a> (screenshot taken 2026-10-22).</sub></p>
 
+### 📣 Announcing post: [@maximusmaximus on X](https://x.com/maximusmaximus/status/2113401220765491699)
+
+> autism + inference + degen = [xeroemoji.grok.me](https://xeroemoji.grok.me/)<br>
+> i gave an AI oracle a $1/day budget and a city made entirely of Xero Emojis
+>
+> 🪨+🔥 = 🧱<br>
+> 🌌+🔮 = 🪄<br>
+> 🪄+🔥 = 🐉
+>
+> every new emoji makes the whole city grow faster. residents pour bricks into wonders. the oracle names the eras and writes prophecies<br>
+> it's running live right now. go watch emojis invent dragons 🐉
+>
+> — Max Infeld ([@maximusmaximus](https://x.com/maximusmaximus)), [October 22, 2026](https://x.com/maximusmaximus/status/2113401220765491699)
+
 Xero is a future city that builds itself out of emoji, and you are standing in one neighborhood of it. The map does not shrink to fit the screen. It is already dozens of tiles across, and it keeps spreading past every edge. Drag toward the dark and there is more ground.
 
 What you are watching is a construction site that learned to be a city. Towers, markets, schools, hospitals, and gas stations do not pop into place. Crews haul timber, brick, steel, glass, and tools to an open lot, and those loads are drawn huge so you can see the floor being paid for while the crane is still up. People walk the sidewalk, reach a door, and step inside. A moment later they are in a window, with the room around them: a cart in a shop, a book in a school, a bed in a hospital.
