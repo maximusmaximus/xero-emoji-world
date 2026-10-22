@@ -32,10 +32,22 @@ Venice keys stay off the repo. Put one in `.secrets/` on the host, or paste it f
 
 ## Xero Worlds cover posters
 
-No-glow posters of the *Xero Worlds* book cover, built from Xero Emoji. Click a preview for the print PDF pinned on IPFS. More posters and promo files: [xeroemoji README](https://github.com/maximusmaximus/xeroemoji#xero-worlds-cover-posters-no-glow).
+No-glow posters of the *Xero Worlds* book cover, built from Xero Emoji. Click a preview to open the print PDF pinned on IPFS. More posters and promo files are in the [xeroemoji README](https://github.com/maximusmaximus/xeroemoji#xero-worlds-cover-posters-no-glow).
 
-<a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Horizontal 24x18 cover poster" width="420"></a> <sub>(PDF, 9.9 MB — large download)</sub>
-<a href="https://gateway.pinata.cloud/ipfs/Qmas1B3ZE7StRBbMiPLeZKoRyjkHBdpoUwvqoDoMCu2DPw"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-18x24-noglow-thumb.jpg" alt="Vertical 18x24 cover poster" width="316"></a> <sub>(PDF, 9.9 MB — large download)</sub>
+<table align="center">
+  <tr>
+    <td align="center" valign="bottom">
+      <a href="https://gateway.pinata.cloud/ipfs/QmaSwnsJkwKxPwmS3b8fRHtGWEyJ8PUe1uPRKPcA22tHQ4"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-24x18-noglow-thumb.jpg" alt="Xero Worlds cover poster, horizontal 24×18" width="360"></a>
+    </td>
+    <td align="center" valign="bottom">
+      <a href="https://gateway.pinata.cloud/ipfs/Qmas1B3ZE7StRBbMiPLeZKoRyjkHBdpoUwvqoDoMCu2DPw"><img src="https://raw.githubusercontent.com/maximusmaximus/xeroemoji/main/examples/posters/xero-worlds-cover-poster-18x24-noglow-thumb.jpg" alt="Xero Worlds cover poster, vertical 18×24" width="203"></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Horizontal 24×18</b> · PDF, 9.9 MB</sub></td>
+    <td align="center"><sub><b>Vertical 18×24</b> · PDF, 9.9 MB</sub></td>
+  </tr>
+</table>
 
 ## 🔮 How the world grows: emoji-alchemy + the Oracle
 The city is built **out of emojis**, not just decorated with them.
