@@ -1044,31 +1044,46 @@ export function drawCity(
       const doorTop = frontDoor ? Math.min(0.28, 0.7 / storyCount(building.kind, floors)) : 0;
       if (facingStreet) {
         const wallH = Math.hypot(at(0, 0.5).x - at(1, 0.5).x, at(0, 0.5).y - at(1, 0.5).y);
-        const panel = Math.max(22, Math.min(40, wallH * 0.22));
-        const pierAt = (u: number, t: number, emoji: string) => {
-          const p = at(t, u);
-          drawXero(ctx, emoji, p.x, p.y, panel, { anchor: "center" });
-        };
-        pierAt(0.1, 0.55, skin.pier);
-        pierAt(0.9, 0.55, skin.pier);
-        if (building.rising) pierAt(0.5, 0.84, "🏗️");
         const stories = storyCount(building.kind, floors);
         const bands = floorBands(stories, doorTop);
+        const jamb = 0.09;
+        const brick = coat ? coat.shade : "#5c4036";
+        const course = coat ? coat.wall : "#8d6b52";
+        const lay = (t0: number, t1: number, u0: number, u1: number, fill: string) => {
+          const slab = faceQuad(t0, t1, u0, u1);
+          quad(ctx, slab);
+          ctx.fillStyle = fill;
+          ctx.fill();
+        };
+        for (let i = 0; i < bands.length - 1; i += 1) {
+          const below = bands[i]!;
+          const above = bands[i + 1]!;
+          lay(below.t1, above.t0, 0, 1, i % 2 === 0 ? brick : course);
+        }
+        const pierTop = bands[bands.length - 1]?.t1 ?? doorTop;
+        lay(doorTop, pierTop, 0, jamb, brick);
+        lay(doorTop, pierTop, 1 - jamb, 1, brick);
+        if (building.rising) {
+          const crane = at(0.84, 0.5);
+          drawXero(ctx, "🏗️", crane.x, crane.y, Math.max(16, Math.min(28, wallH * 0.16)), { anchor: "center" });
+        }
         const roomTints = ["#fff1d4", "#f3e2c4", "#efe6f4", "#e7f0ea"];
+        const u0 = jamb + 0.03;
+        const u1 = 1 - jamb - 0.03;
         bands.forEach((band, bandIndex) => {
           const resident = building.apartments[band.story]?.residents.find((person) => isBody(person.emoji));
           const room = roomFor(facade, band.story, resident?.emoji);
           if (!isBody(room.actor) && motionOf(room.actor) !== "self") {
             room.actor = DISTINCT_BODIES[(band.story + side.side) % DISTINCT_BODIES.length]!;
           }
-          const pane = faceQuad(band.t0, band.t1, 0.12, 0.88);
+          const pane = faceQuad(band.t0, band.t1, u0, u1);
           ctx.save();
           quad(ctx, pane);
           ctx.clip();
           quad(ctx, pane);
           ctx.fillStyle = roomTints[bandIndex % roomTints.length]!;
           ctx.fill();
-          const sill = faceQuad(band.t0, band.t0 + (band.t1 - band.t0) * 0.16, 0.12, 0.88);
+          const sill = faceQuad(band.t0, band.t0 + (band.t1 - band.t0) * 0.16, u0, u1);
           quad(ctx, sill);
           ctx.fillStyle = coat ? coat.shade : "#c9844a";
           ctx.fill();
