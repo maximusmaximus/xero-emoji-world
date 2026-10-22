@@ -1,3 +1,4 @@
+import type { Milestone } from "../city/history.ts";
 import type { City } from "../city/sim";
 import { commitWorld, writeWorldFiles, type WorldChange } from "../city/world-files.ts";
 import { getSql } from "./db";
@@ -43,4 +44,28 @@ export async function persistCity(city: City, change: ChangeInput) {
     repo = commitWorld(root, `world: ${row.summary} via ${row.source}`);
   }
   return { ok: true as const, at: row.at, repo };
+}
+
+export async function listMilestones() {
+  const sql = await getSql();
+  const rows = await sql.query<{ id: string; tick: number; era: string; title: string; summary: string; city: unknown; created_at: string | Date }>(
+    "select id, tick, era, title, summary, city, created_at from world_milestones order by tick asc limit 48",
+  );
+  return rows.flatMap((row) => {
+    const city = typeof row.city === "string" ? (JSON.parse(row.city) as City) : (row.city as City);
+    if (!city || !Array.isArray(city.buildings)) return [];
+    const at = row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at);
+    return [{ id: String(row.id), tick: Number(row.tick) || 0, era: String(row.era), title: String(row.title), summary: String(row.summary), at, city }];
+  });
+}
+
+export async function putMilestone(mark: Milestone) {
+  const sql = await getSql();
+  await sql.query(
+    `insert into world_milestones (id, tick, era, title, summary, city)
+     values ($1, $2, $3, $4, $5, $6::jsonb)
+     on conflict (id) do nothing`,
+    [mark.id.slice(0, 80), Math.max(0, Math.floor(mark.tick)), mark.era.slice(0, 24), mark.title.slice(0, 80), mark.summary.slice(0, 160), JSON.stringify(mark.city)],
+  );
+  return { ok: true as const };
 }

@@ -70,6 +70,30 @@ export const saveWorld = createServerFn({ method: "POST" })
     return persistCity(city, data);
   });
 
+export const loadMilestones = createServerFn({ method: "POST" })
+  .validator(() => ({}))
+  .handler(async () => {
+    const { listMilestones } = await import("./world-store.server");
+    return listMilestones();
+  });
+
+export const saveMilestone = createServerFn({ method: "POST" })
+  .validator((input: { id?: string; tick?: number; era?: string; title?: string; summary?: string; at?: string; city?: unknown }) => ({
+    id: String(input?.id ?? "").slice(0, 80),
+    tick: Math.max(0, Math.min(1_000_000_000, Number(input?.tick) || 0)),
+    era: String(input?.era ?? "camp").slice(0, 24),
+    title: String(input?.title ?? "").slice(0, 80),
+    summary: String(input?.summary ?? "").slice(0, 160),
+    at: String(input?.at ?? "").slice(0, 40),
+    city: input?.city,
+  }))
+  .handler(async ({ data }) => {
+    const { putMilestone } = await import("./world-store.server");
+    const city = data.city as import("../city/sim").City;
+    if (!data.id || !data.title || !city || !Array.isArray(city.buildings)) return { ok: false as const };
+    return putMilestone({ ...data, at: data.at || new Date().toISOString(), city });
+  });
+
 export const addVeniceKeys = createServerFn({ method: "POST" })
   .validator((input: { keys: string }) => ({ keys: String(input?.keys ?? "").slice(0, 4000) }))
   .handler(async ({ data }) => {

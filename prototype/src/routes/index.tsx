@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Info, Search, X } from "lucide-react";
+import { Info, History, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { drawCity, defaultCamera, panBy, pullBy, zoomAt, type Camera, type Hit } from "@/city/draw";
+import { cityAt, loadLocalMilestones, mergeMilestones, recordMilestone, saveLocalMilestones, type Milestone } from "@/city/history";
 import { loadCity, saveCity } from "@/city/save";
 import { CITY_VERSION, createCity, eraLabel, growthOf, personFacts, queuePlans, stepCity, type City } from "@/city/sim";
 import { splitXero, xeroUrl, XERO_REPO } from "@/city/xero-emoji";
-import { addVeniceKeys, developCity, loadWorld, narrateLife, pulseWatch, saveWorld, searchLife, veniceStatus } from "@/lib/world-api";
+import { addVeniceKeys, developCity, loadMilestones, loadWorld, narrateLife, pulseWatch, saveMilestone, saveWorld, searchLife, veniceStatus } from "@/lib/world-api";
 
 export const Route = createFileRoute("/")({
   loader: () => veniceStatus({ data: { keys: "" } }),
@@ -90,6 +91,8 @@ function Home() {
   const saveKeys = useServerFn(addVeniceKeys);
   const remember = useServerFn(saveWorld);
   const recall = useServerFn(loadWorld);
+  const recallMarks = useServerFn(loadMilestones);
+  const storeMark = useServerFn(saveMilestone);
   const pulse = useServerFn(pulseWatch);
   const develop = useServerFn(developCity);
   const [status, setStatus] = useState(initialStatus);
@@ -107,6 +110,10 @@ function Home() {
   const [keyDraft, setKeyDraft] = useState("");
   const [keyNote, setKeyNote] = useState("");
   const [watchers, setWatchers] = useState(1);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [scrub, setScrub] = useState<number | null>(null);
+  const [liveTick, setLiveTick] = useState(city.tick);
+  const [travelOpen, setTravelOpen] = useState(false);
   const [credit, setCredit] = useState(true);
   const [budget, setBudget] = useState(initialStatus.budget);
   const [clock, setClock] = useState(Date.now());
@@ -115,6 +122,9 @@ function Home() {
   const camRef = useRef<Camera>(defaultCamera());
   const focusRef = useRef<string | null>(null);
   const cityRef = useRef(city);
+  const liveRef = useRef(city);
+  const historyRef = useRef<Milestone[]>([]);
+  const scrubRef = useRef<number | null>(null);
   const keepRef = useRef(false);
   const pointers = useRef(new Map<number, { x: number; y: number; type: string }>());
   const gesture = useRef({
@@ -128,6 +138,8 @@ function Home() {
   });
   const watchersRef = useRef(1);
   const planKey = useRef("");
+  const storeMarkRef = useRef(storeMark);
+  storeMarkRef.current = storeMark;
   focusRef.current = focus?.id ?? null;
 
   useEffect(() => {
@@ -137,15 +149,19 @@ function Home() {
         if (stop) return;
         const stored = row?.city?.version === CITY_VERSION ? row.city : loadCity();
         if (stored) {
+          liveRef.current = stored;
           cityRef.current = stored;
           setCity(stored);
+          setLiveTick(stored.tick);
         }
       })
       .catch(() => {
         const stored = loadCity();
         if (!stop && stored) {
+          liveRef.current = stored;
           cityRef.current = stored;
           setCity(stored);
+          setLiveTick(stored.tick);
         }
       })
       .finally(() => {
@@ -159,6 +175,25 @@ function Home() {
       window.removeEventListener("pagehide", flush);
     };
   }, [recall]);
+
+  useEffect(() => {
+    const local = loadLocalMilestones();
+    historyRef.current = local;
+    setMilestones(local);
+    let stop = false;
+    recallMarks({ data: {} })
+      .then((remote) => {
+        if (stop || !Array.isArray(remote)) return;
+        const merged = mergeMilestones([historyRef.current, remote]);
+        historyRef.current = merged;
+        setMilestones(merged);
+        saveLocalMilestones(merged);
+      })
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, [recallMarks]);
 
   useEffect(() => {
     if (!status.infra?.localCapped) return;
@@ -222,10 +257,24 @@ function Home() {
     };
     const loop = () => {
       frame += 1;
-      if (cityRef.current.version === CITY_VERSION && keepRef.current) {
+      if (cityRef.current.version === CITY_VERSION && keepRef.current && scrubRef.current == null) {
         const pace = Math.min(4, Math.max(1, watchersRef.current));
-        for (let step = 0; step < pace; step += 1) cityRef.current = stepCity(cityRef.current);
-        if (frame % 10 === 0) setCity(cityRef.current);
+        let next = liveRef.current.version === CITY_VERSION ? liveRef.current : cityRef.current;
+        for (let step = 0; step < pace; step += 1) next = stepCity(next);
+        liveRef.current = next;
+        const recorded = recordMilestone(historyRef.current, next);
+        if (recorded !== historyRef.current) {
+          const added = recorded.find((item) => !historyRef.current.some((prev) => prev.id === item.id));
+          historyRef.current = recorded;
+          saveLocalMilestones(recorded);
+          setMilestones(recorded);
+          if (added) void storeMarkRef.current({ data: added }).catch(() => undefined);
+        }
+        cityRef.current = next;
+        if (frame % 10 === 0) {
+          setCity(next);
+          setLiveTick(next.tick);
+        }
         if (keepRef.current && frame % 600 === 0) {
           saveCity(cityRef.current);
           void remember({
@@ -237,6 +286,9 @@ function Home() {
             },
           }).catch(() => undefined);
         }
+      } else if (scrubRef.current != null && keepRef.current) {
+        cityRef.current = cityAt(historyRef.current, scrubRef.current) ?? liveRef.current;
+        if (frame % 10 === 0) setCity(cityRef.current);
       }
       paint(frame);
       raf = requestAnimationFrame(loop);
@@ -492,7 +544,20 @@ function Home() {
     if (status.needsKey) setKeysOpen(true);
   }, [status.needsKey]);
 
+  function travelTo(tick: number | null) {
+    const live = liveRef.current;
+    const shown = tick == null ? live : cityAt(historyRef.current, tick) ?? live;
+    scrubRef.current = tick;
+    setScrub(tick);
+    cityRef.current = shown;
+    setCity(shown);
+  }
+
   const latest = city.beats[0];
+  const firstTick = milestones[0]?.tick ?? 0;
+  const sliderMax = Math.max(firstTick + 1, liveTick);
+  const sliderValue = Math.min(sliderMax, Math.max(firstTick, scrub ?? liveTick));
+  const viewing = scrub == null ? null : milestones.filter((item) => item.tick <= scrub).at(-1);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-ink text-cream">
@@ -505,6 +570,67 @@ function Home() {
         onPointerCancel={onPointerUp}
         onContextMenu={(event) => event.preventDefault()}
       />
+      <div className="pointer-events-auto absolute inset-x-3 bottom-3 z-30 flex flex-col gap-2 sm:right-56">
+        {travelOpen && (
+          <div data-testid="milestones" className="flex gap-2 overflow-x-auto rounded-card border border-line bg-panel/95 p-2">
+            {milestones.length === 0 ? (
+              <p className="px-2 py-3 text-xs text-mute">The first snapshot is kept as soon as the city has a moment worth keeping.</p>
+            ) : (
+              milestones.map((mark) => {
+                const selected = viewing?.id === mark.id;
+                return (
+                  <button
+                    key={mark.id}
+                    type="button"
+                    data-testid="milestone"
+                    className={`w-40 shrink-0 rounded-lg border px-2 py-2 text-left ${selected ? "border-amber bg-ink" : "border-line"}`}
+                    onClick={() => travelTo(mark.tick >= liveTick ? null : mark.tick)}
+                  >
+                    <span className="block text-xs text-cream">{mark.title}</span>
+                    <span className="mt-1 block text-[11px] text-mute">
+                      tick {mark.tick} · {mark.era}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-mute">{mark.summary}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-2 rounded-full border border-line bg-panel/95 px-3 py-2">
+          <button
+            type="button"
+            data-testid="time-travel"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-line text-amber"
+            aria-expanded={travelOpen}
+            aria-label="Time travel"
+            onClick={() => setTravelOpen((open) => !open)}
+          >
+            <History className="size-4" />
+          </button>
+          <input
+            data-testid="time-scrub"
+            className="min-w-0 flex-1 accent-amber"
+            type="range"
+            min={firstTick}
+            max={sliderMax}
+            value={sliderValue}
+            aria-label="City time"
+            onChange={(event) => {
+              const tick = Number(event.target.value);
+              travelTo(tick >= liveTick ? null : tick);
+            }}
+          />
+          <span className="w-28 shrink-0 text-right text-[11px] text-mute">
+            {viewing ? `${viewing.title}` : "Now"}
+          </span>
+          {scrub != null && (
+            <button type="button" className="shrink-0 text-[11px] text-amber" onClick={() => travelTo(null)}>
+              Now
+            </button>
+          )}
+        </div>
+      </div>
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 p-4">
         <div className="pointer-events-auto flex items-start gap-3">
           <button
