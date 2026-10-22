@@ -1,8 +1,21 @@
+# dependencies & build output
 node_modules/
 dist/
+*.tsbuildinfo
+.vite/
+coverage/
+# runtime data
 data/
 backups/
-.env
 *.log
-*.tsbuildinfo
+# secrets (never commit keys)
+.env
+.env.*
+!.env.example
 .secrets/
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

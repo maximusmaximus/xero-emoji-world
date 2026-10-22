@@ -7,7 +7,7 @@
  *  - After 30s of use, enter fullscreen. Browsers require a user gesture for requestFullscreen,
  *    so once 30s have elapsed we arm a one-shot listener and go fullscreen on the next tap/scroll-end.
  *    iOS Safari (iPhone) has no element Fullscreen API: we fall back to `scrollTo(0,1)` and
- *    recommend "Add to Home Screen" (manifest display=fullscreen) — documented in HANDOFF.md.
+ *    recommend "Add to Home Screen" (manifest display=fullscreen) — documented in ARCHITECTURE.md.
  */
 export const FULLSCREEN_AFTER_MS = 30_000;
 

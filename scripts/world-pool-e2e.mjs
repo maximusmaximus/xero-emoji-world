@@ -19,7 +19,6 @@ const dir = mkdtempSync(join(tmpdir(), "xero-pool-"));
 const repo = join(dir, "repo");
 const localKey = "VENICE_INFERENCE_KEY_local-pool-000000000000000001";
 const giftKey = "VENICE_INFERENCE_KEY_contrib-pool-0000000000000002";
-const seen = [];
 
 const child = `
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";

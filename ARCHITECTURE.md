@@ -50,3 +50,27 @@ The view is a full-bleed isometric diorama, not a cutaway elevation. The ground 
 - `packages/shared/src/world-behaviours.ts` contains the harvest, alchemy, wonder and decree actions, plus `dynamicWeight` (demand-driven behaviour weights).
 - `apps/sim-server/src/oracle.ts` has `LLMOracle` (OpenAI-compatible chat, JSON mode) and `LocalOracle`. `CityEngine.consult()` runs every `ORACLE_EVERY_TICKS` without blocking and injects the decree into the next `step()`.
 - State: `CityState.world`. Patch: `{ op: 'setWorld' }`. Snapshots from before this layer are back-filled by `ensureWorld` inside `indexCity`.
+
+## Invariants (don't break)
+- `step()` applies a *copy* of each patch, so emitted actions stay immutable. Mutating an emitted patch breaks client lockstep. This was a latent bug: a floor added in the same tick as a `setLot` was double-applied on clients.
+- Oracle and LLM output only enters state through `sanitizeDecree` → `world.decree` action.
+- Only patches mutate state, and the client and server use the same reducer.
+- `step()` randomness comes only from `Rng.at(seed, 'tick', tick)`. No `Math.random` in `packages/shared`.
+- Every `emoji` field must exist in `EMOJI_CATALOG` (there's a test for this).
+- First boot creates the city at the current time and logs genesis. Prior history is never backfilled.
+
+## Mobile caveats
+- Pinch zoom is blocked with the viewport meta, `touch-action: pan-x pan-y`, `gesture*` preventDefault, and multi-touch `touchmove` preventDefault.
+- Browsers only allow fullscreen from a user gesture. After 30 s the app tries right away, then retries on the next tap or keypress (`mobile.ts`).
+- **iPhone Safari has no element Fullscreen API.** The fallbacks are `scrollTo(0,1)` and the PWA manifest (`display: fullscreen`) via "Add to Home Screen". iPadOS supports `webkitRequestFullscreen`.
+
+## Open TODOs (server + web workspaces)
+- [ ] **State growth.** `CityState` is sent whole on connect. Once the city passes about 50 districts, switch to per-district chunks (`/api/district/:id`) and have the client fetch only districts in view.
+- [ ] Relayout is a full `computeLayout` (throttled to 4/s). Make it incremental per building using `action.path`.
+- [ ] The engine's write queue is in memory. Add a disk WAL if DB outages longer than the process lifetime matter.
+- [ ] People who move out are deleted. Consider an "emigrated" archive so their stories stay linked.
+- [ ] More behaviours in `packages/shared/src/simulation.ts`: weddings (`person.married` is typed but not emitted), schools, fires 🚒, festivals 🎆, a day/night cycle tied to a clock.
+- [ ] Extend the emoji catalog. The target is **every** RGI emoji. Generate rows from `unicode.org/Public/emoji/latest/emoji-test.txt` with a script, then hand-assign roles.
+- [ ] Emoji version values are approximate. Verify them against emoji-test.txt during that import.
+- [ ] Auth/rate limiting on `/api/backup/download`. Full exports are expensive.
+- [ ] Optional: let users switch to a Xero Emoji sprite atlas instead of system emoji fonts, so output looks the same on every platform.
