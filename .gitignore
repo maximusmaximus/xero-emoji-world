@@ -19,3 +19,5 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+# scratch file written (and normally removed) by scripts/world-pool-e2e.mjs
+scripts/.pool-run.mjs
