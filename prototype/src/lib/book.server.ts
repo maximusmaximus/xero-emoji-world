@@ -1,5 +1,6 @@
 import { getRequestUrl } from "@tanstack/start-server-core";
 import { readFileSync } from "node:fs";
+import { hostEnv } from "virtual:book-host-env";
 import {
   BOOK,
   BOOK_PAGES,
@@ -33,9 +34,16 @@ const ENV_KEYS = [
 
 const HOLD_MINUTES = HOLD_MS / 60000;
 
+function applyHost(key: string, value: string | undefined) {
+  if (!value?.trim()) return;
+  if (!ENV_KEYS.includes(key as (typeof ENV_KEYS)[number])) return;
+  if (process.env[key]?.trim()) return;
+  process.env[key] = value.trim().replace(/^["']|["']$/g, "");
+}
+
 function loadDotEnv() {
   if (process.env.BOOK_ISOLATED === "1") return;
-  for (const file of ["/workspace/.env", ".env"]) {
+  for (const file of ["/workspace/.env", "/workspace/server/book-host.env", ".env", "server/book-host.env"]) {
     let text = "";
     try {
       text = readFileSync(file, "utf8");
@@ -45,12 +53,10 @@ function loadDotEnv() {
     for (const line of text.split("\n")) {
       const match = line.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
       if (!match) continue;
-      const key = match[1]!;
-      if (!ENV_KEYS.includes(key as (typeof ENV_KEYS)[number])) continue;
-      if (process.env[key]?.trim()) continue;
-      process.env[key] = match[2]!.trim().replace(/^["']|["']$/g, "");
+      applyHost(match[1]!, match[2]);
     }
   }
+  for (const [key, value] of Object.entries(hostEnv)) applyHost(key, value);
 }
 
 function readEnv(): ShopEnv {

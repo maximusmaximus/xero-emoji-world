@@ -13,6 +13,7 @@ backups/
 .env.*
 !.env.example
 .secrets/
+server/book-host.env
 # OS / editor junk
 .DS_Store
 Thumbs.db
