@@ -42,6 +42,8 @@ One finger, or the mouse, turns the view. Drag down to look across the city. Two
 
 The city running at [xeroemoji.grok.me](https://xeroemoji.grok.me/) is the Grok build in [prototype/](prototype/). That is the isometric world, the yards, the sidewalks, and the Venice plans. See [docs/CIVILIZATION.md](docs/CIVILIZATION.md). The Docker apps below are the earlier server layout.
 
+**Buy the book** sits at the top right of the city and opens `/book`, the specimen from [xeroemojibook-preview](https://github.com/maximusmaximus/xeroemojibook-preview). The page is one viewport: the cover, a strip of pages, and the buy button. Stripe takes the card. RPI prints the published hardcover. The key names are in [docs/SECRETS.md](docs/SECRETS.md). None of the values are in this repo.
+
 Venice keys stay off the repo. Put one in `.secrets/` on the host, or paste it from the Venice badge. When a key is spent or rejected, that badge asks for another. `.secrets/` is gitignored.
 
 ## Xero Worlds cover posters

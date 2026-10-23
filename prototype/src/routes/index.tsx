@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Info, History, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -774,7 +774,15 @@ function Home() {
             <p className="mt-1 max-w-xs text-sm text-mute">{latest ? <XeroLine text={latest.text} /> : null}</p>
           </div>
         </div>
-        <div className="pointer-events-auto relative">
+        <div className="pointer-events-auto flex flex-col items-end">
+          <Link
+            to="/book"
+            data-testid="buy-the-book"
+            className="rounded-full bg-amber px-4 py-2 text-xs font-semibold tracking-[0.14em] text-ink"
+          >
+            BUY THE BOOK
+          </Link>
+          <div className="relative mt-2">
           <button
             type="button"
             data-testid="venice-keys"
@@ -859,6 +867,7 @@ function Home() {
               {keyNote}
             </p>
           )}
+          </div>
         </div>
       </header>
       {credit && (
