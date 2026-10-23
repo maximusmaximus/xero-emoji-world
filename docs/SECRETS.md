@@ -45,10 +45,23 @@ Extra keys are pasted in the Venice badge on the city. The browser keeps them in
 | Name | What it is |
 | --- | --- |
 | `STRIPE_SECRET_KEY` | Stripe secret. `sk_test_…` for a test shop. `sk_live_…` only with `ALLOW_LIVE_STRIPE=true`. |
-| `BOOK_PRICE_CENTS` | Retail price in cents, for example `12800` is $128.00. |
-| `RPI_API_AUTH` | Authorization header for the published RPI book (`https://open.api.rpiprint.com`). Used for shipping rates and the print order. |
-| `STRIPE_WEBHOOK_SECRET` | Signing secret (`whsec_…`) for `POST /api/book/webhook`. |
+| `BOOK_PRICE_CENTS` | Retail price in cents. The hardcover is `18569` ($185.69). |
+| `RPI_API_AUTH` | Authorization header for the published RPI book (`https://open.api.rpiprint.com`). Used for shipping rates and the print order. Stays on the host. |
+| `RPI_API_KEY` | The RPI API key, host only. |
+| `RPI_WEBHOOK_SECRET` | Shared secret for `POST /api/book/printer`. Host only. |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret (`whsec_…`) Stripe shows when you add the endpoint. |
 | `RPI_LIVE_ORDERS` | `true` only when a paid order should be sent to the printer. Otherwise the webhook records a dry run. |
+
+The published SKU is `BKPH_HCIW_STD_11.750x11.750IN_80C_GL_40_100T_GLS_44`. The cart can hold more than one copy. The shop stops at 50 copies a day, counted in Pacific time in the `book_holds` table. An unpaid checkout holds its copies for 45 minutes, then they go back on the shelf.
+
+Stripe webhook (event `checkout.session.completed`):
+
+`https://xeroemoji.grok.me/api/book/webhook`
+
+Printer callback, if RPI needs one:
+
+`https://xeroemoji.grok.me/api/book/printer`
+
 
 Optional: `PUBLIC_BASE_URL` (success and cancel links), `RPI_BASE_URL`, `RPI_SKU` (defaults to the published 11.75 in hardcover SKU), `BOOK_COVER_URL` and `BOOK_GUTS_URL` if the SKU does not already have the print files, `BOOK_CHECKOUT=false` to hide a ready shop.
 

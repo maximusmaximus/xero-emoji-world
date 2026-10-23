@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as BookThanksRouteImport } from './routes/book.thanks'
+import { Route as ApiBookPrinterRouteImport } from './routes/api/book.printer'
 import { Route as ApiBookWebhookRouteImport } from './routes/api/book.webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const BookThanksRoute = BookThanksRouteImport.update({
   path: '/thanks',
   getParentRoute: () => BookRoute,
 } as any)
+const ApiBookPrinterRoute = ApiBookPrinterRouteImport.update({
+  id: '/api/book/printer',
+  path: '/api/book/printer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookWebhookRoute = ApiBookWebhookRouteImport.update({
   id: '/api/book/webhook',
   path: '/api/book/webhook',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/book': typeof BookRouteWithChildren
   '/book/thanks': typeof BookThanksRoute
+  '/api/book/printer': typeof ApiBookPrinterRoute
   '/api/book/webhook': typeof ApiBookWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/book': typeof BookRouteWithChildren
   '/book/thanks': typeof BookThanksRoute
+  '/api/book/printer': typeof ApiBookPrinterRoute
   '/api/book/webhook': typeof ApiBookWebhookRoute
 }
 export interface FileRoutesById {
@@ -52,19 +60,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/book': typeof BookRouteWithChildren
   '/book/thanks': typeof BookThanksRoute
+  '/api/book/printer': typeof ApiBookPrinterRoute
   '/api/book/webhook': typeof ApiBookWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/book' | '/book/thanks' | '/api/book/webhook'
+  fullPaths:
+    '/' | '/book' | '/book/thanks' | '/api/book/printer' | '/api/book/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/book' | '/book/thanks' | '/api/book/webhook'
-  id: '__root__' | '/' | '/book' | '/book/thanks' | '/api/book/webhook'
+  to: '/' | '/book' | '/book/thanks' | '/api/book/printer' | '/api/book/webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/book'
+    | '/book/thanks'
+    | '/api/book/printer'
+    | '/api/book/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookRoute: typeof BookRouteWithChildren
+  ApiBookPrinterRoute: typeof ApiBookPrinterRoute
   ApiBookWebhookRoute: typeof ApiBookWebhookRoute
 }
 
@@ -91,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookThanksRouteImport
       parentRoute: typeof BookRoute
     }
+    '/api/book/printer': {
+      id: '/api/book/printer'
+      path: '/api/book/printer'
+      fullPath: '/api/book/printer'
+      preLoaderRoute: typeof ApiBookPrinterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/book/webhook': {
       id: '/api/book/webhook'
       path: '/api/book/webhook'
@@ -114,6 +138,7 @@ const BookRouteWithChildren = BookRoute._addFileChildren(BookRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BookRoute: BookRouteWithChildren,
+  ApiBookPrinterRoute: ApiBookPrinterRoute,
   ApiBookWebhookRoute: ApiBookWebhookRoute,
 }
 export const routeTree = rootRouteImport
