@@ -13,6 +13,9 @@ describe("book shop", () => {
   it("still needs a Stripe key before a card can be taken", () => {
     assert.deepEqual(shopGaps({}).missing, ["STRIPE_SECRET_KEY"]);
     assert.equal(shopGaps({ STRIPE_SECRET_KEY: "sk_test_example" }).ready, true);
+    assert.equal(shopGaps({ STRIPE_SECRET_KEY: "rk_test_example" }).ready, true);
+    assert.deepEqual(shopGaps({ STRIPE_SECRET_KEY: "rk_live_example" }).missing, ["ALLOW_LIVE_STRIPE"]);
+    assert.equal(shopGaps({ STRIPE_SECRET_KEY: "rk_live_example", ALLOW_LIVE_STRIPE: "true" }).ready, true);
   });
 
   it("caps the cart at whatever is left of the 50-a-day run", () => {

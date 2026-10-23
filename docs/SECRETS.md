@@ -44,7 +44,7 @@ Extra keys are pasted in the Venice badge on the city. The browser keeps them in
 
 | Name | What it is |
 | --- | --- |
-| `STRIPE_SECRET_KEY` | Stripe secret. `sk_test_…` for a test shop. `sk_live_…` only with `ALLOW_LIVE_STRIPE=true`. |
+| `STRIPE_SECRET_KEY` | Stripe secret or restricted key. `sk_test_…` or `rk_test_…` for a test shop. `sk_live_…` or `rk_live_…` only with `ALLOW_LIVE_STRIPE=true` on the host. |
 | `BOOK_PRICE_CENTS` | Retail price in cents. The hardcover is `18569` ($185.69). |
 | `RPI_API_AUTH` | Authorization header for the published RPI book (`https://open.api.rpiprint.com`). Used for shipping rates and the print order. Stays on the host. |
 | `RPI_API_KEY` | The RPI API key, host only. |

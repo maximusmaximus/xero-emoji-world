@@ -66,8 +66,8 @@ export function bookPrice(env: ShopEnv) {
 export function shopGaps(env: ShopEnv) {
   const price = bookPrice(env);
   const stripe = env.STRIPE_SECRET_KEY?.trim() ?? "";
-  const live = stripe.startsWith("sk_live_");
-  const test = stripe.startsWith("sk_test_");
+  const live = stripe.startsWith("sk_live_") || stripe.startsWith("rk_live_");
+  const test = stripe.startsWith("sk_test_") || stripe.startsWith("rk_test_");
   const missing: string[] = [];
   if (env.BOOK_CHECKOUT === "false") missing.push("BOOK_CHECKOUT");
   if (!stripe) missing.push("STRIPE_SECRET_KEY");
